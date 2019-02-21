@@ -42,7 +42,7 @@ import time
 
 import processing
 
-from . import utils, qgsUtils, progress
+from . import utils, qgsUtils, feedbacks
 
 nodata_val = '-9999'
 
@@ -97,16 +97,12 @@ def initGdalCommands():
         else:
             utils.user_error("Could not find gdalwarp command")
         
-def setProgressBar(progress_bar):
-    global progressBar
-    progressBar = progress_bar
-        
 def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,onlyOutput=True):
     # Dummy function to enable running an alg inside an alg
     def no_post_process(alg, context, feedback):
         pass
     if feedback is None:
-        feedback = progress.progressFeedback
+        feedback = feedbacks.progressFeedback
     utils.debug("parameters : " + str(parameters))
     feedback.pushDebugInfo("parameters : " + str(parameters))
     QGuiApplication.processEvents()
@@ -124,7 +120,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         diff_time = end_time - start_time
         feedback.pushInfo("Call to " + alg_name + " successful"
                     + ", performed in " + str(diff_time) + " seconds")
-        progress.progressFeedback.endJob()
+        feedbacks.progressFeedback.endJob()
         feedback.pushDebugInfo("res = " + str(res))
         if onlyOutput:
             if "OUTPUT" in res:
@@ -208,7 +204,7 @@ def cloneLayer(layer):
     return clone_layer
                    
 def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
-    progress.progressFeedback.setSubText("Multi to single geometry")
+    feedbacks.progressFeedback.setSubText("Multi to single geometry")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","multiparttosingleparts",parameters,context=context,feedback=feedback)
@@ -216,7 +212,7 @@ def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
     
 def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
-    progress.progressFeedback.setSubText("Dissolve " + str(in_layer))
+    feedbacks.progressFeedback.setSubText("Dissolve " + str(in_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'FIELD' : [],
@@ -229,7 +225,7 @@ def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
     
 def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
-    progress.progressFeedback.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
+    feedbacks.progressFeedback.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'DISSOLVE' : False,
@@ -245,7 +241,7 @@ def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
     return res
     
 def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
-    progress.progressFeedback.setSubText("Merge vector layers")
+    feedbacks.progressFeedback.setSubText("Merge vector layers")
     parameters = { 'CRS' : crs,
                    'LAYERS' : in_layers,
                    'OUTPUT' : out_layer }
@@ -254,7 +250,7 @@ def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
                    
     
 def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
-    progress.progressFeedback.setSubText("Difference")
+    feedbacks.progressFeedback.setSubText("Difference")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : diff_layer }
@@ -262,7 +258,7 @@ def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
     return res  
     
 def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
-    progress.progressFeedback.setSubText("Clip")
+    feedbacks.progressFeedback.setSubText("Clip")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : clip_layer }
@@ -270,7 +266,7 @@ def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
     return res
     
 def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None):
-    progress.progressFeedback.setSubText("Reproject")
+    feedbacks.progressFeedback.setSubText("Reproject")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'TARGET_CRS' : target_crs }
