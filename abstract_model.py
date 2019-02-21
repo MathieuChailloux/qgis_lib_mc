@@ -21,7 +21,7 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
-from . import utils, progress, xmlUtils
+from . import utils, xmlUtils
 
 from abc import ABC, abstractmethod
 #class Abstract(ABC):
