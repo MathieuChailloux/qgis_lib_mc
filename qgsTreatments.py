@@ -223,6 +223,12 @@ def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","dissolve",parameters,context,feedback)
     return res
     
+def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
+    parameters = { 'INPUT' : in_layer,
+                   'OUTPUT' : out_layer }
+    res = applyProcessingAlg("native","saveselectedfeatures",parameters,context,feedback)
+    return res
+    
 def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
     feedbacks.progressFeedback.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
@@ -264,6 +270,24 @@ def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
                    'OVERLAY' : clip_layer }
     res = applyProcessingAlg("qgis","clip",parameters,context,feedback)
     return res
+    
+def applyIntersection(in_layer,clip_layer,out_layer,context=None,feedback=None):
+    feedbacks.progressFeedback.setSubText("Intersection")
+    parameters = { 'INPUT' : in_layer,
+                   'OUTPUT' : out_layer,
+                   'OVERLAY' : clip_layer }
+    res = applyProcessingAlg("qgis","intersection",parameters,context,feedback)
+    return res
+    
+def selectIntersection(in_layer,overlay_layer,context=None,feedback=None):
+    #feedbacks.progressFeedback.setSubText("Intersection")
+    parameters = { 'INPUT' : in_layer,
+                   'INTERSECT' : overlay_layer,
+                   'METHOD' : 0,
+                   'PREDICATE' : [0] }
+    res = applyProcessingAlg("native","selectbylocation",parameters,context,feedback)
+    return res
+    
     
 def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None):
     feedbacks.progressFeedback.setSubText("Reproject")
