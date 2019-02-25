@@ -49,7 +49,7 @@ class LogConnector:
             
     def saveLogAs(self):
         txt = self.dlg.txtLog.toPlainText()
-        fname = utils.saveFileDialog(self,msg="Enregistrer le journal sous",filter="*.txt")
+        fname = qgsUtils.saveFileDialog(self,msg="Enregistrer le journal sous",filter="*.txt")
         utils.writeFile(fname,txt)
         utils.info("Log saved to file '" + fname + "'")
         
