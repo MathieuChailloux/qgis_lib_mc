@@ -102,6 +102,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
     def no_post_process(alg, context, feedback):
         pass
     if feedback is None:
+        utils.debug("initializing feedback")
         feedback = feedbacks.progressFeedback
     utils.debug("parameters : " + str(parameters))
     feedback.pushDebugInfo("parameters : " + str(parameters))
@@ -114,7 +115,10 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         if context is None:
             context = QgsProcessingContext()
             context.setFeedback(feedback)
-        res = processing.run(complete_name,parameters,context=context,feedback=feedback,onFinish=no_post_process)
+        feedbacks.tmpFeedback = feedback
+        feedback.pushDebugInfo("complete_name = " + str(complete_name))
+        feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
+        res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)#,onFinish=no_post_process)
         feedback.pushDebugInfo("res1 = " + str(res))
         end_time = time.time()
         diff_time = end_time - start_time

@@ -26,7 +26,7 @@
 import time
 import sys
 
-from qgis.core import QgsProcessingFeedback
+from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
 
 from . import utils
 from . import qgsUtils
@@ -35,6 +35,7 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QGuiApplication
 
 progressFeedback = None
+tmpFeedback = None
 
 class ProgressFeedback(QgsProcessingFeedback):
     
@@ -108,8 +109,16 @@ class ProgressFeedback(QgsProcessingFeedback):
     def connectComponents(self):
         self.progressChanged.connect(self.setProgress)
         
+        
+class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):
  
+    def __init__(self,nb_steps,feedback):
+        super().__init__(nb_steps,feedback)
+        
+    def reportError(self,error,fatalError=False):
+        super().reportError(error,fatalError)
  
+
 class FileFeedback(QgsProcessingFeedback):
     
     def __init__(self,fname):
