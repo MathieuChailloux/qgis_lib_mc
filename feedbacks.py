@@ -64,6 +64,7 @@ class ProgressFeedback(QgsProcessingFeedback):
     def beginSection(self,txt):
         self.sectionText = txt
         self.setProgressText(txt)
+        self.setProgress(0)
         self.start_time = time.time()
         utils.info(self.sectionHeader + " BEGIN : " + txt)
         
