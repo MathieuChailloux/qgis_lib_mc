@@ -128,7 +128,8 @@ class FileFeedback(QgsProcessingFeedback):
         
     def printFunc(self,msg):
         with open(self.fname,"a") as f:
-            f.write(str(msg + "\n"))
+            f.write(str(msg.encode('utf-8')) + "\n")
+    #f.write(str(msg + "\n"))
         
     def pushCommandInfo(self,msg):
         self.printFunc(msg)
@@ -143,7 +144,8 @@ class FileFeedback(QgsProcessingFeedback):
         self.printFunc(msg)
         
     def reportError(self,error,fatalError=False):
-        print("reportError : " + str(error))
+        #print("reportError : " + str(error))
+        self.printFunc("reportError : " + str(error.encode('utf-8')))
         self.printFunc("reportError : " + str(error))
         
     def setProgressText(self,text):
