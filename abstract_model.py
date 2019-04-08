@@ -383,6 +383,18 @@ class DictModel(AbstractGroupModel):
             self.fields.remove(fieldname)
         self.layoutChanged.emit()
         
+    def fromXMLAttribs(self,attribs):
+        pass
+        
+    def fromXMLRoot(self,root):
+        self.fromXMLAttribs(root.attrib)
+        self.items = []
+        for parsed_item in root:
+            dict = parsed_item.attrib
+            item = self.mkItemFromDict(dict)
+            self.addItem(item)
+        self.layoutChanged.emit()
+        
     def toXML(self,indent=" ",attribs_dict=None):
         utils.debug("toXML " + self.parser_name)
         xmlStr = indent + "<" + self.parser_name
