@@ -23,7 +23,8 @@
     Proxy functions to call usual processing algorithms.
 """
 
-from qgis.core import (QgsProcessingFeedback,
+from qgis.core import (Qgis,
+                       QgsProcessingFeedback,
                        QgsProject,
                        QgsProperty,
                        QgsFeature,
@@ -104,7 +105,6 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
     if feedback is None:
         utils.debug("initializing feedback")
         feedback = feedbacks.progressFeedback
-    utils.debug("parameters : " + str(parameters))
     feedback.pushDebugInfo("parameters : " + str(parameters))
     QGuiApplication.processEvents()
     try:
@@ -118,7 +118,8 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         feedbacks.tmpFeedback = feedback
         feedback.pushDebugInfo("complete_name = " + str(complete_name))
         feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
-        res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)#,onFinish=no_post_process)
+        res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)
+        #res = processing.runAndLoadResults(complete_name,parameters,context=context,feedback=feedback)#,onFinish=no_post_process)
         feedback.pushDebugInfo("res1 = " + str(res))
         end_time = time.time()
         diff_time = end_time - start_time
@@ -302,15 +303,52 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     return res
     
     
+"""
+    RASTER ALGORITHMS
+"""
+
 # Apply rasterization on field 'field' of vector layer 'in_path'.
 # Output raster layer in 'out_path'.
 # Resolution set to 25 if not given.
 # Extent can be given through 'extent_path'. If not, it is extracted from input layer.
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
-def applyRasterization(in_path,field,out_path,resolution=None,
-                       extent_path=None,load_flag=False,to_byte=False,
-                       more_args=[]):
+def applyRasterization(in_path,out_path,extent,resolution,
+                       field=None,burn_val=None,out_type=Qgis.Float32,
+                       nodata_val=0,all_touch=False,
+                       context=None,feedback=None):
     utils.debug("applyRasterization")
+    parameters = { 'ALL_TOUCH' : all_touch,
+                   'BURN' : burn_val,
+                   'DATA_TYPE' : out_type,
+                   'EXTENT' : extent,
+                   'FIELD' : field,
+                   'HEIGHT' : resolution,
+                   #'INIT' : None,
+                   'INPUT' : in_path,
+                   #'INVERT' : False,
+                   'NODATA' : nodata_val,
+                   #'OPTIONS' : '',
+                   'OUTPUT' : 'TEMPORARY_OUTPUT',
+                   'UNITS' : 1, 
+                   'WIDTH' : resolution }
+    res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
+    return res
+
+    
+    
+"""
+    GDAL COMMANDS (legacy)
+"""
+    
+# Apply rasterization on field 'field' of vector layer 'in_path'.
+# Output raster layer in 'out_path'.
+# Resolution set to 25 if not given.
+# Extent can be given through 'extent_path'. If not, it is extracted from input layer.
+# Output raster layer is loaded in QGIS if 'load_flag' is True.
+def applyRasterizationCmd(in_path,field,out_path,extent,
+                       resolution=None,load_flag=False,to_byte=False,
+                       more_args=[]):
+    utils.debug("applyRasterizationCmd")
     in_layer = qgsUtils.loadVectorLayer(in_path)
     if extent_path:
         extent_layer = qgsUtils.loadLayer(extent_path)
@@ -393,7 +431,7 @@ def applyWarpGdal(in_path,out_path,resampling_mode,
     extent = extent_layer.extent()
     extent_crs = extent_layer.crs()
     utils.internal_error("TODO : params refactoring")
-    transformed_extent = params.params.getBoundingBox(extent,extent_crs)
+    transformed_extent = params.paramsModel.getBoundingBox(extent,extent_crs)
     x_min = transformed_extent.xMinimum()
     x_max = transformed_extent.xMaximum()
     y_min = transformed_extent.yMinimum()
