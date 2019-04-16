@@ -52,51 +52,51 @@ gdal_merge_cmd = None
 gdal_rasterize_cmd = None
 gdal_warp_cmd = None
 
-def initGdalCommands():
-    global gdal_calc_cmd, gdal_merge_cmd, gdal_rasterize_cmd, gdal_warp_cmd
-    if utils.platform_sys == 'Windows':
-        gdal_calc_cmd = 'gdal_calc.bat'
-        gdal_merge_cmd = 'gdal_merge.bat'
-        gdal_rasterize_cmd = 'gdal_rasterize'
-        gdal_warp_cmd = 'gdalwarp'
-    elif utils.platform_sys == 'Linux':
-        gdal_calc_cmd = 'gdal_calc.py'
-        gdal_merge_cmd = 'gdal_merge.py'
-        gdal_rasterize_cmd = 'gdal_rasterize'
-        gdal_warp_cmd = 'gdalwarp'
-    elif utils.platform_sys == 'Darwin':
-        gdal_path = '/Library/Frameworks/GDAL.framework'
-        gdal_calc_cmd = 'gdal_calc.py'
-        gdal_rasterize_cmd = 'gdal_rasterize'
-        gdal_warp_cmd = 'gdalwarp'
-        gdal_merge_cmd = 'gdal_merge.py'
-        if not os.path.isfile(gdal_calc_cmd):
-            gdal_calc_cmd = utils.findFileFromDir(gdal_path,'gdal_calc.py')
-        if not os.path.isfile(gdal_merge_cmd):
-            gdal_merge_cmd = utils.findFileFromDir(gdal_path,'gdal_merge.py')
-        if not os.path.isfile(gdal_rasterize_cmd):
-            gdal_rasterize_cmd = utils.findFileFromDir(gdal_path,'gdal_rasterize')
-        if not os.path.isfile(gdal_warp_cmd):
-            gdal_warp_cmd = utils.findFileFromDir(gdal_path,'gdalwarp')
-    else:
-        utils.internal_error("Unexpected system : " + str(utils.platform_sys))
-    if utils.platform_sys in ['Linux','Darwin']:
-        if os.path.isfile(gdal_calc_cmd):
-            utils.debug("gdal_calc command set to " + str(gdal_calc_cmd))
-        else:
-            utils.user_error("Could not find gdal_calc command")
-        if os.path.isfile(gdal_merge_cmd):
-            utils.debug("gdal_merge command set to " + str(gdal_merge_cmd))
-        else:
-            utils.user_error("Could not find gdal_merge command")
-        if os.path.isfile(gdal_rasterize_cmd):
-            utils.debug("gdal_rasterize command set to " + str(gdal_rasterize_cmd))
-        else:
-            utils.user_error("Could not find gdal_rasterize command")
-        if os.path.isfile(gdal_warp_cmd):
-            utils.debug("gdalwarp command set to " + str(gdal_warp_cmd))
-        else:
-            utils.user_error("Could not find gdalwarp command")
+# def initGdalCommands():
+    # global gdal_calc_cmd, gdal_merge_cmd, gdal_rasterize_cmd, gdal_warp_cmd
+    # if utils.platform_sys == 'Windows':
+        # gdal_calc_cmd = 'gdal_calc.bat'
+        # gdal_merge_cmd = 'gdal_merge.bat'
+        # gdal_rasterize_cmd = 'gdal_rasterize'
+        # gdal_warp_cmd = 'gdalwarp'
+    # elif utils.platform_sys == 'Linux':
+        # gdal_calc_cmd = 'gdal_calc.py'
+        # gdal_merge_cmd = 'gdal_merge.py'
+        # gdal_rasterize_cmd = 'gdal_rasterize'
+        # gdal_warp_cmd = 'gdalwarp'
+    # elif utils.platform_sys == 'Darwin':
+        # gdal_path = '/Library/Frameworks/GDAL.framework'
+        # gdal_calc_cmd = 'gdal_calc.py'
+        # gdal_rasterize_cmd = 'gdal_rasterize'
+        # gdal_warp_cmd = 'gdalwarp'
+        # gdal_merge_cmd = 'gdal_merge.py'
+        # if not os.path.isfile(gdal_calc_cmd):
+            # gdal_calc_cmd = utils.findFileFromDir(gdal_path,'gdal_calc.py')
+        # if not os.path.isfile(gdal_merge_cmd):
+            # gdal_merge_cmd = utils.findFileFromDir(gdal_path,'gdal_merge.py')
+        # if not os.path.isfile(gdal_rasterize_cmd):
+            # gdal_rasterize_cmd = utils.findFileFromDir(gdal_path,'gdal_rasterize')
+        # if not os.path.isfile(gdal_warp_cmd):
+            # gdal_warp_cmd = utils.findFileFromDir(gdal_path,'gdalwarp')
+    # else:
+        # utils.internal_error("Unexpected system : " + str(utils.platform_sys))
+    # if utils.platform_sys in ['Linux','Darwin']:
+        # if os.path.isfile(gdal_calc_cmd):
+            # utils.debug("gdal_calc command set to " + str(gdal_calc_cmd))
+        # else:
+            # utils.user_error("Could not find gdal_calc command")
+        # if os.path.isfile(gdal_merge_cmd):
+            # utils.debug("gdal_merge command set to " + str(gdal_merge_cmd))
+        # else:
+            # utils.user_error("Could not find gdal_merge command")
+        # if os.path.isfile(gdal_rasterize_cmd):
+            # utils.debug("gdal_rasterize command set to " + str(gdal_rasterize_cmd))
+        # else:
+            # utils.user_error("Could not find gdal_rasterize command")
+        # if os.path.isfile(gdal_warp_cmd):
+            # utils.debug("gdalwarp command set to " + str(gdal_warp_cmd))
+        # else:
+            # utils.user_error("Could not find gdalwarp command")
         
 def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,onlyOutput=True):
     # Dummy function to enable running an alg inside an alg
@@ -111,6 +111,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         complete_name = provider + ":" + alg_name
         feedback.pushInfo("Calling processing algorithm '" + complete_name + "'")
         start_time = time.time()
+        context = None
         utils.debug("context = " + str(context))
         if context is None:
             context = QgsProcessingContext()
@@ -118,6 +119,11 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         feedbacks.tmpFeedback = feedback
         feedback.pushDebugInfo("complete_name = " + str(complete_name))
         feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
+        # context = None
+        # if context is None:
+            # context = QgsProcessingContext()
+        # if feedback is None:
+            # feedback = QgsProcessingFeedback()
         res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)
         #res = processing.runAndLoadResults(complete_name,parameters,context=context,feedback=feedback)#,onFinish=no_post_process)
         feedback.pushDebugInfo("res1 = " + str(res))
@@ -142,8 +148,8 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
     finally:  
         feedback.pushDebugInfo("End run " + alg_name)
 
-def applyGrassAlg(parameters,alg_name):
-    applyProcessingAlg("grass7",alg_name,parameters)
+def applyGrassAlg(parameters,alg_name,context,feedback):
+    return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
 
 def selectGeomByExpression(in_layer,expr,out_path,out_name):
     #utils.info("Calling 'selectGeomByExpression' algorithm")
@@ -304,7 +310,33 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     
     
 """
-    RASTER ALGORITHMS
+    QGIS RASTER ALGORITHMS
+"""
+
+def applyReclassifyByTable(input,table,output,
+                           nodata_val=0,out_type=2,boundaries_mode=1,
+                           context=None,feedback=None):
+    parameters = { 'DATA_TYPE' : out_type,
+                   'INPUT_RASTER' : input,
+                   'NODATA_FOR_MISSING' : False,
+                   'NO_DATA' : nodata_val,
+                   'OUTPUT' : output,
+                   'RANGE_BOUNDARIES' : boundaries_mode,
+                   'RASTER_BAND' : 1,
+                   'TABLE' : table }
+    return applyProcessingAlg("native","reclassifybytable",parameters,context,feedback)
+    
+# def applyReclassifyByTableInt(input,tuples,output,nodata_val=0,context=None,feedback=None):
+    # table = []
+    # for k, v in tuple:
+        # table.append(k)
+        # table.append(k)
+        # table.append(v)
+    # boundaries_mode = 2
+    # return applyReclassifyByTable(input,table,output,nodata_val,boundaries_mode,context,feedback)
+    
+"""
+    GDAL RASTER ALGORITHMS
 """
 
 # Apply rasterization on field 'field' of vector layer 'in_path'.
@@ -314,10 +346,12 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=0,all_touch=False,
+                       nodata_val=0,all_touch=False,overwrite=False,
                        context=None,feedback=None):
     utils.debug("applyRasterization")
-    parameters = { 'ALL_TOUCH' : all_touch,
+    if overwrite:
+        qgsUtils.removeRaster(out_path)
+    parameters = { 'ALL_TOUCH' : True,
                    'BURN' : burn_val,
                    'DATA_TYPE' : out_type,
                    'EXTENT' : extent,
@@ -328,13 +362,150 @@ def applyRasterization(in_path,out_path,extent,resolution,
                    #'INVERT' : False,
                    'NODATA' : nodata_val,
                    #'OPTIONS' : '',
-                   'OUTPUT' : 'TEMPORARY_OUTPUT',
+                   'OUTPUT' : out_path,
                    'UNITS' : 1, 
                    'WIDTH' : resolution }
     res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
+    # context = QgsProcessingContext()
+    # feedback = QgsProcessingFeedback()
+    # res = processing.run("gdal:rasterize",parameters,context=context,feedback=feedback)["OUTPUT"]
+    #res = None
     return res
-
     
+def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
+                       src_crs=None,extent=None,extent_crs=None,
+                       resolution=None,out_type=0,nodata_val=0,overwrite=False,
+                       context=None,feedback=None):
+    # { 'DATA_TYPE' : 3, 'EXTRA' : '', 'INPUT' : 'D:/Projets/BioDispersal/Tests/BousquetOrbExtended/SousTrames/forest/forest_disp_1000.tif', 'MULTITHREADING' : False, 'NODATA' : -999, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'RESAMPLING' : 0, 'SOURCE_CRS' : QgsCoordinateReferenceSystem('EPSG:2154'), 'TARGET_CRS' : QgsCoordinateReferenceSystem('EPSG:7411'), 'TARGET_EXTENT' : '693953.28055333,727528.28055333,6268374.87768497,6308149.87768497 [EPSG:2154]', 'TARGET_EXTENT_CRS' : None, 'TARGET_RESOLUTION' : 10 }
+    modes = { 'near' : 0, 'mean' : 5 }
+    # Resampling mode
+    if resampling_mode not in modes:
+        utils.internal_error("Unexpected resampling mode : " + str(resampling_mode))
+    mode_val = modes[resampling_mode]
+    if overwrite:
+        qgsUtils.removeRaster(out_path)
+    # Output type
+    TYPES = ['Use input layer data type', 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32',
+             'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    # Parameters
+    parameters = { 'DATA_TYPE' : out_type,
+                   'INPUT' : in_path,
+                   'NODATA' : nodata_val,
+                   'OUTPUT' : out_path,
+                   'RESAMPLING' : mode_val,
+                   'SOURCE_CRS' : src_crs,
+                   'TARGET_CRS' : dst_crs,
+                   'TARGET_EXTENT' : extent,
+                   'TARGET_EXTENT_CRS' : extent_crs,
+                   'TARGET_RESOLUTION' : resolution }
+    return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
+                   
+def applyRasterCalc(input_a,input_b,output,expr,
+                    nodata_val=0,out_type=5,
+                    context=None,feedback=None):
+    TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    parameters = { 'BAND_A' : 1,
+                   'BAND_B' : 1,
+                   'FORMULA' : expr,
+                   'INPUT_A' : input_a,
+                   'INPUT_B' : input_b,
+                   'NO_DATA' : nodata_val,
+                   'OUTPUT' : output,
+                   'RTYPE' : out_type }
+    return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+                   
+def applyRasterCalcMult(input_a,input_b,output,
+                        nodata_val=0,out_type=5,
+                        context=None,feedback=None):
+    expr = "A*B"
+    return applyRasterCalc(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+                   
+"""
+    GRASS ALGORITHMS
+"""
+
+# Apply raster calculator from expression 'expr'.
+# Calculation is made on a single file and a signled band renamed 'A'.
+# Output format is Integer32.
+def applyResample(in_path,out_path,context=None,feedback=None):
+    parameters = {'input' : in_path,
+                   'output' : out_path,
+                   '--overwrite' : True,
+                   'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
+                   'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
+                   'GRASS_MIN_AREA_PARAMETER' : 0}
+    return applyGrassAlg("r.resample",parameters,context,feedback)
+    
+def applyReclassGdal(in_path,out_path,rules_file,title,context=None,feedback=None):
+    parameters = {'input' : in_path,
+                  'output' : out_path,
+                  'rules' : rules_file,
+                  'title' : title,
+                   'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
+                   'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
+                   'GRASS_MIN_AREA_PARAMETER' : 0}
+    return applyGrassAlg("r.reclass",parameters,context,feedback)
+    
+def applyRNull(in_path,new_val,out_path,context=None,feedback=None):
+    parameters = { 'map' : in_path,
+                   'null' : str(new_val),
+                   'output' : out_path }
+    return applyGrassAlg(parameters,"r.null",context,feedback)
+    
+def applyRSetNull(in_path,new_val,out_path,context=None,feedback=None):
+    parameters = { 'map' : in_path,
+                   'setnull' : str(new_val),
+                   'output' : out_path }
+    return applyGrassAlg(parameters,"r.null",context,feedback)
+    
+def applyRBuffer(in_path,buffer_vals,out_path,context=None,feedback=None):
+    utils.checkFileExists(in_path,"Buffer input layer ")
+    distances_str = ""
+    for v in buffer_vals:
+        if distances_str != "":
+            distances_str += ","
+        distances_str += str(v)
+    parameters = { 'input' : in_path,
+                    'output' : out_path,
+                    'distances' : distances_str, #"0,100,200",
+                    'units' : 0, # 0 = meters ?
+                    #'memory' : 5000,
+                    'GRASS_RASTER_FORMAT_META' : '',
+                    'GRASS_RASTER_FORMAT_OPT' : '',
+                    'GRASS_REGION_CELLSIZE_PARAMETER' : 25,
+                    'GRASS_REGION_PARAMETER' : None,
+                    '-z' : False,
+                    '--type' : 'Int32',
+                    '--overwrite' : False}
+    return applyGrassAlg(parameters,"r.buffer.lowmem",context,feedback)
+    
+def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
+    utils.checkFileExists(start_path,"Dispersion Start Layer ")
+    utils.checkFileExists(cost_path,"Dispersion Permeability Raster ")
+    parameters = { 'input' : cost_path,
+                    'start_raster' : start_path,
+                    'maxcost' : int(cost),
+                    'null_cost' : None,
+                    'output' : out_path,
+                    'start_points' : None,
+                    'stop_points' : None,
+                    'start_coordinates' : None,
+                    'stop_coordinates' : None,
+                    'outir' : None,
+                    'memory' : 5000,
+                    'GRASS_MIN_AREA_PARAMETER' : 0.0001, 
+                    'GRASS_RASTER_FORMAT_META' : '',
+                    'GRASS_RASTER_FORMAT_OPT' : '',
+                    'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
+                    'GRASS_REGION_PARAMETER' : None,
+                    'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
+                    '-k' : False,
+                    '-n' : True,
+                    '-r' : True,
+                    '-i' : False,
+                    '-b' : False,
+                    '--overwrite' : True}
+    return applyGrassAlg(parameters,"r.cost",context,feedback)
     
 """
     GDAL COMMANDS (legacy)
@@ -345,7 +516,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
 # Resolution set to 25 if not given.
 # Extent can be given through 'extent_path'. If not, it is extracted from input layer.
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
-def applyRasterizationCmd(in_path,field,out_path,extent,
+def applyRasterizationCmd(in_path,field,out_path,extent_path,
                        resolution=None,load_flag=False,to_byte=False,
                        more_args=[]):
     utils.debug("applyRasterizationCmd")
@@ -357,8 +528,9 @@ def applyRasterizationCmd(in_path,field,out_path,extent,
     extent = extent_layer.extent()
     #extent_crs = qgsUtils.getLayerCrsStr(extent_layer)
     extent_crs = extent_layer.crs()
-    utils.internal_error("TODO : params refactoring needed")
+    #utils.internal_error("TODO : params refactoring needed")
     #transformed_extent = params.params.getBoundingBox(extent,extent_crs)
+    transformed_extent = extent
     x_min = transformed_extent.xMinimum()
     x_max = transformed_extent.xMaximum()
     y_min = transformed_extent.yMinimum()
@@ -395,27 +567,6 @@ def applyRasterizationCmd(in_path,field,out_path,extent,
         res_layer = qgsUtils.loadRasterLayer(out_path)
         QgsProject.instance().addMapLayer(res_layer)
         
-
-# Apply raster calculator from expression 'expr'.
-# Calculation is made on a single file and a signled band renamed 'A'.
-# Output format is Integer32.
-def applyResampleProcessing(in_path,out_path):
-    utils.debug("qgsTreatments.applyResampleProcessing")
-    parameters = {'input' : in_path,
-                   'output' : out_path,
-                   '--overwrite' : True,
-                   'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
-                   'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
-                   'GRASS_MIN_AREA_PARAMETER' : 0}
-    feedback = QgsProcessingFeedback()
-    try:
-        processing.run("grass7:r.resample",parameters,feedback=feedback)
-        utils.debug ("call to r.cost successful")
-    except Exception as e:
-        utils.warn ("Failed to call r.reclass : " + str(e))
-        raise e
-    finally:
-        utils.debug("End resample")
         
 # TODO
 def applyWarpGdal(in_path,out_path,resampling_mode,
@@ -627,96 +778,7 @@ def applyMinGdal(in_path1,in_path2,out_path,load_flag=False):
     utils.debug("qgsTreatments.applyMinGdal")
     expr = 'A*less_equal(A,B) + B*less(B,A)'
     applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag)
-    
-def applyRNull(in_path,new_val,out_path):
-    utils.debug("applyRNull")
-    parameters = { 'map' : in_path,
-                   'null' : str(new_val),
-                   'output' : out_path }
-    applyGrassAlg(parameters,"r.null")
-    
-def applyRSetNull(in_path,new_val,out_path):
-    utils.debug("applyRNull")
-    parameters = { 'map' : in_path,
-                   'setnull' : str(new_val),
-                   'output' : out_path }
-    applyGrassAlg(parameters,"r.null")
-        
-def applyRBuffer(in_path,buffer_vals,out_path):
-    utils.debug ("applyRBuffer")
-    utils.checkFileExists(in_path,"Buffer input layer ")
-    distances_str = ""
-    for v in buffer_vals:
-        if distances_str != "":
-            distances_str += ","
-        distances_str += str(v)
-    parameters = { 'input' : in_path,
-                    'output' : out_path,
-                    'distances' : distances_str, #"0,100,200",
-                    'units' : 0, # 0 = meters ?
-                    #'memory' : 5000,
-                    'GRASS_RASTER_FORMAT_META' : '',
-                    'GRASS_RASTER_FORMAT_OPT' : '',
-                    'GRASS_REGION_CELLSIZE_PARAMETER' : 25,
-                    'GRASS_REGION_PARAMETER' : None,
-                    '-z' : False,
-                    '--type' : 'Int32',
-                    '--overwrite' : False}
-    applyGrassAlg(parameters,"r.buffer.lowmem")
-    # feedback = QgsProcessingFeedback()
-    # utils.debug("parameters : " + str(parameters))
-    # try:
-        # res = processing.run("grass7:r.buffer.lowmem",parameters,feedback=feedback)
-        # print(str(feedback))
-        # print(str(res["output"]))
-        # print ("call to r.buffer successful")
-    # except Exception as e:
-        # print ("Failed to call r.buffer : " + str(e))
-        # raise e
-    # finally:  
-        # utils.debug("End runBuffer")
-        
-def applyRCost(start_path,cost_path,cost,out_path):
-    utils.debug ("applyRCost")
-    utils.checkFileExists(start_path,"Dispersion Start Layer ")
-    utils.checkFileExists(cost_path,"Dispersion Permeability Raster ")
-    parameters = { 'input' : cost_path,
-                    'start_raster' : start_path,
-                    'maxcost' : int(cost),
-                    'null_cost' : None,
-                    'output' : out_path,
-                    'start_points' : None,
-                    'stop_points' : None,
-                    'start_coordinates' : None,
-                    'stop_coordinates' : None,
-                    'outir' : None,
-                    'memory' : 5000,
-                    'GRASS_MIN_AREA_PARAMETER' : 0.0001, 
-                    'GRASS_RASTER_FORMAT_META' : '',
-                    'GRASS_RASTER_FORMAT_OPT' : '',
-                    'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
-                    'GRASS_REGION_PARAMETER' : None,
-                    'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
-                    '-k' : False,
-                    '-n' : True,
-                    '-r' : True,
-                    '-i' : False,
-                    '-b' : False,
-                    '--overwrite' : True}
-    applyGrassAlg(parameters,"r.cost")
-    #feedback = QgsProcessingFeedback()
-    #utils.debug("parameters : " + str(parameters))
-    #try:
-    #    processing.run("grass7:r.cost",parameters,feedback=feedback)
-    #    utils.info ("call to r.cost successful")
-        #res_layer = qgsUtils.loadRasterLayer(out_path)
-        #QgsProject.instance().addMapLayer(res_layer)
-    #except Exception as e:
-    #    utils.info ("Failed to call r.cost : " + str(e))
-    #    raise e
-    #finally:  
-    #    utils.debug("End runCost")
-        
+                 
         
 def applyGdalMerge(files,out_path,load_flag=False):
     cmd_args = [gdal_merge_cmd,

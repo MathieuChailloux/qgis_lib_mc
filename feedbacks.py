@@ -39,6 +39,8 @@ tmpFeedback = None
 
 class ProgressFeedback(QgsProcessingFeedback):
     
+    GDAL_ERROR_PREFIX = 'ERROR 1'
+    
     def __init__(self,dlg):
         self.dlg = dlg
         self.progressBar = dlg.progressBar
@@ -50,7 +52,8 @@ class ProgressFeedback(QgsProcessingFeedback):
         utils.info(msg)
         
     def pushConsoleInfo(self,msg):
-        utils.info(msg)
+        if msg.startswith(self.GDAL_ERROR_PREFIX):
+            self.reportError(msg)
         
     def pushDebugInfo(self,msg):
         utils.debug(msg)

@@ -25,6 +25,7 @@
 
 import os
 from pathlib import Path
+import numpy as np
 
 from qgis.gui import *
 from qgis.core import *
@@ -82,7 +83,7 @@ def getLayerByFilename(fname):
     map_layers = QgsProject.instance().mapLayers().values()
     fname_parts = Path(fname).parts
     for layer in map_layers:
-        utils.debug("layer : " + str(layer))
+        utils.debug("layer : " + str(layer.name()))
         layer_path = pathOfLayer(layer)
         path_parts = Path(layer_path).parts
         if fname_parts == path_parts:
@@ -125,7 +126,7 @@ def loadVectorLayer(fname,loadProject=False):
 def loadRasterLayer(fname,loadProject=False):
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
-        return getLayerByName(fname)
+        return getLayerByFilename(fname)
     rlayer = QgsRasterLayer(fname, layerNameOfPath(fname))
     if not rlayer.isValid():
         utils.user_error("Invalid raster layer '" + fname + "'")
@@ -138,10 +139,10 @@ def loadRasterLayer(fname,loadProject=False):
 def loadLayer(fname,loadProject=False):
     try:
         return (loadVectorLayer(fname,loadProject))
-    except CustomException:
+    except utils.CustomException:
         try:
             return (loadRasterLayer(fname,loadProject))
-        except CustomException:
+        except utils.CustomException:
             utils.user_error("Could not load layer '" + fname + "'")
     
 # Retrieve layer loaded in QGIS project from name
@@ -267,6 +268,23 @@ def getLayerAssocs(layer,key_field,val_field):
         else:
             assoc[k] = [v]
     return assoc
+    
+def getRasterVals(layer):
+    band1 = in_layer.GetRasterBand(1)
+    data_array = band1.ReadAsArray()
+    unique_vals = set(np.unique(data_array))
+    utils.debug("Unique values init : " + str(unique_vals))
+    in_nodata_val = int(band1.GetNoDataValue())
+    utils.debug("in_nodata_val = " + str(in_nodata_val))
+    unique_vals.remove(in_nodata_val)
+    utils.debug("Unique values : " + str(unique_vals))
+    return unique_vals
+    
+def getVectorVals(layer,field_name):
+    field_values = set()
+    for f in layer.getFeatures():
+        field_values.add(f[field_name])
+    return field_values
 
 # Geopackages 'fid'
 def getMaxFid(layer):
