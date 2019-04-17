@@ -45,7 +45,7 @@ import processing
 
 from . import utils, qgsUtils, feedbacks
 
-nodata_val = '-9999'
+#nodata_val = '-9999'
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -399,6 +399,15 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                    'TARGET_EXTENT_CRS' : extent_crs,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
+    
+# def applyMergeRaster(files,out_path,nodata_val=0,out_type=2,context=None,feedback=None):
+    # parameters = { 'DATA_TYPE' : out_type,
+                   # 'INPUT' : files,
+                   # 'NODATA_INPUT' : None,
+                   # 'NODATA_OUTPUT' : nodata_val,
+                   # 'OUTPUT' : out_path }
+    # return applyProcessingAlg("gdal","merge",parameters,context,feedback)
+    
                    
 def applyRasterCalc(input_a,input_b,output,expr,
                     nodata_val=0,out_type=5,
