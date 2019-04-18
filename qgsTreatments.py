@@ -45,7 +45,7 @@ import processing
 
 from . import utils, qgsUtils, feedbacks
 
-#nodata_val = '-9999'
+nodata_val = '666'
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -314,7 +314,7 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
 """
 
 def applyReclassifyByTable(input,table,output,
-                           nodata_val=0,out_type=2,boundaries_mode=1,
+                           nodata_val=nodata_val,out_type=2,boundaries_mode=1,
                            context=None,feedback=None):
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT_RASTER' : input,
@@ -326,7 +326,7 @@ def applyReclassifyByTable(input,table,output,
                    'TABLE' : table }
     return applyProcessingAlg("native","reclassifybytable",parameters,context,feedback)
     
-# def applyReclassifyByTableInt(input,tuples,output,nodata_val=0,context=None,feedback=None):
+# def applyReclassifyByTableInt(input,tuples,output,nodata_val=nodata_val,context=None,feedback=None):
     # table = []
     # for k, v in tuple:
         # table.append(k)
@@ -346,7 +346,7 @@ def applyReclassifyByTable(input,table,output,
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=0,all_touch=False,overwrite=False,
+                       nodata_val=nodata_val,all_touch=False,overwrite=False,
                        context=None,feedback=None):
     utils.debug("applyRasterization")
     if overwrite:
@@ -374,7 +374,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
     
 def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                        src_crs=None,extent=None,extent_crs=None,
-                       resolution=None,out_type=0,nodata_val=0,overwrite=False,
+                       resolution=None,out_type=0,nodata_val=nodata_val,overwrite=False,
                        context=None,feedback=None):
     # { 'DATA_TYPE' : 3, 'EXTRA' : '', 'INPUT' : 'D:/Projets/BioDispersal/Tests/BousquetOrbExtended/SousTrames/forest/forest_disp_1000.tif', 'MULTITHREADING' : False, 'NODATA' : -999, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'RESAMPLING' : 0, 'SOURCE_CRS' : QgsCoordinateReferenceSystem('EPSG:2154'), 'TARGET_CRS' : QgsCoordinateReferenceSystem('EPSG:7411'), 'TARGET_EXTENT' : '693953.28055333,727528.28055333,6268374.87768497,6308149.87768497 [EPSG:2154]', 'TARGET_EXTENT_CRS' : None, 'TARGET_RESOLUTION' : 10 }
     modes = { 'near' : 0, 'mean' : 5 }
@@ -400,17 +400,41 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
-# def applyMergeRaster(files,out_path,nodata_val=0,out_type=2,context=None,feedback=None):
-    # parameters = { 'DATA_TYPE' : out_type,
-                   # 'INPUT' : files,
-                   # 'NODATA_INPUT' : None,
-                   # 'NODATA_OUTPUT' : nodata_val,
-                   # 'OUTPUT' : out_path }
-    # return applyProcessingAlg("gdal","merge",parameters,context,feedback)
+def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=2,context=None,feedback=None):
+    parameters = { 'DATA_TYPE' : out_type,
+                   'INPUT' : files,
+                   'NODATA_INPUT' : None,
+                   'NODATA_OUTPUT' : nodata_val,
+                   'OUTPUT' : out_path }
+    return applyProcessingAlg("gdal","merge",parameters,context,feedback)
     
                    
-def applyRasterCalc(input_a,input_b,output,expr,
-                    nodata_val=0,out_type=5,
+def applyRasterCalc(input_a,output,expr,
+                    nodata_val=nodata_val,out_type=5,
+                    context=None,feedback=None):
+    TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    parameters = { 'BAND_A' : 1,
+                   'FORMULA' : expr,
+                   'INPUT_A' : input_a,
+                   'NO_DATA' : nodata_val,
+                   'OUTPUT' : output,
+                   'RTYPE' : out_type }
+    return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+    
+def applyRasterCalcLT(input,output,max_val,
+                      nodata_val=nodata_val,out_type=5,
+                      context=None,feedback=None):
+    expr = "less(A," + str(max_val) + ")*A+less_equal(" + str(max_val) + ",A)*" + str(nodata_val)
+    return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
+    
+def applyRasterCalcLE(input,output,max_val,
+                      nodata_val=nodata_val,out_type=5,
+                      context=None,feedback=None):
+    expr = "less_equal(A," + str(max_val) + ")*A+less(" + str(max_val) + ",A)*" + str(nodata_val)
+    return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
+    
+def applyRasterCalcAB(input_a,input_b,output,expr,
+                    nodata_val=nodata_val,out_type=5,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : 1,
@@ -424,7 +448,7 @@ def applyRasterCalc(input_a,input_b,output,expr,
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
                    
 def applyRasterCalcMult(input_a,input_b,output,
-                        nodata_val=0,out_type=5,
+                        nodata_val=nodata_val,out_type=5,
                         context=None,feedback=None):
     expr = "A*B"
     return applyRasterCalc(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)

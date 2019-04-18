@@ -466,8 +466,8 @@ class AbstractConnector:
     def applyItems(self):
         indexes = self.getSelectedIndexes()
         utils.debug("Selected indexes = " + str(indexes))
-        #self.model.applyItemsWithContext(indexes,None,self.dlg.feedback)#,indexes)
-        self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback)
+        self.model.applyItemsWithContext(indexes,None,self.dlg.feedback)#,indexes)
+        #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback)
         
     def addItem(self):
         utils.debug("AbstractConnector.addItem")

@@ -40,6 +40,7 @@ tmpFeedback = None
 class ProgressFeedback(QgsProcessingFeedback):
     
     GDAL_ERROR_PREFIX = 'ERROR 1'
+    SET_COLOR_ERROR = 'ERROR 6: SetColorTable'
     
     def __init__(self,dlg):
         self.dlg = dlg
@@ -62,7 +63,11 @@ class ProgressFeedback(QgsProcessingFeedback):
         utils.info(msg)
         
     def reportError(self,error,fatalError=False):
-        utils.internal_error("reportError : " + str(error))
+        error_msg = str(error)
+        if error_msg.startswith(self.SET_COLOR_ERROR):
+            utils.warn(error_msg)
+        else:
+            utils.internal_error("reportError : " + error_msg)
         
     def beginSection(self,txt):
         self.sectionText = txt

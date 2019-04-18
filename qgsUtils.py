@@ -144,6 +144,25 @@ def loadLayer(fname,loadProject=False):
             return (loadRasterLayer(fname,loadProject))
         except utils.CustomException:
             utils.user_error("Could not load layer '" + fname + "'")
+            
+def loadLayerGetType(fname,loadProject=False):
+    utils.checkFileExists(fname)
+    if isLayerLoaded(fname):
+       return getLayerByFilename(fname)
+    layer_name = layerNameOfPath(fname)
+    layer = QgsVectorLayer(fname, layer_name, "ogr")
+    if layer == None or not layer.isValid():
+        layer = QgsRasterLayer(fname,layer_name)
+        if not rlayer.isValid():
+            utils.user_error("Could not load layer '" + fname + "'")
+        type = 'Raster'
+    else:
+        normalizeEncoding(layer)
+        type = 'Vector'
+    if loadProject:
+        QgsProject.instance().addMapLayer(layer)
+    return (layer, type)
+    
     
 # Retrieve layer loaded in QGIS project from name
 def getLoadedLayerByName(name):
