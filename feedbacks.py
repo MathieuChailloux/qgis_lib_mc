@@ -50,7 +50,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         super().__init__()
         
     def pushCommandInfo(self,msg):
-        utils.info(msg)
+        utils.debug(msg)
         
     def pushConsoleInfo(self,msg):
         if msg.startswith(self.GDAL_ERROR_PREFIX):

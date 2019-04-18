@@ -314,11 +314,11 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
 """
 
 def applyReclassifyByTable(input,table,output,
-                           nodata_val=nodata_val,out_type=2,boundaries_mode=1,
+                           nodata_val=nodata_val,out_type=2,boundaries_mode=1,nodata_missing=False,
                            context=None,feedback=None):
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT_RASTER' : input,
-                   'NODATA_FOR_MISSING' : False,
+                   'NODATA_FOR_MISSING' : nodata_missing,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
                    'RANGE_BOUNDARIES' : boundaries_mode,
@@ -451,7 +451,19 @@ def applyRasterCalcMult(input_a,input_b,output,
                         nodata_val=nodata_val,out_type=5,
                         context=None,feedback=None):
     expr = "A*B"
-    return applyRasterCalc(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+                   
+def applyRasterCalcMin(input_a,input_b,output,
+                       nodata_val=nodata_val,out_type=5,
+                       context=None,feedback=None):
+    expr = 'B*less_equal(A,B) + A*less(B,A)'
+    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+                   
+def applyRasterCalcMax(input_a,input_b,output,
+                       nodata_val=nodata_val,out_type=5,
+                       context=None,feedback=None):
+    expr = 'A*less_equal(A,B) + B*less(B,A)'
+    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
                    
 """
     GRASS ALGORITHMS
@@ -505,7 +517,7 @@ def applyRBuffer(in_path,buffer_vals,out_path,context=None,feedback=None):
                     #'memory' : 5000,
                     'GRASS_RASTER_FORMAT_META' : '',
                     'GRASS_RASTER_FORMAT_OPT' : '',
-                    'GRASS_REGION_CELLSIZE_PARAMETER' : 25,
+                    #'GRASS_REGION_CELLSIZE_PARAMETER' : 25,
                     'GRASS_REGION_PARAMETER' : None,
                     '-z' : False,
                     '--type' : 'Int32',
@@ -529,7 +541,7 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     'GRASS_MIN_AREA_PARAMETER' : 0.0001, 
                     'GRASS_RASTER_FORMAT_META' : '',
                     'GRASS_RASTER_FORMAT_OPT' : '',
-                    'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
+                    #'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
                     'GRASS_REGION_PARAMETER' : None,
                     'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
                     '-k' : False,
