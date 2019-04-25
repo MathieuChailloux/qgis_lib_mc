@@ -27,6 +27,8 @@ import os
 from pathlib import Path
 import numpy as np
 
+from osgeo import gdal
+
 from qgis.gui import *
 from qgis.core import *
 from PyQt5.QtCore import QVariant, pyqtSignal
@@ -288,8 +290,23 @@ def getLayerAssocs(layer,key_field,val_field):
             assoc[k] = [v]
     return assoc
     
+def getRasterValsFromPath(path):
+    gdal_layer = gdal.Open(path)
+    band1 = gdal_layer.GetRasterBand(1)
+    data_array = band1.ReadAsArray()
+    unique_vals = set(np.unique(data_array))
+    utils.debug("Unique values init : " + str(unique_vals))
+    in_nodata_val = band1.GetNoDataValue()
+    utils.debug("in_nodata_val = " + str(in_nodata_val))
+    unique_vals.remove(in_nodata_val)
+    utils.debug("Unique values : " + str(unique_vals))
+    return unique_vals
+    
+# IMPORT GDAL OR NOT ?
 def getRasterVals(layer):
-    band1 = in_layer.GetRasterBand(1)
+    path = pathOfLayer(layer)
+    gdal_layer = gdal.Open(path)
+    band1 = gdal_layer.GetRasterBand(1)
     data_array = band1.ReadAsArray()
     unique_vals = set(np.unique(data_array))
     utils.debug("Unique values init : " + str(unique_vals))
@@ -298,6 +315,21 @@ def getRasterVals(layer):
     unique_vals.remove(in_nodata_val)
     utils.debug("Unique values : " + str(unique_vals))
     return unique_vals
+    
+# def getRasterMinMax(layer):
+    # unique_vals = getRasterVals(layer)
+    # if len(unique_vals) == 0:
+        # utils.user_error("Empty layer")
+    # min, max = unique_vals[0], unique_vals[-1]
+    # return (min, max)
+    
+# def getRasterNoData(layer):
+    # band1 = layer.GetRasterBand(1)
+    # nodata_val = band1.GetNoDataValue()
+    # return nodata_val
+    
+# def getRasterResolution(layer):
+    # pass
     
 def getVectorVals(layer,field_name):
     field_values = set()

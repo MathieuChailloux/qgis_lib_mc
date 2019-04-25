@@ -25,6 +25,7 @@
 
 from qgis.core import (Qgis,
                        QgsProcessingFeedback,
+                       QgsProcessingUtils,
                        QgsProject,
                        QgsProperty,
                        QgsFeature,
@@ -46,6 +47,7 @@ import processing
 from . import utils, qgsUtils, feedbacks
 
 nodata_val = '666'
+MEMORY_LAYER_NAME = 'TEMPORARY_OUTPUT'
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -138,6 +140,8 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
                 feedback.pushDebugInfo("output = " + str(res["OUTPUT"]))
                 feedback.pushDebugInfo("output type = " + str(type(res["OUTPUT"])))
                 return res["OUTPUT"]
+            elif 'output' in res:
+                return res['output']
             else:
                 return None
         else:
@@ -446,25 +450,32 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'OUTPUT' : output,
                    'RTYPE' : out_type }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
-                   
+                       
 def applyRasterCalcMult(input_a,input_b,output,
                         nodata_val=nodata_val,out_type=5,
                         context=None,feedback=None):
     expr = "A*B"
     return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    
+# def applyRasterCalcMult_Bnonull(input_a,input_b,output,
+                               # nodata_val=nodata_val,out_type=5,
+                               # context=None,feedback=None):
+    # nonull = applyRNull(input_b,1,'TEMPORARY_OUTPUT',context=context,feedback=feedback)
+    # return applyRasterCalcAB(input_a,nonull,output,expr,nodata_val,out_type,context,feedback)
                    
 def applyRasterCalcMin(input_a,input_b,output,
-                       nodata_val=nodata_val,out_type=5,
-                       context=None,feedback=None):
-    expr = 'B*less_equal(A,B) + A*less(B,A)'
-    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
-                   
-def applyRasterCalcMax(input_a,input_b,output,
                        nodata_val=nodata_val,out_type=5,
                        context=None,feedback=None):
     expr = 'A*less_equal(A,B) + B*less(B,A)'
     return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
                    
+def applyRasterCalcMax(input_a,input_b,output,
+                       nodata_val=nodata_val,out_type=5,
+                       context=None,feedback=None):
+    expr = 'B*less_equal(A,B) + A*less(B,A)'
+    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+                
+                
 """
     GRASS ALGORITHMS
 """
@@ -551,6 +562,7 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     '-b' : False,
                     '--overwrite' : True}
     return applyGrassAlg(parameters,"r.cost",context,feedback)
+    
     
 """
     GDAL COMMANDS (legacy)

@@ -71,7 +71,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         
     def beginSection(self,txt):
         self.sectionText = txt
-        self.setProgressText(txt)
+        self.dlg.lblProgress.setText(txt)
         self.setProgress(0)
         self.start_time = time.time()
         utils.info(self.sectionHeader + " BEGIN : " + txt)
@@ -85,14 +85,13 @@ class ProgressFeedback(QgsProcessingFeedback):
         self.sectionText = ""
             
     def setSubText(self,txt):
-        self.setProgressText(self.sectionText,txt)
+        self.setProgressText(txt)
         
-    def setProgressText(self,text,subText=""):
-        msg = text
+    def setProgressText(self,text):
+        msg = self.sectionText
         if msg:
             msg += "...  "
-        if subText:
-            msg += subText
+        msg += text
         self.dlg.lblProgress.setText(msg)
         QGuiApplication.processEvents()
         
@@ -127,11 +126,13 @@ class ProgressFeedback(QgsProcessingFeedback):
 class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):
  
     def __init__(self,nb_steps,feedback):
+        self.nb_steps = nb_steps
+        self.step_range = 100 / nb_steps
         super().__init__(nb_steps,feedback)
         
     def reportError(self,error,fatalError=False):
         super().reportError(error,fatalError)
- 
+        
 
 class FileFeedback(QgsProcessingFeedback):
     
