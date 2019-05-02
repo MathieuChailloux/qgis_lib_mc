@@ -66,8 +66,10 @@ class ProgressFeedback(QgsProcessingFeedback):
         error_msg = str(error)
         if error_msg.startswith(self.SET_COLOR_ERROR):
             utils.warn(error_msg)
-        else:
+        elif fatalError:
             utils.internal_error("reportError : " + error_msg)
+        else:
+            utils.warn(error_msg)
         
     def beginSection(self,txt):
         self.sectionText = txt

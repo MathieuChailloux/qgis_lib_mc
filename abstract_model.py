@@ -409,6 +409,11 @@ class DictModel(AbstractGroupModel):
             xmlStr += i.toXML(indent=indent + " ") + "\n"
         xmlStr += indent + "</" + self.parser_name + ">"
         return xmlStr
+        
+    def applyItemsWithContext(self,indexes,context,feedback):
+        for n in indexes:
+            i = self.items[n]
+            self.applyItemWithContext(i,context,feedback)
     
 # AbstractConnector connects a view and a model
 class AbstractConnector:
