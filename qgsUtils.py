@@ -114,7 +114,7 @@ def loadVectorLayer(fname,loadProject=False):
     if isLayerLoaded(fname):
        return getLayerByFilename(fname)
     layer = QgsVectorLayer(fname, layerNameOfPath(fname), "ogr")
-    if layer == None:
+    if not layer:
         utils.user_error("Could not load vector layer '" + fname + "'")
     if not layer.isValid():
         utils.user_error("Invalid vector layer '" + fname + "'")

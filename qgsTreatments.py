@@ -46,7 +46,7 @@ import processing
 
 from . import utils, qgsUtils, feedbacks
 
-nodata_val = '666'
+nodata_val = '-9999'
 MEMORY_LAYER_NAME = 'TEMPORARY_OUTPUT'
 
 gdal_calc_cmd = None
@@ -318,7 +318,8 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
 """
 
 def applyReclassifyByTable(input,table,output,
-                           nodata_val=nodata_val,out_type=2,boundaries_mode=1,nodata_missing=False,
+                           nodata_val=nodata_val,out_type=Qgis.Float32,
+                           boundaries_mode=1,nodata_missing=False,
                            context=None,feedback=None):
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT_RASTER' : input,
@@ -404,7 +405,8 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
-def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=2,context=None,feedback=None):
+def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,context=None,feedback=None):
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT' : files,
                    'NODATA_INPUT' : None,
