@@ -118,7 +118,6 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         if context is None:
             context = QgsProcessingContext()
             context.setFeedback(feedback)
-        feedbacks.tmpFeedback = feedback
         feedback.pushDebugInfo("complete_name = " + str(complete_name))
         feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
         # context = None
@@ -353,6 +352,8 @@ def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
                        nodata_val=nodata_val,all_touch=False,overwrite=False,
                        context=None,feedback=None):
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
+             'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     utils.debug("applyRasterization")
     if overwrite:
         qgsUtils.removeRaster(out_path)

@@ -68,7 +68,7 @@ def mkRandomColorRasterShader(layer):
     rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
     colorRamp = getRandomSingleColorRamp()
     if not colorRamp:
-        utils.internal_error("Coule not create color ramp")        
+        utils.internal_error("Could not create color ramp")        
     colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp)
     colorRampShader.classifyColorRamp(band=1,input=layer.dataProvider())
     if colorRampShader.isEmpty():
@@ -79,7 +79,7 @@ def mkRandomColorRasterShader(layer):
 def setRandomColorRasterRenderer(layer):
     rasterShader = mkRandomColorRasterShader(layer)
     if not rasterShader:
-        utils.internal_error("Coule not create raster shader")
+        utils.internal_error("Could not create raster shader")
     renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=rasterShader)
     if not renderer:
         utils.internal_error("Could not create renderer")

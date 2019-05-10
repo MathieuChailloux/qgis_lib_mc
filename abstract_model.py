@@ -298,6 +298,15 @@ class AbstractGroupModel(QAbstractTableModel):
             i = self.items[n]
             i.applyItem()
             
+    def getItems(self,indexes=None):
+        res = []
+        if not indexes:
+            indexes = range(0,len(self.items))
+        for n in indexes:
+            i = self.items[n]
+            res.append(i)
+        return res
+            
     # Order items based on 'idx' column/field
     # Reverse order at each call for a specific column
     # def orderItems(self,idx):
@@ -450,6 +459,8 @@ class AbstractConnector:
         if self.runButton:
             self.runButton.disconnect()
         
+    def tr(self,msg):
+        return self.dlg.tr(msg)
                 
     def switchOnlySelection(self):
         new_val = not self.onlySelection

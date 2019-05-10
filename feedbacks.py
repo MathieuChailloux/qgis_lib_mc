@@ -35,7 +35,16 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QGuiApplication
 
 progressFeedback = None
-tmpFeedback = None
+
+def beginSection(msg):
+    if progressFeedback:
+        progressFeedback.beginSection(msg)
+    else:
+        utils.debug("No progress feedback")
+        
+def endSection():
+    if progressFeedback:
+        progressFeedback.endSection()
 
 class ProgressFeedback(QgsProcessingFeedback):
     
@@ -128,8 +137,11 @@ class ProgressFeedback(QgsProcessingFeedback):
 class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):
  
     def __init__(self,nb_steps,feedback):
+        if nb_steps == 0:
+            utils.user_error("No steps in ProgressMultiStepFeedback initialization (empty model ?)")
         self.nb_steps = nb_steps
         self.step_range = 100 / nb_steps
+        self.feedback = feedback
         super().__init__(nb_steps,feedback)
         
     def reportError(self,error,fatalError=False):
