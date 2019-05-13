@@ -47,7 +47,7 @@ redCol = QColor(redHex)
 yellowCol = QColor(yellowHex)
 greenCol = QColor(greenHex)
 
-singleColorRampList = [ 'Blues', 'Greens', 'Greys', 'Oranges', 'Purples', 'Reds' ]
+singleColorRampList = [ 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds' ]
 
 def getDefaultStyle():
     return QgsStyle.defaultStyle()

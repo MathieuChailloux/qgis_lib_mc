@@ -21,7 +21,7 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
-from . import utils, xmlUtils
+from . import utils, xmlUtils, feedbacks
 
 from abc import ABC, abstractmethod
 #class Abstract(ABC):
@@ -420,9 +420,13 @@ class DictModel(AbstractGroupModel):
         return xmlStr
         
     def applyItemsWithContext(self,indexes,context,feedback):
-        for n in indexes:
+        nb_steps = len(indexes)
+        step_feedback = feedbacks.ProgressMultiStepFeedback(nb_steps,feedback)
+        step_feedback.setCurrentStep(0)
+        for cpt, n in enumerate(indexes,1):
             i = self.items[n]
             self.applyItemWithContext(i,context,feedback)
+            step_feedback.setCurrentStep(cpt)
     
 # AbstractConnector connects a view and a model
 class AbstractConnector:

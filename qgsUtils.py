@@ -48,6 +48,10 @@ def typeIsFloat(t):
 def typeIsNumeric(t):
     return (typeIsInteger(t) or typeIsFloat(t))
 
+def qgisTypeIsInteger(t):
+    int_types = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32]
+    return (t in int_types)
+    
 # Delete raster file and associated xml file
 def removeRaster(path):
     if isLayerLoaded(path):
@@ -303,7 +307,7 @@ def getRasterValsFromPath(path):
     return unique_vals
     
 # IMPORT GDAL OR NOT ?
-def getRasterVals(layer):
+def getRasterValsOld(layer):
     path = pathOfLayer(layer)
     gdal_layer = gdal.Open(path)
     band1 = gdal_layer.GetRasterBand(1)
@@ -315,6 +319,26 @@ def getRasterVals(layer):
     unique_vals.remove(in_nodata_val)
     utils.debug("Unique values : " + str(unique_vals))
     return unique_vals
+    
+def getRasterValsBis(layer):
+    rows = layer.height()
+    cols = layer.width()
+    dpr = layer.dataProvider()
+    bl = dpr.block(1, dpr.extent(), cols, rows) # 1: band no
+    nodata_val = dpr.sourceNoDataValue(1)
+    unique_values = set([bl.value(r, c) for r in range(rows) for c in range(cols)])
+    unique_values.remove(nodata_val)
+    return list(unique_values)
+    
+# def getHistogram(layer):
+    # pr = layer.dataProvider()
+    # hist = pr.histogram(1)
+    # if not pr.hasHistogram(1,0):
+        # utils.debug("init")
+        # pr.initHistogram(hist,1,0)
+    # utils.debug("hist = " + str(hist))
+    # return hist
+       
     
 # def getRasterMinMax(layer):
     # unique_vals = getRasterVals(layer)
@@ -331,11 +355,15 @@ def getRasterVals(layer):
 # def getRasterResolution(layer):
     # pass
     
-def getVectorVals(layer,field_name):
+def getVectorValsOld(layer,field_name):
     field_values = set()
     for f in layer.getFeatures():
         field_values.add(f[field_name])
-    return field_values
+    return sorted(field_values)
+    
+def getVectorVals(layer,field_name):
+    idx = layer.dataProvider().fieldNameIndex(field_name)
+    return layer.uniqueValues(idx)
 
 # Geopackages 'fid'
 def getMaxFid(layer):
