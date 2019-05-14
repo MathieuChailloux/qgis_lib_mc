@@ -38,7 +38,7 @@ from qgis.core import (QgsColorRampShader,
                        QgsSingleBandPseudoColorRenderer,
                        QgsStyle)
                        
-from . import utils
+from . import utils, qgsUtils
 
 redHex = '#ff0000'
 yellowHex = '#ffff00'
@@ -75,17 +75,7 @@ def getRandomSingleColorRamp():
     return colorRamp    
     
 def getValuesFromLayer3(layer):
-    pr = layer.dataProvider()
-    stats = pr.bandStatistics(1,stats=QgsRasterBandStats.All)
-    if (stats.minimumValue < 0):
-        min = 0
-    else:
-        min= stats.minimumValue
-    max = stats.maximumValue
-    range = max - min
-    half_range = range//2
-    med = min + half_range
-    return (min,med,max)
+    return qgsUtils.getRasterMinMedMax(layer)
     
 def mkRandomColorRasterShader(layer):
     min, med, max = getValuesFromLayer3(layer)

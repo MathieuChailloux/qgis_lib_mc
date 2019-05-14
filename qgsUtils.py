@@ -142,7 +142,7 @@ def loadRasterLayer(fname,loadProject=False):
 
 # Opens layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadLayer(fname,loadProject=False):
+def loadLayerOld(fname,loadProject=False):
     try:
         return (loadVectorLayer(fname,loadProject))
     except utils.CustomException:
@@ -151,24 +151,62 @@ def loadLayer(fname,loadProject=False):
         except utils.CustomException:
             utils.user_error("Could not load layer '" + fname + "'")
             
-def loadLayerGetType(fname,loadProject=False):
+def loadVectorLayerNoError(fname):
+    layer = QgsVectorLayer(fname, layerNameOfPath(fname), "ogr")
+    if not layer:
+        utils.debug("Could not load vector layer '" + fname + "'")
+        return None
+    if not layer.isValid():
+        utils.debug("Invalid vector layer '" + fname + "'")
+        return None
+    normalizeEncoding(layer)
+    return layer
+    
+def loadRasterLayerNoError(fname):
+    layer = QgsRasterLayer(fname, layerNameOfPath(fname))
+    if not layer:
+        utils.debug("Could not load raster layer '" + fname + "'")
+        return None
+    if not layer.isValid():
+        utils.debug("Invalid raster layer '" + fname + "'")
+        return None
+    return layer
+    
+def loadLayer(fname,loadProject=False):
+    layer = loadVectorLayerNoError(fname)
+    if layer is None:
+        layer = loadRasterLayerNoError(fname)
+    if layer is None:
+        utils.user_error("Could not load layer '" + fname + "'")
+    if loadProject:
+        QgsProject.instance().addMapLayer(layer)
+    return layer
+            
+def loadLayerGetTypeOld(fname,loadProject=False):
     utils.checkFileExists(fname)
-    if isLayerLoaded(fname):
-       return getLayerByFilename(fname)
-    layer_name = layerNameOfPath(fname)
-    layer = QgsVectorLayer(fname, layer_name, "ogr")
-    if layer == None or not layer.isValid():
-        layer = QgsRasterLayer(fname,layer_name)
-        if not rlayer.isValid():
-            utils.user_error("Could not load layer '" + fname + "'")
-        type = 'Raster'
-    else:
-        normalizeEncoding(layer)
+    try:
+        layer = loadVectorLayer(fname,loadProject)
         type = 'Vector'
+        return (layer, type)
+    except utils.CustomException:
+        try:
+            layer = loadRasterLayer(fname,loadProject)
+            type = 'Raster'
+            return (layer, type)
+        except utils.CustomException:
+            utils.user_error("Could not load layer '" + fname + "'")
+    
+def loadLayerGetType(fname,loadProject=False):
+    layer = loadVectorLayerNoError(fname)
+    type = 'Vector'
+    if layer is None:
+        layer = loadRasterLayerNoError(fname)
+        type = 'Raster'
+    if layer is None:
+        utils.user_error("Could not load layer '" + fname + "'")
     if loadProject:
         QgsProject.instance().addMapLayer(layer)
     return (layer, type)
-    
     
 # Retrieve layer loaded in QGIS project from name
 def getLoadedLayerByName(name):
@@ -339,13 +377,23 @@ def getRasterValsBis(layer):
     # utils.debug("hist = " + str(hist))
     # return hist
        
+def getRasterStats(layer):
+    pr = layer.dataProvider()
+    stats = pr.bandStatistics(1,stats=QgsRasterBandStats.All)
+    return stats
     
-# def getRasterMinMax(layer):
-    # unique_vals = getRasterVals(layer)
-    # if len(unique_vals) == 0:
-        # utils.user_error("Empty layer")
-    # min, max = unique_vals[0], unique_vals[-1]
-    # return (min, max)
+def getRasterMinMax(layer):
+    stats = getRasterStats(layer)
+    min, max = stats.minimumValue, stats.maximumValue
+    return (min, max)
+    
+def getRasterMinMedMax(layer):
+    stats = getRasterStats(layer)
+    min, max = stats.minimumValue, stats.maximumValue
+    range = max - min
+    half_range = range//2
+    med = min + half_range
+    return (min,med,max)
     
 # def getRasterNoData(layer):
     # band1 = layer.GetRasterBand(1)
