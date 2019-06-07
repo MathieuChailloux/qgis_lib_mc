@@ -443,6 +443,26 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
+def clipRasterFromVector(raster_path,vector_path,out_path,
+                         resolution=None,
+                         context=None,feedback=None):
+    # data type 0 = input raster type
+    parameters = { #'ALPHA_BAND' : False,
+                   'CROP_TO_CUTLINE' : True,
+                   'DATA_TYPE' : 0,
+                   'INPUT' : raster_path,
+                   #'KEEP_RESOLUTION' : False,
+                   'MASK' : vector_path,
+                   #'NODATA' : None,
+                   #'OPTIONS' : '',
+                   'OUTPUT' : out_path }
+    if resolution:
+        parameters['SET_RESOLUTION'] = True
+        parameters['X_RESOLUTION'] = resolution
+        parameters['Y_RESOLUTION'] = resolution
+    return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
+
+    
 def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     parameters = { 'DATA_TYPE' : out_type,
@@ -495,7 +515,9 @@ def applyRasterCalcMult(input_a,input_b,output,
                         nodata_val=nodata_val,out_type=5,
                         context=None,feedback=None):
     expr = "A*B"
-    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalcAB(input_a,input_b,output,expr,
+                             nodata_val=nodata_val,out_type=out_type,
+                             context=context,feedback=feedback)
     
 # def applyRasterCalcMult_Bnonull(input_a,input_b,output,
                                # nodata_val=nodata_val,out_type=5,

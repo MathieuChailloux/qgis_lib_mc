@@ -61,18 +61,19 @@ def getColorBrewColorRampGnYlRd():
     colorRamp = QgsColorBrewerColorRamp(schemeName='RdYlGn',inverted=True)
     return colorRamp
     
-def getGradientColorRampRdYlGn():
+def mkColorRamp(color,invert=False):
     style = getDefaultStyle()
-    colorRamp = style.colorRamp('RdYlGn')
-    colorRamp.invert()
+    colorRamp = style.colorRamp(color)
+    if invert:
+        colorRamp.invert()
     return colorRamp
+    
+def getGradientColorRampRdYlGn():
+    return mkColorRamp('RdYlGn',invert=True)
     
 def getRandomSingleColorRamp():
     rampName = random.choice(singleColorRampList)
-    style = getDefaultStyle()
-    colorRamp = style.colorRamp(rampName)
-    colorRamp.invert()
-    return colorRamp    
+    return mkColorRamp(rampName,invert=True)  
     
 def getValuesFromLayer3(layer):
     return qgsUtils.getRasterMinMedMax(layer)
@@ -90,15 +91,43 @@ def mkRandomColorRasterShader(layer):
     rasterShader.setRasterShaderFunction(colorRampShader)
     return rasterShader
     
-def setRandomColorRasterRenderer(layer):
-    rasterShader = mkRandomColorRasterShader(layer)
-    if not rasterShader:
+def mkQuantileShaderFromColorRamp(layer,colorRamp):
+    min, med, max = getValuesFromLayer3(layer)
+    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
+                                         classificationMode=QgsColorRampShader.Quantile)
+    colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
+    if colorRampShader.isEmpty():
+        utils.internal_error("Empty color ramp shader")
+    rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
+    rasterShader.setRasterShaderFunction(colorRampShader)
+    return rasterShader
+    
+# SBPC = Single Band Pseudo Color
+def setSBPCRasterRenderer(layer,shader):
+    if not shader:
         utils.internal_error("Could not create raster shader")
-    renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=rasterShader)
+    renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=shader)
     if not renderer:
         utils.internal_error("Could not create renderer")
     layer.setRenderer(renderer)
     layer.triggerRepaint()
+    
+def setRandomColorRasterRenderer(layer):
+    rasterShader = mkRandomColorRasterShader(layer)
+    setSBPCRasterRenderer(layer,rasterShader)
+    # if not rasterShader:
+        # utils.internal_error("Could not create raster shader")
+    # renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=rasterShader)
+    # if not renderer:
+        # utils.internal_error("Could not create renderer")
+    # layer.setRenderer(renderer)
+    # layer.triggerRepaint()
+    
+# SBPC = Single Band Pseudo Color
+def setRendererSBPCGnYlRd(layer):
+    colorRamp = getGradientColorRampRdYlGn()
+    shader = mkQuantileShaderFromColorRamp(layer,colorRamp)
+    setSBPCRasterRenderer(layer,shader)
     
 def mkRendererPalettedGnYlRd(layer):
     pr = layer.dataProvider()
@@ -117,8 +146,6 @@ def setRendererPalettedGnYlRd(layer):
         utils.internal_error("Could not create renderer")
     layer.setRenderer(renderer)
     layer.triggerRepaint()
-    
-    
     
 # def mkColorRampShaderPalettedGnYlRd(valueList,colorList):
     # lst =  []
