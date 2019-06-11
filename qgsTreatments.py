@@ -443,7 +443,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
-def applyTranslate(in_path,out_path,data_type=6,nodata_val=nodata_val,
+def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
                    crs=None,context=None,feedback=None):
     parameters = { 'COPY_SUBDATASETS' : False,
                    'DATA_TYPE' : data_type,
