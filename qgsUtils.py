@@ -387,6 +387,19 @@ def getRasterMinMax(layer):
     min, max = stats.minimumValue, stats.maximumValue
     return (min, max)
     
+def getRastersMinMax(layers):
+    if not layers:
+        utils.internal_error("No layers selected")
+    min, max = getRasterMinMax(layers[0])
+    for l in layers:
+        curr_min, curr_max = getRasterMinMax(l)
+        if curr_min < min:
+            min = curr_min
+        if curr_max > max:
+            max = curr_max
+    return (min, max)
+        
+    
 def getRasterMinMedMax(layer):
     stats = getRasterStats(layer)
     min, max = stats.minimumValue, stats.maximumValue

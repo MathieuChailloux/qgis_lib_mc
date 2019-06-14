@@ -521,6 +521,40 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'OUTPUT' : output,
                    'RTYPE' : out_type }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+    
+def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
+                    nodata_val=nodata_val,out_type=5,
+                    context=None,feedback=None):
+    TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    if os.path.isfile(output):
+        qgsUtils.removeRaster(output)
+    tmp_no_data_val = -998
+    nd_str = str(tmp_no_data_val)
+    nonull_a = QgsProcessingUtils.generateTempFilename("nonull_a.tif")
+    nonull_b = QgsProcessingUtils.generateTempFilename("nonull_b.tif")
+    nonull_ab = QgsProcessingUtils.generateTempFilename("nonull_ab.tif")
+    nonull_reset = QgsProcessingUtils.generateTempFilename("nonull_reset.tif")
+    applyRNull(input_a,tmp_no_data_val,nonull_a)
+    applyRNull(input_b,tmp_no_data_val,nonull_b)
+    # a_nodata = str(input_a.dataProvider().sourceNoDataValue(1))
+    # b_nodata = str(input_b.dataProvider().sourceNoDataValue(1))
+    expr_wrap = "equal(A," + nd_str + ") * B "
+    expr_wrap += " + logical_and(not_equal(A," + nd_str + "),equal(B," + nd_str + ")) * A"
+    expr_wrap += " + logical_and(not_equal(A," + nd_str + "),not_equal(B," + nd_str +")) * (" + str(expr) + ")"
+    parameters = { 'BAND_A' : 1,
+                   'BAND_B' : 1,
+                   'FORMULA' : expr_wrap,
+                   'INPUT_A' : nonull_a,
+                   'INPUT_B' : nonull_b,
+                   'NO_DATA' : nodata_val,
+                   'OUTPUT' : nonull_ab,
+                   'RTYPE' : out_type }
+    applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+    reset_nodata_expr = '(A==' + str(tmp_no_data_val) + ')*' + str(nodata_val)
+    reset_nodata_expr += '+(A!=' + str(tmp_no_data_val) + ')*A'
+    applyRasterCalc(nonull_ab,output,reset_nodata_expr)
+    return output
+    # return applyRSetNull(nonull_reset,nodata_val,output)
                        
 def applyRasterCalcMult(input_a,input_b,output,
                         nodata_val=nodata_val,out_type=5,
@@ -539,14 +573,16 @@ def applyRasterCalcMult(input_a,input_b,output,
 def applyRasterCalcMin(input_a,input_b,output,
                        nodata_val=nodata_val,out_type=5,
                        context=None,feedback=None):
+    min = qgsUtils.getRastersMinMax([input_a,input_b])
+    min
     expr = 'A*less_equal(A,B) + B*less(B,A)'
-    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
                    
 def applyRasterCalcMax(input_a,input_b,output,
                        nodata_val=nodata_val,out_type=5,
                        context=None,feedback=None):
-    expr = 'B*less_equal(A,B) + A*less(B,A)'
-    return applyRasterCalcAB(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    expr = 'B*less_equal(A,B) + A*less(B,A) '
+    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
                 
                 
 """
@@ -636,6 +672,28 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     '--overwrite' : True}
     return applyGrassAlg(parameters,"r.cost",context,feedback)
     
+    
+def applyRSeries(layers,aggr_func,range,output,context=None,feedback=None):
+    feedback.pushDebugInfo('output = ' + str(output))
+    #tmp_path = QgsProcessingUtils.generateTempFilename("test.tif")
+    #tmp_path = "D:/tmp/testrigolo.tif"
+    tmp_path = output
+    parameters = { 
+                   '-n' : False,
+                   '-z' : False,
+                   'GRASS_RASTER_FORMAT_META' : '',
+                   'GRASS_RASTER_FORMAT_OPT' : '',
+                   'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
+                   'GRASS_REGION_PARAMETER' : None,
+                   'input' : layers,
+                   'method' : [aggr_func],
+                   'output' : tmp_path,
+                   'range' : range,
+                    '--overwrite' : True }
+    applyGrassAlg(parameters,"r.series",context,feedback)
+    qgsUtils.loadRasterLayer(tmp_path,loadProject=True)
+    return tmp_path
+
     
 """
     GDAL COMMANDS (legacy)
