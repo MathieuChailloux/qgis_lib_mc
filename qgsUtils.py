@@ -340,7 +340,8 @@ def getRasterValsFromPath(path):
     utils.debug("Unique values init : " + str(unique_vals))
     in_nodata_val = band1.GetNoDataValue()
     utils.debug("in_nodata_val = " + str(in_nodata_val))
-    unique_vals.remove(in_nodata_val)
+    if in_nodata_val in unique_vals:
+        unique_vals.remove(in_nodata_val)
     utils.debug("Unique values : " + str(unique_vals))
     return unique_vals
     
