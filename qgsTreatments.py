@@ -420,11 +420,12 @@ def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
                        resolution=None,out_type=0,nodata_val=nodata_val,overwrite=False,
                        context=None,feedback=None):
     # { 'DATA_TYPE' : 3, 'EXTRA' : '', 'INPUT' : 'D:/Projets/BioDispersal/Tests/BousquetOrbExtended/SousTrames/forest/forest_disp_1000.tif', 'MULTITHREADING' : False, 'NODATA' : -999, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'RESAMPLING' : 0, 'SOURCE_CRS' : QgsCoordinateReferenceSystem('EPSG:2154'), 'TARGET_CRS' : QgsCoordinateReferenceSystem('EPSG:7411'), 'TARGET_EXTENT' : '693953.28055333,727528.28055333,6268374.87768497,6308149.87768497 [EPSG:2154]', 'TARGET_EXTENT_CRS' : None, 'TARGET_RESOLUTION' : 10 }
-    modes = { 'near' : 0, 'mean' : 5 }
+    modes = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
+             'average','mode', 'max', 'min', 'med', 'q1', 'q3']
     # Resampling mode
     if resampling_mode not in modes:
         utils.internal_error("Unexpected resampling mode : " + str(resampling_mode))
-    mode_val = modes[resampling_mode]
+    mode_val = modes.index(resampling_mode)
     if overwrite:
         qgsUtils.removeRaster(out_path)
     # Output type

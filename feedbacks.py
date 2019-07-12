@@ -86,14 +86,14 @@ class ProgressFeedback(QgsProcessingFeedback):
         self.dlg.lblProgress.setText(txt)
         self.setProgress(0)
         self.start_time = time.time()
-        utils.info(self.sectionHeader + " BEGIN : " + txt)
+        self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
         
     def endSection(self):
         if self.sectionText:
             self.setSubText("DONE")
         self.end_time = time.time()
         diff_time = self.end_time - self.start_time
-        utils.info(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
+        self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
         self.sectionText = ""
             
     def setSubText(self,txt):
@@ -110,14 +110,15 @@ class ProgressFeedback(QgsProcessingFeedback):
     def setProgress(self,value):
         #utils.debug("setProgress " + str(value))
         fv = float(value)
-        utils.debug("fv = " + str(fv))
+        self.pushDebugInfo("fv = " + str(fv))
         if str(fv) == 'inf':
             self.pushInfo("Unexpected value in progress bar : " + str(value))
         else:
             self.progressBar.setValue(value)
         
     def setPercentage(self,percentage):
-        utils.info("setperc")
+        pass
+        #utils.info("setperc")
         #utils.internal_error("percentage : " + str(percentage))
         
     def focusLogTab(self):
@@ -154,6 +155,8 @@ class FileFeedback(QgsProcessingFeedback):
     def __init__(self,fname):
         self.fname = fname
         super().__init__()
+        self.sectionText = ""
+        self.sectionHeader = "********"
         
     def printFunc(self,msg):
         with open(self.fname,"a") as f:
@@ -176,6 +179,17 @@ class FileFeedback(QgsProcessingFeedback):
         #print("reportError : " + str(error))
         self.printFunc("reportError : " + str(error.encode('utf-8')))
         self.printFunc("reportError : " + str(error))
+        
+    def beginSection(self,txt):
+        self.sectionText = txt
+        self.start_time = time.time()
+        self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
+        
+    def endSection(self):
+        self.end_time = time.time()
+        diff_time = self.end_time - self.start_time
+        self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
+        self.sectionText = ""
         
     def setProgressText(self,text):
         pass
