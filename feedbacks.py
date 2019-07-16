@@ -25,6 +25,7 @@
 
 import time
 import sys
+import datetime
 
 from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
 
@@ -160,14 +161,16 @@ class FileFeedback(QgsProcessingFeedback):
         
     def printFunc(self,msg):
         with open(self.fname,"a") as f:
-            f.write(str(msg.encode('utf-8')) + "\n")
-    #f.write(str(msg + "\n"))
+            #f.write(str(msg.encode('utf-8')) + "\n")
+            f.write(str("[" + str(datetime.datetime.now()) + "] " + msg + "\n"))
         
     def pushCommandInfo(self,msg):
         self.printFunc(msg)
         
     def pushConsoleInfo(self,msg):
-        self.printFunc(msg)
+        #self.printFunc(msg)
+        if msg.startswith(ProgressFeedback.GDAL_ERROR_PREFIX):
+            self.reportError(msg)
         
     def pushDebugInfo(self,msg):
         self.printFunc(msg)

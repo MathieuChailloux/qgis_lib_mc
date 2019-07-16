@@ -199,6 +199,9 @@ class AbstractGroupModel(QAbstractTableModel):
     def getItems(self):
         return self.items
         
+    def getNbItems(self):
+        return len(self.getItems())
+        
     def getNItem(self,n):
         if n < self.rowCount():
             return self.items[n]
