@@ -27,7 +27,10 @@ import os
 from pathlib import Path
 import numpy as np
 
-from osgeo import gdal
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
 from qgis.gui import *
 from qgis.core import *
@@ -332,6 +335,44 @@ def getLayerAssocs(layer,key_field,val_field):
             assoc[k] = [v]
     return assoc
     
+# Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
+# Exports array to .tif file (path) according to rasterSource
+def exportRaster(array,rasterSource,path,nodata=True):
+    raster = gdal.Open(str(rasterSource))
+    rows = raster.RasterYSize
+    cols = raster.RasterXSize
+    if nodata == True:
+        nodata = raster.GetRasterBand(1).GetNoDataValue()
+    elif nodata == False:
+        nodata = 0
+    else: # take nodata as it comes
+        nodata = nodata
+
+    driver = gdal.GetDriverByName('GTiff')
+    # Create File based in path
+    try:
+        outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Float32)
+    except RuntimeError:
+        utils.internal_error("Could not overwrite file. Check permissions!")
+    if outDs is None:
+        utils.internal_error("Could not create output File. Check permissions!")
+
+    band = outDs.GetRasterBand(1)
+    band.WriteArray(array)
+
+    # flush data to disk, set the NoData value
+    band.FlushCache()
+    try:
+        band.SetNoDataValue(nodata)
+    except TypeError:
+        band.SetNoDataValue(-9999) # set -9999 in the meantime
+
+    # georeference the image and set the projection
+    outDs.SetGeoTransform(raster.GetGeoTransform())
+    outDs.SetProjection(raster.GetProjection())
+
+    band = outDs = None # Close writing
+    
 def getRasterValsFromPath(path):
     gdal_layer = gdal.Open(path)
     band1 = gdal_layer.GetRasterBand(1)
@@ -368,6 +409,26 @@ def getRasterValsBis(layer):
     unique_values = set([bl.value(r, c) for r in range(rows) for c in range(cols)])
     unique_values.remove(nodata_val)
     return list(unique_values)
+    
+def getRasterValsAndArray(path,nodata=None):
+    raster = gdal.Open(str(path))
+    if(raster.RasterCount==1):
+        band = raster.GetRasterBand(1)
+        if nodata == None:
+            nodata = band.GetNoDataValue()
+        try:
+            array =  band.ReadAsArray() 
+        except ValueError:
+            utils.internal_error("Raster file is too big for processing. Please crop the file and try again.")
+            return
+        classes = sorted(np.unique(array)) # get classes
+        try:
+            classes.remove(nodata)
+        except ValueError:
+            pass
+        return classes, array
+    else:
+        utils.user_error("Multiband Rasters not implemented yet")
     
 # def getHistogram(layer):
     # pr = layer.dataProvider()

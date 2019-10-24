@@ -456,11 +456,11 @@ def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
 
     
 def clipRasterFromVector(raster_path,vector_path,out_path,
-                         resolution=None,
+                         resolution=None,x_res=None,y_res=None,crop_cutline=True,
                          context=None,feedback=None):
     # data type 0 = input raster type
     parameters = { #'ALPHA_BAND' : False,
-                   'CROP_TO_CUTLINE' : True,
+                   'CROP_TO_CUTLINE' : crop_cutline,
                    'DATA_TYPE' : 0,
                    'INPUT' : raster_path,
                    #'KEEP_RESOLUTION' : False,
@@ -472,6 +472,10 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         parameters['SET_RESOLUTION'] = True
         parameters['X_RESOLUTION'] = resolution
         parameters['Y_RESOLUTION'] = resolution
+    if x_res and y_res:
+        parameters['SET_RESOLUTION'] = True
+        parameters['X_RESOLUTION'] = x_res
+        parameters['Y_RESOLUTION'] = y_res
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
 
     
