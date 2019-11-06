@@ -341,8 +341,9 @@ def exportRaster(array,rasterSource,path,nodata=True):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize
+    raster_band1 = raster.GetRasterBand(1)
     if nodata == True:
-        nodata = raster.GetRasterBand(1).GetNoDataValue()
+        nodata = raster_band1.GetNoDataValue()
     elif nodata == False:
         nodata = 0
     else: # take nodata as it comes
@@ -351,7 +352,9 @@ def exportRaster(array,rasterSource,path,nodata=True):
     driver = gdal.GetDriverByName('GTiff')
     # Create File based in path
     try:
-        outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Float32)
+        # TODO : type
+        #outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Byte)
+        outDs = driver.Create(path, cols, rows, 1, raster_band1.DataType)
     except RuntimeError:
         utils.internal_error("Could not overwrite file. Check permissions!")
     if outDs is None:
