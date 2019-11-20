@@ -337,24 +337,24 @@ def getLayerAssocs(layer,key_field,val_field):
     
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
-def exportRaster(array,rasterSource,path,nodata=True):
+def exportRaster(array,rasterSource,path,
+                 nodata=None,type=None):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize
     raster_band1 = raster.GetRasterBand(1)
-    if nodata == True:
-        nodata = raster_band1.GetNoDataValue()
-    elif nodata == False:
-        nodata = 0
-    else: # take nodata as it comes
-        nodata = nodata
+    out_type = raster_band1.DataType
+    out_nodata = raster_band1.GetNoDataValue()
+    if nodata:
+        out_nodata = nodata
+    if type:
+        out_type = type
 
     driver = gdal.GetDriverByName('GTiff')
     # Create File based in path
     try:
-        # TODO : type
         #outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Byte)
-        outDs = driver.Create(path, cols, rows, 1, raster_band1.DataType)
+        outDs = driver.Create(path, cols, rows, 1, out_type)
     except RuntimeError:
         utils.internal_error("Could not overwrite file. Check permissions!")
     if outDs is None:
@@ -366,7 +366,7 @@ def exportRaster(array,rasterSource,path,nodata=True):
     # flush data to disk, set the NoData value
     band.FlushCache()
     try:
-        band.SetNoDataValue(nodata)
+        band.SetNoDataValue(out_nodata)
     except TypeError:
         band.SetNoDataValue(-9999) # set -9999 in the meantime
 

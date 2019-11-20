@@ -460,23 +460,24 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                          crop_cutline=True,nodata=None,data_type=0,
                          context=None,feedback=None):
     # data type 0 = input raster type
+    
     parameters = { 'ALPHA_BAND' : False,
                    'CROP_TO_CUTLINE' : crop_cutline,
                    'DATA_TYPE' : data_type,
                    'INPUT' : raster_path,
-                   'KEEP_RESOLUTION' : True,
+                   'KEEP_RESOLUTION' : False,
                    'MASK' : vector_path,
                    'NODATA' : nodata,
                    #'OPTIONS' : '',
                    'OUTPUT' : out_path }
-    # if resolution:
-        # parameters['SET_RESOLUTION'] = True
-        # parameters['X_RESOLUTION'] = resolution
-        # parameters['Y_RESOLUTION'] = resolution
-    # if x_res and y_res:
-        # parameters['SET_RESOLUTION'] = True
-        # parameters['X_RESOLUTION'] = x_res
-        # parameters['Y_RESOLUTION'] = y_res
+    if resolution:
+        parameters['SET_RESOLUTION'] = True
+        parameters['X_RESOLUTION'] = resolution
+        parameters['Y_RESOLUTION'] = resolution
+    if x_res and y_res:
+        parameters['SET_RESOLUTION'] = True
+        parameters['X_RESOLUTION'] = x_res
+        parameters['Y_RESOLUTION'] = y_res
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
 
     

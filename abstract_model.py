@@ -422,7 +422,11 @@ class DictModel(AbstractGroupModel):
         xmlStr += indent + "</" + self.parser_name + ">"
         return xmlStr
         
-    def applyItemsWithContext(self,indexes,context,feedback):
+    def applyItemsWithContext(self,context,feedback,indexes=None):
+        if not self.items:
+            feedback.reportError("Empty Model")
+        if not indexes:
+            indexes = range(0,len(self.items))
         nb_steps = len(indexes)
         step_feedback = feedbacks.ProgressMultiStepFeedback(nb_steps,feedback)
         step_feedback.setCurrentStep(0)
@@ -489,8 +493,8 @@ class AbstractConnector:
     def applyItems(self):
         indexes = self.getSelectedIndexes()
         utils.debug("Selected indexes = " + str(indexes))
-        self.model.applyItemsWithContext(indexes,None,self.dlg.feedback)#,indexes)
-        #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback)
+        self.model.applyItemsWithContext(None,self.dlg.feedback,indexes)
+        #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback,indexes)
         
     def addItem(self):
         utils.debug("AbstractConnector.addItem")
