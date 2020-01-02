@@ -317,7 +317,7 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
 """
 
 def getRasterUniqueValsReport(input,context=None,feedback=None):
-    input_type = input.dataProvider().dataType(1)
+    # input_type = input.dataProvider().dataType(1)
     tmp_html = QgsProcessingUtils.generateTempFilename('OUTPUT_HTML_FILE.html')
     tmp_table = QgsProcessingUtils.generateTempFilename('OUTPUT_TABLE.gpkg')
     parameters = { 'BAND' : 1,
@@ -328,28 +328,20 @@ def getRasterUniqueValsReport(input,context=None,feedback=None):
                              context=context,feedback=feedback,onlyOutput=False)
     return ret
 
-def getRasterUniqueVals(input,context=None,feedback=None):
-    #input_type = input.dataProvider().dataType(1)
-    # tmp_html = QgsProcessingUtils.generateTempFilename('OUTPUT_HTML_FILE.html')
-    # tmp_table = QgsProcessingUtils.generateTempFilename('OUTPUT_TABLE.gpkg')
-    # parameters = { 'BAND' : 1,
-                   # 'INPUT' : input,
-                   # 'OUTPUT_HTML_FILE' : tmp_html,
-                   # 'OUTPUT_TABLE' : tmp_table }
-    # applyProcessingAlg("native","rasterlayeruniquevaluesreport",parameters,
-                       # context=context,feedback=feedback,onlyOutput=False)
-    report = getRasterUniqueValsReport(input,context,feedback)
+def getRasterUniqueVals(input,feedback):
+    feedback.pushDebugInfo("HEY")
+    report = getRasterUniqueValsReport(input,feedback=feedback)
     input_type = input.dataProvider().dataType(1)
     tmp_table = report['OUTPUT_TABLE']
     tmp_html = report['OUTPUT_HTML_FILE']
     table_lyr = qgsUtils.loadVectorLayer(tmp_table)
     unique_vals = qgsUtils.getVectorVals(table_lyr,'value')
-    utils.debug("unique_vals = " + str(unique_vals))
-    utils.debug("data_type = " + str(input_type))
+    feedback.pushDebugInfo("unique_vals = " + str(unique_vals))
+    feedback.pushDebugInfo("data_type = " + str(input_type))
     if qgsUtils.qgisTypeIsInteger(input_type):
-        utils.debug("data_type = " + str(input_type))
+        feedback.pushDebugInfo("data_type = " + str(input_type))
         unique_vals = [int(v) for v in unique_vals]
-    utils.debug("unique_vals = " + str(unique_vals))
+    feedback.pushDebugInfo("unique_vals = " + str(unique_vals))
     return unique_vals
     
 
