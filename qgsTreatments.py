@@ -386,7 +386,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
     utils.debug("applyRasterization")
     if overwrite:
         qgsUtils.removeRaster(out_path)
-    parameters = { 'ALL_TOUCH' : True,
+    parameters = { 'ALL_TOUCH' : all_touch,
                    'BURN' : burn_val,
                    'DATA_TYPE' : out_type,
                    'EXTENT' : extent,
@@ -400,6 +400,12 @@ def applyRasterization(in_path,out_path,extent,resolution,
                    'OUTPUT' : out_path,
                    'UNITS' : 1, 
                    'WIDTH' : resolution }
+    extra_param_name = 'EXTRA'
+    if all_touch:
+        if hasattr(processing.algs.gdal.rasterize.rasterize,extra_param_name):
+            parameters['EXTRA'] = '-at'
+        else:
+            parameters['ALL_TOUCH'] = True
     res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
     # context = QgsProcessingContext()
     # feedback = QgsProcessingFeedback()
