@@ -345,7 +345,7 @@ def exportRaster(array,rasterSource,path,
     raster_band1 = raster.GetRasterBand(1)
     out_type = raster_band1.DataType
     out_nodata = raster_band1.GetNoDataValue()
-    if nodata:
+    if nodata is not None:
         out_nodata = nodata
     if type:
         out_type = type
