@@ -51,6 +51,7 @@ class ProgressFeedback(QgsProcessingFeedback):
     
     GDAL_ERROR_PREFIX = 'ERROR '
     SET_COLOR_ERROR = 'ERROR 6: SetColorTable'
+    FILE_NOT_FOUND_ERROR = 'FileNotFoundError'
     
     def __init__(self,dlg):
         self.dlg = dlg
@@ -79,6 +80,8 @@ class ProgressFeedback(QgsProcessingFeedback):
             utils.warn(error_msg)
         elif fatalError:
             utils.internal_error("reportError : " + error_msg)
+        elif error_msg.startswith(self.FILE_NOT_FOUND_ERROR):
+            utils.user_error(error_msg)
         else:
             utils.warn(error_msg)
         

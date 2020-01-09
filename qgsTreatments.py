@@ -150,8 +150,21 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         raise e
     finally:  
         feedback.pushDebugInfo("End run " + alg_name)
+        
+        
+def checkGrass7Installed():
+    grass7 = processing.algs.grass7.Grass7Utils.Grass7Utils
+    if grass7:
+        version = grass7.installedVersion()
+        if version:
+            utils.debug("GRASS version = " + str(version))
+        else:
+            utils.user_error("GRASS is not installed, please launch QGIS with GRASS")
+    else:
+        utils.user_error("GRASS is not installed, please launch QGIS with GRASS")
 
 def applyGrassAlg(parameters,alg_name,context,feedback):
+    checkGrass7Installed()
     return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
 
 def selectGeomByExpression(in_layer,expr,out_path,out_name):
