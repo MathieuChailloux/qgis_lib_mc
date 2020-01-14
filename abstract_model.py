@@ -19,9 +19,13 @@
  ***************************************************************************/
 """
 
+import os.path
+
+from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle, QgsProject, QgsCoordinateTransform, QgsProcessingUtils
+
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
-from . import utils, xmlUtils, feedbacks
+from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks
 
 from abc import ABC, abstractmethod
 #class Abstract(ABC):
@@ -435,7 +439,251 @@ class DictModel(AbstractGroupModel):
             self.applyItemWithContext(i,context,feedback)
             step_feedback.setCurrentStep(cpt)
     
-# AbstractConnector connects a view and a model
+class NormalizingParamsModel(QAbstractTableModel):
+
+    WORKSPACE = "workspace"
+    PROJECT = "projectFile"
+    EXTENT_LAYER = "extentLayer"
+    RESOLUTION = "resolution"
+    CRS = "crs"
+    
+    DEFAULT_CRS = QgsCoordinateReferenceSystem("epsg:2154")
+    
+    def __init__(self):
+        self.workspace = None
+        self.extentLayer = None
+        self.resolution = 0.0
+        self.projectFile = ""
+        self.crs = self.DEFAULT_CRS
+        self.fields = [self.WORKSPACE,self.EXTENT_LAYER,
+            self.RESOLUTION,self.PROJECT,self.CRS]
+        QAbstractTableModel.__init__(self)
+        
+    def setExtentLayer(self,path):
+        path = self.normalizePath(path)
+        utils.info("Setting extent layer to " + str(path))
+        self.extentLayer = path
+        self.layoutChanged.emit()
+        
+    def setResolution(self,resolution):
+        utils.info("Setting resolution to " + str(resolution))
+        self.resolution = resolution
+        self.layoutChanged.emit()
+        
+    def setCrs(self,crs):
+        utils.info("Setting extent CRS to " + crs.description())
+        self.crs = crs
+        self.layoutChanged.emit()
+        
+    def getCrsStr(self):
+        return self.crs.authid().lower()
+
+    def getTransformator(self,in_crs):
+        transformator = QgsCoordinateTransform(in_crs,self.crs,QgsProject.instance())
+        return transformator
+    
+    def getBoundingBox(self,in_extent_rect,in_crs):
+        transformator = self.getTransformator(in_crs)
+        out_extent_rect = transformator.transformBoundingBox(in_extent_rect)
+        return out_extent_rect
+        
+    def setWorkspace(self,path):
+        norm_path = utils.normPath(path)
+        self.workspace = norm_path
+        utils.info("Workspace directory set to '" + norm_path)
+        if not os.path.isdir(norm_path):
+            utils.user_error("Directory '" + norm_path + "' does not exist")
+        return norm_path
+            
+    def fromXMLRoot(self,root):
+        dict = root.attrib
+        utils.debug("params dict = " + str(dict))
+        return self.fromXMLDict(dict)
+    
+    def fromXMLDict(self,dict):
+        if self.WORKSPACE in dict:
+           if not self.workspace and os.path.isdir(dict[self.WORKSPACE]):
+               self.setWorkspace(dict[self.WORKSPACE])
+        if self.RESOLUTION in dict:
+            try:
+                self.setResolution(float(dict[self.RESOLUTION]))
+            except ValueError:
+                utils.user_error("Unexpected resolution : " + str(dict[self.RESOLUTION]))
+        if self.EXTENT_LAYER in dict:
+            self.setExtentLayer(dict[self.EXTENT_LAYER])
+        if self.CRS in dict:
+            crs = QgsCoordinateReferenceSystem(dict[self.CRS])
+            self.setCrs(crs)
+    
+    def getXMLStr(self):
+        xmlStr = ""
+        if self.workspace:
+            xmlStr += " " + self.WORKSPACE + "=\"" + str(self.workspace) + "\""
+        if self.resolution:
+            xmlStr += " " + self.RESOLUTION + "=\"" + str(self.resolution) + "\""
+        if self.extentLayer:
+            xmlStr += " extent=\"" + str(self.extentLayer) + "\""
+        if self.crs:
+            xmlStr += " " + self.crs + "=\"" + self.getCrsStr() + "\""
+        return xmlStr
+        
+    def rowCount(self,parent=QModelIndex()):
+        return len(self.fields)
+        
+    def columnCount(self,parent=QModelIndex()):
+        return 1
+        
+    def getNItem(self,n):
+        items = [self.workspace,
+                 self.extentLayer,
+                 self.resolution,
+                 self.projectFile,
+                 self.crs.description(),
+                 ""]
+        return items[n]
+            
+    def data(self,index,role):
+        if not index.isValid():
+            return QVariant()
+        row = index.row()
+        item = self.getNItem(row)
+        if role != Qt.DisplayRole:
+            return QVariant()
+        elif row < self.rowCount():
+            return(QVariant(item))
+        else:
+            return QVariant()
+            
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        
+    def headerData(self,col,orientation,role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return QVariant("value")
+        elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+            return QVariant(self.fields[col])
+        return QVariant()
+        
+    # Checks that workspace is intialized and is an existing directory.
+    def checkWorkspaceInit(self):
+        if not self.workspace:
+            utils.user_error("Workspace parameter not initialized")
+        if not os.path.isdir(self.workspace):
+            utils.user_error("Workspace directory '" + self.workspace + "' does not exist")
+            
+    # Returns relative path w.r.t. workspace directory.
+    # File separator is set to common slash '/'.
+    def normalizePath(self,path):
+        self.checkWorkspaceInit()
+        if not path:
+            utils.user_error("Empty path")
+        norm_path = utils.normPath(path)
+        if os.path.isabs(norm_path):
+            rel_path = os.path.relpath(norm_path,self.workspace)
+        else:
+            rel_path = norm_path
+        final_path = utils.normPath(rel_path)
+        return final_path
+            
+    # Returns absolute path from normalized path (cf 'normalizePath' function)
+    def getOrigPath(self,path):
+        self.checkWorkspaceInit()
+        if path is None or path == "":
+            utils.user_error("Empty path")
+        elif os.path.isabs(path):
+            return path
+        else:
+            join_path = utils.joinPath(self.workspace,path)
+            norm_path = os.path.normpath(join_path)
+            return norm_path
+            
+    # Checks that all parameters are initialized
+    def checkInit(self):
+        self.checkWorkspaceInit()
+        if not self.extentLayer:
+            utils.user_error("Extent layer parameter not initialized")
+        extent_path = self.getOrigPath(self.extentLayer)
+        utils.debug("extent_path = " + str(extent_path))
+        utils.checkFileExists(extent_path,"Extent layer ")
+        if not self.resolution:
+            utils.user_error("Resolution parameter not initialized")
+        if self.resolution == 0.0:
+            utils.user_error("Null resolution")
+        if not self.crs:
+            utils.user_error("CRS parameter not initialized")
+        if not self.crs.isValid():
+            utils.user_error("Invalid CRS")
+            
+    def getResolution(self):
+        return float(self.resolution)
+        
+    def getExtentLayer(self):
+        return self.getOrigPath(self.extentLayer)
+        
+    def getExtentString(self):
+        extent_path = self.getOrigPath(self.extentLayer)
+        extent_layer = qgsUtils.loadLayer(extent_path)
+        extent = extent_layer.extent()
+        transformed_extent = self.getBoundingBox(extent,extent_layer.crs())
+        res = str(transformed_extent.xMinimum())
+        res += ',' + str(transformed_extent.xMaximum())
+        res += ',' + str(transformed_extent.yMinimum())
+        res += ',' + str(transformed_extent.yMaximum())
+        res += '[' + str(self.crs) + ']'
+        return res
+        
+    # Return bounding box coordinates of extent layer
+    def getExtentCoords(self):
+        extent_path = self.getOrigPath(self.extentLayer)
+        if extent_path:
+            return qgsUtils.coordsOfExtentPath(extent_path)
+        else:
+            utils.user_error("Extent layer not initialized")
+            
+    # Checks that given layer matches extent layer coordinates
+    def equalsParamsExtent(self,path):
+        params_coords = self.getExtentCoords()
+        path_coords = qgsUtils.coordsOfExtentPath(path)
+        return (params_coords == path_coords)
+            
+    # Returns extent layer bounding box as a QgsRectangle
+    def getExtentRectangle(self):
+        coords = self.getExtentCoords()
+        rect = QgsRectangle(float(coords[0]),float(coords[1]),
+                            float(coords[2]),float(coords[3]))
+        return rect 
+                
+    # Normalize given raster layer to match global extent and resolution
+    def normalizeRaster(self,path,out_path=None,resampling_mode="near"):
+        layer = qgsUtils.loadRasterLayer(path)
+        # extent
+        extent_path = self.getExtentLayer()
+        extent_layer, extent_layer_type = qgsUtils.loadLayerGetType(extent_path)
+        utils.debug("extent_layer_type = " + str(extent_layer_type))
+        params_coords = self.getExtentCoords()
+        layer_coords = qgsUtils.coordsOfExtentPath(path)
+        same_extent = self.equalsParamsExtent(path)
+        resolution = self.getResolution()
+        # layer_res_x = layer.rasterUnitsPerPixelX()
+        # layer_res_y = layer.rasterUnitsPerPixelX()
+        # same_res = (layer_res_x == resolution and layer_res_y == resolution)
+        # if not same_extent:
+            # utils.debug("Diff coords : '" + str(params_coords) + "' vs '" + str(layer_coords))
+        # if not same_res:
+            # utils.debug("Diff resolution : '(" + str(resolution) + ")' vs '("
+                        # + str(layer_res_x) + "," + str(layer_res_y) + ")'")
+        if extent_layer_type == 'Vector':
+            clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
+            qgsTreatments.clipRasterFromVector(path,extent_path,out_path,resolution=resolution)
+        # elif not (same_extent and same_res):
+        else:
+            warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
+            utils.warn("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
+            qgsTreatments.applyWarpGdal(path,out_path,resampling_mode,self.crs,
+                                        resolution,extent_path,
+                                        load_flag=False,to_byte=False)        
+    
+""" AbstractConnector connects a view and a model """
 class AbstractConnector:
 
     def __init__(self,model,view,addButton=None,removeButton=None,
