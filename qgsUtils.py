@@ -240,6 +240,12 @@ def getLayerSimpleGeomStr(layer):
     geom_type = QgsWkbTypes.geometryType(type)
     return QgsWkbTypes.geometryDisplayString(geom_type)
     
+# Checks if geometry is multipart
+def isMultipartLayer(layer):
+    wkb_type = layer.wkbType()
+    is_multi = QgsWkbTypes.isMultiType(wkb_type)
+    return is_multi
+    
 # Checks layers geometry compatibility (raise error if not compatible)
 def checkLayersCompatible(l1,l2):
     crs1 = l1.crs().authid()

@@ -239,7 +239,8 @@ def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
     
 def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
-    feedbacks.progressFeedback.setSubText("Dissolve " + str(in_layer))
+    feedbacks.progressFeedback.setSubText("Dissolve")
+    #feedbacks.progressFeedback.setSubText("Dissolve " + str(in_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'FIELD' : [],
@@ -258,7 +259,8 @@ def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
     
 def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
-    feedbacks.progressFeedback.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
+    feedbacks.progressFeedback.setSubText("Buffering")
+    #feedbacks.progressFeedback.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'DISSOLVE' : False,

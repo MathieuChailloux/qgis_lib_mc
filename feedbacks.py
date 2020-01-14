@@ -83,7 +83,8 @@ class ProgressFeedback(QgsProcessingFeedback):
         elif error_msg.startswith(self.FILE_NOT_FOUND_ERROR):
             utils.user_error(error_msg)
         else:
-            utils.warn(error_msg)
+            utils.internal_error(error_msg)
+            #utils.warn(error_msg)
         
     def beginSection(self,txt):
         self.sectionText = txt
