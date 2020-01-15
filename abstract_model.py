@@ -522,9 +522,9 @@ class NormalizingParamsModel(QAbstractTableModel):
         if self.resolution:
             xmlStr += " " + self.RESOLUTION + "=\"" + str(self.resolution) + "\""
         if self.extentLayer:
-            xmlStr += " extent=\"" + str(self.extentLayer) + "\""
+            xmlStr += " " + self.EXTENT_LAYER + "=\"" + str(self.extentLayer) + "\""
         if self.crs:
-            xmlStr += " " + self.crs + "=\"" + self.getCrsStr() + "\""
+            xmlStr += " " + self.CRS + "=\"" + self.getCrsStr() + "\""
         return xmlStr
         
     def rowCount(self,parent=QModelIndex()):

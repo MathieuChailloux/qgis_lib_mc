@@ -543,15 +543,33 @@ class LayerComboDialog:
         self.button = button
         self.layer_name = None
         self.layer = None
+        self.vector_mode = True
         self.button.clicked.connect(self.openDialog)
+        
+    def setVectorMode(self):
+        self.vector_mode = True
+        self.combo.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        
+    def setRasterMode(self):
+        self.vector_mode = False
+        self.combo.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        
+    def getFileFilters(self):
+        if self.vector_mode:
+            return getVectorFilters()
+        else:
+            return getRasterFilters()
         
     def openDialog(self):
         fname = openFileDialog(self.parent,
                                      msg="Ouvrir la couche",
-                                     filter=getVectorFilters())
+                                     filter=self.getFileFilters())
         if fname:
             self.layer_name = fname
-            self.layer = loadVectorLayer(fname,loadProject=True)
+            if self.vector_mode:
+                self.layer = loadVectorLayer(fname,loadProject=True)
+            else:
+                self.layer = loadRasterLayer(fname,loadProject=True)
             utils.debug("self.layer = " +str(self.layer))
             self.combo.setLayer(self.layer)
             #self.combo.layerChanged.emit(self.layer)
