@@ -428,7 +428,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
     #res = None
     return res
     
-def applyWarpReproject(in_path,out_path,resampling_mode,dst_crs,
+def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        src_crs=None,extent=None,extent_crs=None,
                        resolution=None,out_type=0,nodata_val=nodata_val,overwrite=False,
                        context=None,feedback=None):

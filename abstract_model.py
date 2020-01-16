@@ -21,7 +21,7 @@
 
 import os.path
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle, QgsProject, QgsCoordinateTransform, QgsProcessingUtils
+from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle, QgsProject, QgsCoordinateTransform, QgsProcessingUtils, QgsProcessingFeedback
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
@@ -452,6 +452,7 @@ class NormalizingParamsModel(QAbstractTableModel):
     def __init__(self):
         self.workspace = None
         self.extentLayer = None
+        self.extentType = None
         self.resolution = 0.0
         self.projectFile = ""
         self.crs = self.DEFAULT_CRS
@@ -620,6 +621,11 @@ class NormalizingParamsModel(QAbstractTableModel):
     def getExtentLayer(self):
         return self.getOrigPath(self.extentLayer)
         
+    def getExtentLayerAndType(self):
+        path = self.getExtentLayer()
+        layer, type = qgsUtils.loadLayerGetType(path)
+        return (path,type)
+        
     def getExtentString(self):
         extent_path = self.getOrigPath(self.extentLayer)
         extent_layer = qgsUtils.loadLayer(extent_path)
@@ -652,37 +658,58 @@ class NormalizingParamsModel(QAbstractTableModel):
         rect = QgsRectangle(float(coords[0]),float(coords[1]),
                             float(coords[2]),float(coords[3]))
         return rect 
+        
+    def clipByExtent(self,input,name="",context=None,feedback=None):
+        if not self.extentLayer:
+            return input
+        if not feedback:
+            feedback = QgsProcessingFeedback()
+        extent = self.getExtentRectangle()
+        extent_layer_path = self.extentLayer
+        extent_layer, extent_type = self.getExtentLayerAndType()
+        input_layer, input_type = qgsUtils.loadLayerGetType(input)
+        # resolution = self.getResolution()
+        if input_type == 'Raster' and extent_type == 'Vector':
+            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.tif')
+            res = qgsTreatments.clipRasterFromVector(input,extent_layer_path,clipped_path,
+                context=context,feedback=feedback)
+        elif input_type == 'Raster' and extent_type == 'Raster':
+            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.tif')
+            res = qgsTreatments.applyWarpReproject(input,clipped_path,
+                dst_crs=self.crs,extent=extent,
+                context=context,feedback=feedback)
+            return res
+        elif input_type == 'Vector' and extent_type == 'Vector':
+            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.gpkg')
+            res = qgsTreatments.applyVectorClip(input,extent_layer_path,clipped_path,
+                context=context,feedback=feedback)
+        elif input_type == 'Vector' and extent_type == 'Raster':
+            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.gpkg')
+            res = qgsTreatments.clipVectorByExtent(input,extent,clipped_path,
+                context=context,feedback=feedback)
+        else:
+            assert(False)
+        return res
                 
     # Normalize given raster layer to match global extent and resolution
-    def normalizeRaster(self,path,out_path=None,resampling_mode="near"):
-        layer = qgsUtils.loadRasterLayer(path)
-        # extent
-        extent_path = self.getExtentLayer()
-        extent_layer, extent_layer_type = qgsUtils.loadLayerGetType(extent_path)
+    def normalizeRaster(self,path,out_path=None,resampling_mode="near",context=None,feedback=None):
+        extent_layer, extent_layer_type = self.getExtentLayerAndType()
         utils.debug("extent_layer_type = " + str(extent_layer_type))
-        params_coords = self.getExtentCoords()
-        layer_coords = qgsUtils.coordsOfExtentPath(path)
-        same_extent = self.equalsParamsExtent(path)
         resolution = self.getResolution()
-        # layer_res_x = layer.rasterUnitsPerPixelX()
-        # layer_res_y = layer.rasterUnitsPerPixelX()
-        # same_res = (layer_res_x == resolution and layer_res_y == resolution)
-        # if not same_extent:
-            # utils.debug("Diff coords : '" + str(params_coords) + "' vs '" + str(layer_coords))
-        # if not same_res:
-            # utils.debug("Diff resolution : '(" + str(resolution) + ")' vs '("
-                        # + str(layer_res_x) + "," + str(layer_res_y) + ")'")
         if extent_layer_type == 'Vector':
+            extent_path = self.getExtentLayer()
             clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
-            qgsTreatments.clipRasterFromVector(path,extent_path,out_path,resolution=resolution)
-        # elif not (same_extent and same_res):
+            res = qgsTreatments.clipRasterFromVector(path,extent_path,out_path,
+                resolution=resolution,context=context,feedback=feedback)
         else:
+            extent = self.getExtentRectangle()
             warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
             utils.warn("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
-            qgsTreatments.applyWarpGdal(path,out_path,resampling_mode,self.crs,
-                                        resolution,extent_path,
-                                        load_flag=False,to_byte=False)        
-    
+            res = qgsTreatments.applyWarpReproject(path,out_path,resampling_mode,
+                dst_crs=self.crs,resolution=resolution,extent=extent,
+                context=context,feedback=feedback)
+        return res
+                
 """ AbstractConnector connects a view and a model """
 class AbstractConnector:
 
