@@ -298,6 +298,14 @@ def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
                    'OUTPUT' : out_layer,
                    'OVERLAY' : clip_layer }
     res = applyProcessingAlg("qgis","clip",parameters,context,feedback)
+    return res  
+    
+def clipVectorByExtent(in_layer,extent,out_layer,context=None,feedback=None):
+    feedbacks.progressFeedback.setSubText("Clip")
+    parameters = { 'INPUT' : in_layer,
+                   'OUTPUT' : out_layer,
+                   'EXTENT' : extent }
+    res = applyProcessingAlg("gdal","clipvectorbyextent",parameters,context,feedback)
     return res
     
 def applyIntersection(in_layer,clip_layer,out_layer,context=None,feedback=None):

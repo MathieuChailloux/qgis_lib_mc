@@ -176,6 +176,8 @@ def loadRasterLayerNoError(fname):
     return layer
     
 def loadLayer(fname,loadProject=False):
+    if isLayerLoaded(fname):
+        return getLayerByFilename(fname)
     layer = loadVectorLayerNoError(fname)
     if layer is None:
         layer = loadRasterLayerNoError(fname)
@@ -543,7 +545,7 @@ class LayerComboDialog:
         self.button = button
         self.layer_name = None
         self.layer = None
-        self.vector_mode = True
+        self.vector_mode = None
         self.button.clicked.connect(self.openDialog)
         
     def setVectorMode(self):
@@ -566,7 +568,9 @@ class LayerComboDialog:
                                      filter=self.getFileFilters())
         if fname:
             self.layer_name = fname
-            if self.vector_mode:
+            if self.vector_mode is None:
+                self.layer = loadLayer(fname,loadProject=True)
+            elif self.vector_mode:
                 self.layer = loadVectorLayer(fname,loadProject=True)
             else:
                 self.layer = loadRasterLayer(fname,loadProject=True)
