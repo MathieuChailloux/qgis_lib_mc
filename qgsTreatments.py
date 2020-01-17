@@ -502,11 +502,12 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
 
     
-def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,context=None,feedback=None):
+def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,
+                     nodata_input=None,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT' : files,
-                   'NODATA_INPUT' : None,
+                   'NODATA_INPUT' : nodata_input,
                    'NODATA_OUTPUT' : nodata_val,
                    'OUTPUT' : out_path }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)

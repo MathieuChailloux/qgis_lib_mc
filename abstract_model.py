@@ -460,6 +460,32 @@ class NormalizingParamsModel(QAbstractTableModel):
             self.RESOLUTION,self.PROJECT,self.CRS]
         QAbstractTableModel.__init__(self)
         
+    def checkWorkspaceInit(self):
+        if not self.workspace:
+            utils.user_error("Workspace parameter not initialized")
+        if not os.path.isdir(self.workspace):
+            utils.user_error("Workspace directory '" + self.workspace + "' does not exist")
+            
+    def checkExtentInit(self):
+        if not self.extentLayer:
+            utils.user_error("Extent parameter not initialized")
+            
+    def checkResolutionInit(self):
+        if not self.resolution or self.resolution <= 0:
+            utils.user_error("Resolution parameter not initialized")
+            
+    def checkCrsInit(self):
+        if not self.crs:
+            utils.user_error("CRS parameter not initialized")
+        if not self.crs.isValid():
+            utils.user_error("Invalid CRS")
+            
+    def checkInit(self):
+        checkWorkspaceInit()
+        checkExtentInit()
+        checkResolutionInit()
+        checkCrsInit()
+        
     def setExtentLayer(self,path):
         path = self.normalizePath(path)
         utils.info("Setting extent layer to " + str(path))
@@ -475,6 +501,12 @@ class NormalizingParamsModel(QAbstractTableModel):
         utils.info("Setting extent CRS to " + crs.description())
         self.crs = crs
         self.layoutChanged.emit()
+        
+    def getRasterParams(self):
+        crs = self.crs
+        extent = self.getExtentString()
+        resolution = self.getResolution()
+        return (crs, extent, resolution)
         
     def getCrsStr(self):
         return self.crs.authid().lower()
@@ -627,7 +659,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         return (path,type)
         
     def getExtentString(self):
-        extent_path = self.getOrigPath(self.extentLayer)
+        extent_path = self.getExtentLayer()
         extent_layer = qgsUtils.loadLayer(extent_path)
         extent = extent_layer.extent()
         transformed_extent = self.getBoundingBox(extent,extent_layer.crs())
@@ -640,7 +672,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         
     # Return bounding box coordinates of extent layer
     def getExtentCoords(self):
-        extent_path = self.getOrigPath(self.extentLayer)
+        extent_path = self.getExtentLayer()
         if extent_path:
             return qgsUtils.coordsOfExtentPath(extent_path)
         else:
@@ -660,12 +692,13 @@ class NormalizingParamsModel(QAbstractTableModel):
         return rect 
         
     def clipByExtent(self,input,name="",context=None,feedback=None):
-        if not self.extentLayer:
+        extentLayer = self.getExtentLayer()
+        if not extentLayer:
             return input
         if not feedback:
             feedback = QgsProcessingFeedback()
         extent = self.getExtentRectangle()
-        extent_layer_path = self.extentLayer
+        extent_layer_path = extentLayer
         extent_layer, extent_type = self.getExtentLayerAndType()
         input_layer, input_type = qgsUtils.loadLayerGetType(input)
         # resolution = self.getResolution()
