@@ -651,7 +651,10 @@ class NormalizingParamsModel(QAbstractTableModel):
         return float(self.resolution)
         
     def getExtentLayer(self):
-        return self.getOrigPath(self.extentLayer)
+        if self.extentLayer:
+            return self.getOrigPath(self.extentLayer)
+        else:
+            return None
         
     def getExtentLayerAndType(self):
         path = self.getExtentLayer()
@@ -691,34 +694,35 @@ class NormalizingParamsModel(QAbstractTableModel):
                             float(coords[2]),float(coords[3]))
         return rect 
         
-    def clipByExtent(self,input,name="",context=None,feedback=None):
+    def clipByExtent(self,input,name="",out_path="",context=None,feedback=None):
         extentLayer = self.getExtentLayer()
         if not extentLayer:
             return input
+        self.checkResolutionInit()
         if not feedback:
             feedback = QgsProcessingFeedback()
         extent = self.getExtentRectangle()
         extent_layer_path = extentLayer
         extent_layer, extent_type = self.getExtentLayerAndType()
         input_layer, input_type = qgsUtils.loadLayerGetType(input)
+        if not out_path:
+            bname = name + "_clipped"
+            ext = ".tif" if input_type == 'Raster' else ".gpkg"
+            out_path = QgsProcessingUtils.generateTempFilename(bname + ext)
         # resolution = self.getResolution()
         if input_type == 'Raster' and extent_type == 'Vector':
-            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.tif')
-            res = qgsTreatments.clipRasterFromVector(input,extent_layer_path,clipped_path,
+            res = qgsTreatments.clipRasterFromVector(input,extent_layer_path,out_path,
                 context=context,feedback=feedback)
         elif input_type == 'Raster' and extent_type == 'Raster':
-            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.tif')
-            res = qgsTreatments.applyWarpReproject(input,clipped_path,
+            res = qgsTreatments.applyWarpReproject(input,out_path,
                 dst_crs=self.crs,extent=extent,
                 context=context,feedback=feedback)
             return res
         elif input_type == 'Vector' and extent_type == 'Vector':
-            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.gpkg')
-            res = qgsTreatments.applyVectorClip(input,extent_layer_path,clipped_path,
+            res = qgsTreatments.applyVectorClip(input,extent_layer_path,out_path,
                 context=context,feedback=feedback)
         elif input_type == 'Vector' and extent_type == 'Raster':
-            clipped_path = QgsProcessingUtils.generateTempFilename(name + '_clipped.gpkg')
-            res = qgsTreatments.clipVectorByExtent(input,extent,clipped_path,
+            res = qgsTreatments.clipVectorByExtent(input,extent,out_path,
                 context=context,feedback=feedback)
         else:
             assert(False)
@@ -726,6 +730,8 @@ class NormalizingParamsModel(QAbstractTableModel):
                 
     # Normalize given raster layer to match global extent and resolution
     def normalizeRaster(self,path,out_path=None,resampling_mode="near",context=None,feedback=None):
+        if not self.extent_layer:
+            return input
         extent_layer, extent_layer_type = self.getExtentLayerAndType()
         utils.debug("extent_layer_type = " + str(extent_layer_type))
         resolution = self.getResolution()
