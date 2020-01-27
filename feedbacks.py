@@ -113,9 +113,8 @@ class ProgressFeedback(QgsProcessingFeedback):
         QGuiApplication.processEvents()
         
     def setProgress(self,value):
-        #utils.debug("setProgress " + str(value))
         fv = float(value)
-        self.pushDebugInfo("fv = " + str(fv))
+        # self.pushDebugInfo("fv = " + str(fv))
         if str(fv) == 'inf':
             self.pushInfo("Unexpected value in progress bar : " + str(value))
         else:
