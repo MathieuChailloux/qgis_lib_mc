@@ -248,6 +248,35 @@ def isMultipartLayer(layer):
     is_multi = QgsWkbTypes.isMultiType(wkb_type)
     return is_multi
     
+def getGDALTypeAndND(max_val):
+    if max_val < 255:
+        return gdal.GDT_Byte, 255
+    elif max_val < 65535:
+        return gdal.GDT_UInt16, 65536
+    else:
+        return gdal.GDT_UInt32, sys.maxsize
+        
+def getQGISTypeMaxVal(type):
+    unsigned = { Qgis.Byte : 255,
+        Qgis.UInt16 : 65535,
+        Qgis.UInt32 : 4294967295 }
+    if type not in unsigned:
+        utils.internal_error("Type " + str(type) + " is unsigned")
+    return unsigned[type]
+    
+def getNDCandidates(type):
+    if type in [ Qgis.Byte, Qgis.UInt16, Qgis.UInt32]:
+        return [ 0,getQGISTypeMaxVal(type) ]
+    else:
+        return [ 0, -9999, -1 ]
+        
+def getNDCandidate(type,vals):
+    candidates = getNDCandidates(type)
+    for cand in candidates:
+        if cand not in vals:
+            return cand
+    utils.internal_error("Could not find a proper NoData value, exiting (please contact support)")
+    
 # Checks layers geometry compatibility (raise error if not compatible)
 def checkLayersCompatible(l1,l2):
     crs1 = l1.crs().authid()
