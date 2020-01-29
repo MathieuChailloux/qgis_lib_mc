@@ -248,6 +248,7 @@ def isMultipartLayer(layer):
     is_multi = QgsWkbTypes.isMultiType(wkb_type)
     return is_multi
     
+# Returns smallest unisgned type (GDAL type) in which max_val can be represented
 def getGDALTypeAndND(max_val):
     if max_val < 255:
         return gdal.GDT_Byte, 255
@@ -256,6 +257,7 @@ def getGDALTypeAndND(max_val):
     else:
         return gdal.GDT_UInt32, sys.maxsize
         
+# Returns maximum value that can be represented in input unsigned type (QGIS type)
 def getQGISTypeMaxVal(type):
     unsigned = { Qgis.Byte : 255,
         Qgis.UInt16 : 65535,
@@ -264,12 +266,14 @@ def getQGISTypeMaxVal(type):
         utils.internal_error("Type " + str(type) + " is unsigned")
     return unsigned[type]
     
+# Returns list of classic values to reprensent NoData pixels in raster layers
 def getNDCandidates(type):
     if type in [ Qgis.Byte, Qgis.UInt16, Qgis.UInt32]:
         return [ 0,getQGISTypeMaxVal(type) ]
     else:
         return [ 0, -9999, -1 ]
         
+# Returns a value to represent NoData pixels that does not already exist in vals
 def getNDCandidate(type,vals):
     candidates = getNDCandidates(type)
     for cand in candidates:

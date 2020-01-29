@@ -20,6 +20,7 @@
 """
 
 import os.path
+import csv
 
 from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle, QgsProject, QgsCoordinateTransform, QgsProcessingUtils, QgsProcessingFeedback
 
@@ -425,6 +426,17 @@ class DictModel(AbstractGroupModel):
             xmlStr += i.toXML(indent=indent + " ") + "\n"
         xmlStr += indent + "</" + self.parser_name + ">"
         return xmlStr
+        feedback.endSection()
+        
+    # Saves model to CSV file 'fname'
+    def saveCSV(self,fname):
+        with open(fname,"w", newline='') as f:
+            writer = csv.DictWriter(f,fieldnames=self.fields,delimiter=';')
+            writer.writeheader()
+            for i in self.items:
+                utils.debug("writing row " + str(i.dict))
+                writer.writerow(i.dict)
+        utils.info("Model saved to file '" + str(fname) + "'")
         
     def applyItemsWithContext(self,context,feedback,indexes=None):
         if not self.items:
