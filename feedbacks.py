@@ -126,11 +126,11 @@ class ProgressFeedback(QgsProcessingFeedback):
         #utils.internal_error("percentage : " + str(percentage))
         
     def focusLogTab(self):
-        self.dlg.mTabWidget.setCurrentWidget(self.dlg.logTab)
+        # self.dlg.mTabWidget.setCurrentWidget(self.dlg.logTab)
         self.dlg.txtLog.verticalScrollBar().setValue(self.dlg.txtLog.verticalScrollBar().maximum())
         
     def endJob(self):
-        self.setProgress(100)
+        # self.setProgress(100)
         self.focusLogTab()
         
     def initGui(self):

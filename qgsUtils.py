@@ -589,6 +589,10 @@ class LayerComboDialog:
         self.vector_mode = False
         self.combo.setFilters(QgsMapLayerProxyModel.RasterLayer)
         
+    def setBothMode(self):
+        self.vector_mode = None
+        self.combo.setFilters(QgsMapLayerProxyModel.All)
+        
     def getFileFilters(self):
         if self.vector_mode:
             return getVectorFilters()

@@ -252,6 +252,7 @@ def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
     return res
     
 def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
+    feedbacks.progressFeedback.setSubText("Save selected")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","saveselectedfeatures",parameters,context,feedback)
@@ -354,6 +355,8 @@ def getRasterUniqueValsReport(input,context=None,feedback=None):
 def getRasterUniqueVals(input,feedback):
     feedback.pushDebugInfo("HEY")
     report = getRasterUniqueValsReport(input,feedback=feedback)
+    if isinstance(input,str):
+        input = qgsUtils.loadRasterLayer(input)
     input_type = input.dataProvider().dataType(1)
     tmp_table = report['OUTPUT_TABLE']
     tmp_html = report['OUTPUT_HTML_FILE']
@@ -407,6 +410,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     utils.debug("applyRasterization")
+    feedbacks.progressFeedback.setSubText("Rasterize")
     if overwrite:
         qgsUtils.removeRaster(out_path)
     parameters = { 'ALL_TOUCH' : all_touch,
@@ -441,6 +445,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        resolution=None,out_type=0,nodata_val=nodata_val,overwrite=False,
                        context=None,feedback=None):
     # { 'DATA_TYPE' : 3, 'EXTRA' : '', 'INPUT' : 'D:/Projets/BioDispersal/Tests/BousquetOrbExtended/SousTrames/forest/forest_disp_1000.tif', 'MULTITHREADING' : False, 'NODATA' : -999, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'RESAMPLING' : 0, 'SOURCE_CRS' : QgsCoordinateReferenceSystem('EPSG:2154'), 'TARGET_CRS' : QgsCoordinateReferenceSystem('EPSG:7411'), 'TARGET_EXTENT' : '693953.28055333,727528.28055333,6268374.87768497,6308149.87768497 [EPSG:2154]', 'TARGET_EXTENT_CRS' : None, 'TARGET_RESOLUTION' : 10 }
+    feedbacks.progressFeedback.setSubText("Warp")
     modes = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
              'average','mode', 'max', 'min', 'med', 'q1', 'q3']
     # Resampling mode
@@ -467,6 +472,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     
 def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
                    crs=None,context=None,feedback=None):
+    feedbacks.progressFeedback.setSubText("Tanslate")
     parameters = { 'COPY_SUBDATASETS' : False,
                    'DATA_TYPE' : data_type,
                    'INPUT' : in_path,
@@ -481,7 +487,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                          crop_cutline=True,nodata=None,data_type=0,
                          context=None,feedback=None):
     # data type 0 = input raster type
-    
+    feedbacks.progressFeedback.setSubText("Clip raster")
     parameters = { 'ALPHA_BAND' : False,
                    'CROP_TO_CUTLINE' : crop_cutline,
                    'DATA_TYPE' : data_type,
@@ -505,6 +511,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
 def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,
                      nodata_input=None,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    feedbacks.progressFeedback.setSubText("Merge raster")
     parameters = { 'DATA_TYPE' : out_type,
                    'INPUT' : files,
                    'NODATA_INPUT' : nodata_input,
@@ -517,6 +524,7 @@ def applyRasterCalc(input_a,output,expr,
                     nodata_val=nodata_val,out_type=5,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    feedbacks.progressFeedback.setSubText("Raster Calc")
     parameters = { 'BAND_A' : 1,
                    'FORMULA' : expr,
                    'INPUT_A' : input_a,
