@@ -36,6 +36,7 @@ from qgis.core import (QgsColorRampShader,
                        QgsRasterBandStats,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
+                       QgsGraduatedSymbolRenderer,
                        QgsStyle)
                        
 from . import utils, qgsUtils
@@ -51,6 +52,8 @@ singleColorRampList = [ 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds' ]
 
 def getDefaultStyle():
     return QgsStyle.defaultStyle()
+    
+# Color utilities
     
 def getPresetGnYlRd():
     colors = [redCol,yellowCol,greenCol]
@@ -74,6 +77,32 @@ def getGradientColorRampRdYlGn():
 def getRandomSingleColorRamp():
     rampName = random.choice(singleColorRampList)
     return mkColorRamp(rampName,invert=True)  
+    
+def setRenderer(layer,renderer):
+    if not renderer:
+        utils.internal_error("Could not create renderer")
+    layer.setRenderer(renderer)
+    layer.triggerRepaint()
+    
+# Vector utilities
+
+def mkGraduatedRenderer(layer,fieldname,color_ramp):
+    nb_classes = 5
+    # classif = QgsClassificationQuantile()
+    # classes = classif.classes(layer,fieldname,nb_classes)
+    renderer = QgsGraduatedSymbolRenderer(attrName=fieldname)
+    renderer.setSourceColorRamp(color_ramp)
+    renderer.updateClasses(layer,QgsGraduatedSymbolRenderer.Jenks,5)
+    # renderer.setGraduatedMethod(QgsGraduatedSymbolRenderer.GraduatedColor)
+    # renderer.setClassificationMethod(classif)
+    return renderer
+    
+def setGreenGraduatedStyle(layer,fieldname):
+    color_ramp = mkColorRamp('Greens')
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+# Raster utilities
     
 def getValuesFromLayer3(layer):
     return qgsUtils.getRasterMinMedMax(layer)
@@ -107,10 +136,7 @@ def setSBPCRasterRenderer(layer,shader):
     if not shader:
         utils.internal_error("Could not create raster shader")
     renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=shader)
-    if not renderer:
-        utils.internal_error("Could not create renderer")
-    layer.setRenderer(renderer)
-    layer.triggerRepaint()
+    setRenderer(layer,renderer)
     
 def setRandomColorRasterRenderer(layer):
     rasterShader = mkRandomColorRasterShader(layer)
