@@ -102,6 +102,11 @@ def setGreenGraduatedStyle(layer,fieldname):
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
     setRenderer(layer,renderer)
     
+def setRdYlGnGraduatedStyle(layer,fieldname):
+    color_ramp = mkColorRamp('RdYlGn')
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
 # Raster utilities
     
 def getValuesFromLayer3(layer):
