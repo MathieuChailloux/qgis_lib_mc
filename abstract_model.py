@@ -499,7 +499,8 @@ class NormalizingParamsModel(QAbstractTableModel):
         checkCrsInit()
         
     def setExtentLayer(self,path):
-        path = self.normalizePath(path)
+        if path:
+            path = self.normalizePath(path)
         utils.info("Setting extent layer to " + str(path))
         self.extentLayer = path
         self.layoutChanged.emit()
@@ -675,6 +676,8 @@ class NormalizingParamsModel(QAbstractTableModel):
         
     def getExtentString(self):
         extent_path = self.getExtentLayer()
+        if not extent_path:
+            return None
         extent_layer = qgsUtils.loadLayer(extent_path)
         extent = extent_layer.extent()
         transformed_extent = self.getBoundingBox(extent,extent_layer.crs())
@@ -706,9 +709,9 @@ class NormalizingParamsModel(QAbstractTableModel):
                             float(coords[2]),float(coords[3]))
         return rect 
         
-    def clipByExtent(self,input,name="",out_path="",context=None,feedback=None):
+    def clipByExtent(self,input,name="",out_path="",clip_raster=True,context=None,feedback=None):
         extentLayer = self.getExtentLayer()
-        if not extentLayer:
+        if not extentLayer or extentLayer == input:
             return input
         self.checkResolutionInit()
         if not feedback:
@@ -716,7 +719,11 @@ class NormalizingParamsModel(QAbstractTableModel):
         extent = self.getExtentRectangle()
         extent_layer_path = extentLayer
         extent_layer, extent_type = self.getExtentLayerAndType()
+        feedback.pushDebugInfo("extent_type " + str(extent_type))
+        feedback.pushDebugInfo("clip_raster " + str(clip_raster))
         input_layer, input_type = qgsUtils.loadLayerGetType(input)
+        if not clip_raster and (input_type == 'Raster' or extent_type == 'Raster'):
+            return input
         if not out_path:
             bname = name + "_clipped"
             ext = ".tif" if input_type == 'Raster' else ".gpkg"

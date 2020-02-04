@@ -197,6 +197,45 @@ def selectGeomByExpression(in_layer,expr,out_path,out_name):
     #utils.info("Call to 'selectGeomByExpression' successful"
     #           + ", performed in " + str(diff_time) + " seconds")
     
+def classifByExpr(in_layer,expr,out_path,out_name):
+    #utils.info("Calling 'selectGeomByExpression' algorithm")
+    qgsUtils.removeVectorLayer(out_path)
+    out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
+    value_field = QgsField("Value", QVariant.Int)
+    orig_field = QgsField("Origin", QVariant.String)
+    out_layer.dataProvider().addAttributes([value_field,orig_field])
+    out_layer.updateFields()
+    fields = out_layer.fields()
+    out_provider = out_layer.dataProvider()
+    in_name = in_layer.name()
+    if expr:
+        feats = in_layer.getFeatures(QgsFeatureRequest().setFilterExpression(expr))
+    else:
+        feats = in_layer.getFeatures(QgsFeatureRequest())
+    for f in feats:
+        geom = f.geometry()
+        new_f = QgsFeature(fields)
+        new_f.setGeometry(geom)
+        new_f["Value"] = 1
+        new_f["Origin"] = in_layer.name()
+        res = out_provider.addFeature(new_f)
+        if not res:
+            internal_error("addFeature failed")
+    if expr:
+        not_expr = "NOT(" + str(expr) + ")"
+        feats = in_layer.getFeatures(QgsFeatureRequest().setFilterExpression(not_expr))
+        for f in feats:
+            geom = f.geometry()
+            new_f = QgsFeature(fields)
+            new_f.setGeometry(geom)
+            new_f["Value"] = 0
+            new_f["Origin"] = in_layer.name()
+            res = out_provider.addFeature(new_f)
+            if not res:
+                internal_error("addFeature failed")
+    out_layer.updateExtents()
+    qgsUtils.writeVectorLayer(out_layer,out_path)
+    
 def joinToReportingLayer(init_layer,reporting_layer_path,out_name):
     init_pr = init_layer.dataProvider()
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
