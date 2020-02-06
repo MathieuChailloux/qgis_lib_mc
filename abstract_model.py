@@ -722,7 +722,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         feedback.pushDebugInfo("extent_type " + str(extent_type))
         feedback.pushDebugInfo("clip_raster " + str(clip_raster))
         input_layer, input_type = qgsUtils.loadLayerGetType(input)
-        if not clip_raster and (input_type == 'Raster' or extent_type == 'Raster'):
+        if not clip_raster and extent_type == 'Raster':
             return input
         if not out_path:
             bname = name + "_clipped"
