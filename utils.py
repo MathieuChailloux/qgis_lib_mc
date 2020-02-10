@@ -142,9 +142,7 @@ def pathEquals(p1,p2):
 def fileExists(fname,prefix=""):
     if not fname:
         return False
-    print("fe 1")
     path = pathlib.Path(fname)
-    print("fe 2")
     if not path.exists():
         return False
     if not (os.path.isfile(fname)):

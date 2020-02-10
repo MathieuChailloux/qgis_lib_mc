@@ -460,37 +460,41 @@ class NormalizingParamsModel(QAbstractTableModel):
     CRS = "crs"
     
     DEFAULT_CRS = QgsCoordinateReferenceSystem("epsg:2154")
+    DEFAULT_FIELDS = [WORKSPACE,EXTENT_LAYER,
+        RESOLUTION,PROJECT,CRS]
     
-    def __init__(self):
+    def __init__(self,fields=DEFAULT_FIELDS):
         self.workspace = None
         self.extentLayer = None
         self.extentType = None
         self.resolution = 0.0
         self.projectFile = ""
         self.crs = self.DEFAULT_CRS
-        self.fields = [self.WORKSPACE,self.EXTENT_LAYER,
-            self.RESOLUTION,self.PROJECT,self.CRS]
+        self.fields = fields
         QAbstractTableModel.__init__(self)
+        
+    def tr(self, msg):
+        return QCoreApplication.translate('Params', msg)
         
     def checkWorkspaceInit(self):
         if not self.workspace:
-            utils.user_error("Workspace parameter not initialized")
+            utils.user_error(self.tr("Workspace parameter not initialized"))
         if not os.path.isdir(self.workspace):
             utils.user_error("Workspace directory '" + self.workspace + "' does not exist")
             
     def checkExtentInit(self):
         if not self.extentLayer:
-            utils.user_error("Extent parameter not initialized")
+            utils.user_error(self.tr("Extent parameter not initialized"))
             
     def checkResolutionInit(self):
         if not self.resolution or self.resolution <= 0:
-            utils.user_error("Resolution parameter not initialized")
+            utils.user_error(self.tr("Resolution parameter not initialized"))
             
     def checkCrsInit(self):
         if not self.crs:
-            utils.user_error("CRS parameter not initialized")
+            utils.user_error(self.tr("CRS parameter not initialized"))
         if not self.crs.isValid():
-            utils.user_error("Invalid CRS")
+            utils.user_error(self.tr("Invalid CRS"))
             
     def checkInit(self):
         checkWorkspaceInit()
@@ -584,8 +588,7 @@ class NormalizingParamsModel(QAbstractTableModel):
                  self.extentLayer,
                  self.resolution,
                  self.projectFile,
-                 self.crs.description(),
-                 ""]
+                 self.crs.description()]
         return items[n]
             
     def data(self,index,role):
@@ -713,7 +716,6 @@ class NormalizingParamsModel(QAbstractTableModel):
         extentLayer = self.getExtentLayer()
         if not extentLayer or extentLayer == input:
             return input
-        self.checkResolutionInit()
         if not feedback:
             feedback = QgsProcessingFeedback()
         extent = self.getExtentRectangle()
@@ -730,9 +732,11 @@ class NormalizingParamsModel(QAbstractTableModel):
             out_path = QgsProcessingUtils.generateTempFilename(bname + ext)
         # resolution = self.getResolution()
         if input_type == 'Raster' and extent_type == 'Vector':
+            self.checkResolutionInit()
             res = qgsTreatments.clipRasterFromVector(input,extent_layer_path,out_path,
                 context=context,feedback=feedback)
         elif input_type == 'Raster' and extent_type == 'Raster':
+            self.checkResolutionInit()
             res = qgsTreatments.applyWarpReproject(input,out_path,
                 dst_crs=self.crs,extent=extent,
                 context=context,feedback=feedback)
