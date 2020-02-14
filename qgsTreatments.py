@@ -32,6 +32,7 @@ from qgis.core import (Qgis,
                        QgsFeatureRequest,
                        QgsField,
                        QgsProcessingContext,
+                       QgsVectorLayer,
                        QgsExpression)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
@@ -545,6 +546,25 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         parameters['X_RESOLUTION'] = x_res
         parameters['Y_RESOLUTION'] = y_res
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
+    
+def clipRasterAllTouched(raster_path,vector_path,dst_crs,
+                         out_path=None,nodata=None,data_type=0,
+                         resolution=None,context=None,feedback=None):
+    feedbacks.progressFeedback.setSubText("Clip raster at")
+    if isinstance(vector_path,QgsVectorLayer):
+        vector_path = qgsUtils.pathOfLayer(vector_path)
+    extra_params = "-cutline " + str(vector_path)
+    extra_params += " -crop_to_cutline -wo CUTLINE_ALL_TOUCHED=True"
+    parameters = { 'DATA_TYPE' : data_type,
+                   'INPUT' : raster_path,
+                   'NODATA' : nodata,
+                   'OUTPUT' : out_path,
+                   'RESAMPLING' : 0,
+                   'TARGET_CRS' : dst_crs,
+                   'TARGET_RESOLUTION' : 10,
+                   'EXTRA' : extra_params }
+    return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
+    
 
     
 def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,
