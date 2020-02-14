@@ -523,7 +523,7 @@ def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
 
     
 def clipRasterFromVector(raster_path,vector_path,out_path,
-                         resolution=None,x_res=None,y_res=None,
+                         resolution=None,x_res=None,y_res=None,keep_res=True,
                          crop_cutline=True,nodata=None,data_type=0,
                          context=None,feedback=None):
     # data type 0 = input raster type
@@ -532,7 +532,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                    'CROP_TO_CUTLINE' : crop_cutline,
                    'DATA_TYPE' : data_type,
                    'INPUT' : raster_path,
-                   'KEEP_RESOLUTION' : False,
+                   'KEEP_RESOLUTION' : keep_res,
                    'MASK' : vector_path,
                    'NODATA' : nodata,
                    #'OPTIONS' : '',
@@ -561,7 +561,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
                    'OUTPUT' : out_path,
                    'RESAMPLING' : 0,
                    'TARGET_CRS' : dst_crs,
-                   'TARGET_RESOLUTION' : 10,
+                   'TARGET_RESOLUTION' : resolution,
                    'EXTRA' : extra_params }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
