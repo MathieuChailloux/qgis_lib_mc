@@ -48,7 +48,7 @@ import processing
 from . import utils, qgsUtils, feedbacks
 
 nodata_val = '-9999'
-MEMORY_LAYER_NAME = None
+MEMORY_LAYER_NAME = 'TEMPORARY_OUTPUT'
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -172,6 +172,8 @@ def selectGeomByExpression(in_layer,expr,out_path,out_name):
     #utils.info("Calling 'selectGeomByExpression' algorithm")
     start_time = time.time()
     qgsUtils.removeVectorLayer(out_path)
+    if isinstance(in_layer,str):
+        in_layer = qgsUtils.loadVectorLayer(in_layer)
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
     orig_field = QgsField("Origin", QVariant.String)
     out_layer.dataProvider().addAttributes([orig_field])
@@ -201,6 +203,8 @@ def selectGeomByExpression(in_layer,expr,out_path,out_name):
 def classifByExpr(in_layer,expr,out_path,out_name):
     #utils.info("Calling 'selectGeomByExpression' algorithm")
     qgsUtils.removeVectorLayer(out_path)
+    if isinstance(in_layer,str):
+        in_layer = qgsUtils.loadVectorLayer(in_layer)
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
     value_field = QgsField("Value", QVariant.Int)
     orig_field = QgsField("Origin", QVariant.String)

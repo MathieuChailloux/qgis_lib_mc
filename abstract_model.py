@@ -688,7 +688,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         res += ',' + str(transformed_extent.xMaximum())
         res += ',' + str(transformed_extent.yMinimum())
         res += ',' + str(transformed_extent.yMaximum())
-        res += '[' + str(self.crs) + ']'
+        res += '[' + str(self.crs.authid()) + ']'
         return res
         
     # Return bounding box coordinates of extent layer
