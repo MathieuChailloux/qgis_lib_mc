@@ -48,7 +48,7 @@ import processing
 from . import utils, qgsUtils, feedbacks
 
 nodata_val = '-9999'
-MEMORY_LAYER_NAME = 'TEMPORARY_OUTPUT'
+MEMORY_LAYER_NAME = 'memory:'
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -240,6 +240,19 @@ def classifByExpr(in_layer,expr,out_path,out_name):
                 internal_error("addFeature failed")
     out_layer.updateExtents()
     qgsUtils.writeVectorLayer(out_layer,out_path)
+    
+def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
+        discard=True,fields=[],method=0,prefix='',context=None,feedback=None):
+    parameters = { 'DISCARD_NONMATCHING' : discard,
+        'INPUT' : layer1,
+        'JOIN' : layer2,
+        'JOIN_FIELDS' : fields,
+        'METHOD' : method,
+        'OUTPUT' : out_path,
+        'PREDICATE' : predicates,
+        'PREFIX' : prefix }
+    res = applyProcessingAlg("qgis","joinattributesbylocation",parameters,context=context,feedback=feedback)
+    return res
     
 def joinToReportingLayer(init_layer,reporting_layer_path,out_name):
     init_pr = init_layer.dataProvider()
