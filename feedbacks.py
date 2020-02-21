@@ -46,6 +46,20 @@ def beginSection(msg):
 def endSection():
     if progressFeedback:
         progressFeedback.endSection()
+        progressFeedback.setProgress(100)
+        
+def setProgressText(text):
+    if progressFeedback:
+        progressFeedback.setProgressText(text)
+        
+def setSubText(text):
+    if progressFeedback:
+        progressFeedback.setSubText(text)
+        
+def endJob():
+    if progressFeedback:
+        progressFeedback.endJob()
+    
 
 class ProgressFeedback(QgsProcessingFeedback):
     
@@ -67,6 +81,8 @@ class ProgressFeedback(QgsProcessingFeedback):
         #if msg.startswith(self.GDAL_ERROR_PREFIX):
         if msg.startswith(self.GDAL_ERROR_PREFIX):
             self.reportError(msg)
+        else:
+            utils.debug(msg)
         
     def pushDebugInfo(self,msg):
         utils.debug(msg)
