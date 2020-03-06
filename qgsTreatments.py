@@ -618,7 +618,9 @@ def applyRasterCalc(input_a,output,expr,
     type_str = TYPE[out_type]
     if isinstance(input_a,QgsRasterLayer):
         input_a = qgsUtils.pathOfLayer(input_a)
-    applyGdalCalc(input_a,output,expr,type=type_str,nodata=nodata_val)
+    #applyGdalCalc(input_a,output,expr,type=type_str,nodata=nodata_val)
+    applyRasterCalcProc(input_a,output,expr,nodata_val=nodata_val,
+        out_type=out_type,context=context,feedback=feedback)
     return output
     
 def applyRasterCalcLT(input,output,max_val,
@@ -962,9 +964,13 @@ def applyGdalCalc(in_path,out_path,expr,type='Int32',nodata=nodata_val,
     if os.path.isfile(out_path):
         qgsUtils.removeRaster(out_path)
     #cmd_args = ['gdal_calc.bat',
-    gdal_calc_cmd = 'gdal_calc.bat' if utils.platform_sys == 'Windows' else 'gdal_calc.py'
-    utils.debug("gdal_calc commnad = " + str(gdal_calc_cmd))
-    cmd_args = [gdal_calc_cmd,
+    if utils.platform_sys:
+        cmd_args = ['gdal_calc.bat']
+    else:
+        cmd_args = ['gdal_calc.py']
+    # gdal_calc_cmd = 'gdal_calc.bat' if utils.platform_sys == 'Windows' else 'gdal_calc.py'
+    utils.debug("cmd_args commnad = " + str(cmd_args))
+    cmd_args += [
                 '-A', in_path,
                 '--type=' + str(type),
                 '--outfile=' + out_path,
