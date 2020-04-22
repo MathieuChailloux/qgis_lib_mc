@@ -255,6 +255,26 @@ def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
     res = applyProcessingAlg("qgis","joinattributesbylocation",parameters,context=context,feedback=feedback)
     return res
     
+def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames,summaries,
+        predicates=[0],context=None,feedback=None):
+    # parameters = { 'DISCARD_NONMATCHING' : False,
+        # 'INPUT' : in_layer,
+        # 'JOIN' : join_layer,
+        # 'JOIN_FIELDS' : ['flux_lampe'],
+        # 'OUTPUT' : 'TEMPORARY_OUTPUT',
+        # 'PREDICATE' : [0],
+        # 'SUMMARIES' : [0,1,2,3,5,6] }
+    parameters = { 'DISCARD_NONMATCHING' : True,
+        'INPUT' : in_layer,
+        'JOIN' : join_layer,
+        'JOIN_FIELDS' : fieldnames,
+        'OUTPUT' : out_layer,
+        'PREDICATE' : predicates,
+        'SUMMARIES' : summaries }
+    res = applyProcessingAlg("qgis","joinbylocationsummary",
+        parameters,context=context,feedback=feedback)
+    return res
+    
 def joinToReportingLayer(init_layer,reporting_layer_path,out_name):
     init_pr = init_layer.dataProvider()
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
@@ -393,6 +413,18 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     res = applyProcessingAlg("native","reprojectlayer",parameters,context,feedback)
     return res
     
+def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
+    parameters = {
+        'CRS' : crs,
+        'EXTENT' : extent,
+        'HOVERLAY' : 0,
+        'HSPACING' : size,
+        'VOVERLAY' : 0,
+        'VSPACING' : size,
+        'OUTPUT' : out_layer,
+        'TYPE' : 2 } #Rectangle
+    res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
+    return res
     
 """
     QGIS RASTER ALGORITHMS
