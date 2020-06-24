@@ -28,7 +28,6 @@ import random
 from PyQt5.QtGui import QColor
 from qgis.core import (QgsColorRampShader,
                        QgsRasterShader,
-                       QgsColorRampShader,
                        QgsColorBrewerColorRamp,
                        QgsGradientColorRamp,
                        QgsCptCityColorRamp,
@@ -86,13 +85,12 @@ def setRenderer(layer,renderer):
     
 # Vector utilities
 
-def mkGraduatedRenderer(layer,fieldname,color_ramp):
-    nb_classes = 5
+def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5):
     # classif = QgsClassificationQuantile()
     # classes = classif.classes(layer,fieldname,nb_classes)
     renderer = QgsGraduatedSymbolRenderer(attrName=fieldname)
     renderer.setSourceColorRamp(color_ramp)
-    renderer.updateClasses(layer,QgsGraduatedSymbolRenderer.Jenks,5)
+    renderer.updateClasses(layer,QgsGraduatedSymbolRenderer.Jenks,nb_classes)
     # renderer.setGraduatedMethod(QgsGraduatedSymbolRenderer.GraduatedColor)
     # renderer.setClassificationMethod(classif)
     return renderer
@@ -105,6 +103,21 @@ def setGreenGraduatedStyle(layer,fieldname):
 def setRdYlGnGraduatedStyle(layer,fieldname):
     color_ramp = mkColorRamp('RdYlGn')
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+def setCustomClasses(layer,renderer,class_bounds):
+    nb_bounds = len(class_bounds)
+    renderer.updateClasses(layer,nb_bounds)
+    for idx, b in enumerate(class_bounds):
+        if idx > 0:
+            renderer.updateRangeUpperValue(idx-1,b)
+        renderer.updateRangeLowerValue(idx,b)
+    
+def setCustomClassesDSFL(layer,fieldname):
+    class_bounds = [0,10,20,25,35]
+    color_ramp = mkColorRamp('RdYlBu',invert=True)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5)
+    setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
     
 # Raster utilities
