@@ -115,7 +115,7 @@ def setCustomClasses(layer,renderer,class_bounds):
     
 def setCustomClassesDSFL(layer,fieldname):
     class_bounds = [0,10,20,25,35]
-    color_ramp = mkColorRamp('RdYlBu',invert=True)
+    color_ramp = getGradientColorRampRdYlGn()
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5)
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
