@@ -289,6 +289,14 @@ def extractByExpression(in_layer,expr,out_layer,context=None,feedback=None):
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","extractbyexpression",parameters,context=context,feedback=feedback)
     return res
+        
+# predicate = 0 <=> intersection
+def extractByLoc(in_layer,loc_layer,out_layer,predicate=[0],context=None,feedback=None):
+    parameters = { 'PREDICATE' : predicate,
+                   'INPUT' : in_layer,
+                   'OUTPUT' : out_layer }
+    res = applyProcessingAlg("native","extractbylocation",parameters,context=context,feedback=feedback)
+    return res
     
 def selectByExpression(in_layer,expr,context=None,feedback=None):
     parameters = { 'EXPRESSION' : expr,
