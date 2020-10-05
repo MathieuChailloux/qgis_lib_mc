@@ -434,6 +434,12 @@ def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
     return res
     
+def fixGeometries(input,output,context=None,feedback=None):
+    parameters = {'INPUT' : input, 'OUTPUT' : output }
+    res = applyProcessingAlg("native","fixgeometries",parameters,context,feedback)
+    return res
+    
+    
 """
     QGIS RASTER ALGORITHMS
 """
