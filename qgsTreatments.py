@@ -323,13 +323,13 @@ def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","multiparttosingleparts",parameters,context=context,feedback=feedback)
     return res
     
-def dissolveLayer(in_layer,out_layer,context=None,feedback=None):
+def dissolveLayer(in_layer,out_layer,fields=[],context=None,feedback=None):
     #utils.checkFileExists(in_layer)
     feedbacks.setSubText("Dissolve")
     #feedbacks.setSubText("Dissolve " + str(in_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
-    parameters = { 'FIELD' : [],
+    parameters = { 'FIELD' : fields,
                    'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     if feedback:
