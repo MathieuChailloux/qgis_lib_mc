@@ -439,6 +439,23 @@ def fixGeometries(input,output,context=None,feedback=None):
     res = applyProcessingAlg("native","fixgeometries",parameters,context,feedback)
     return res
     
+def applyHeatmap(input, output, resolution=5, radius_field=None,
+        weight_field=None, context=None, feedback=None):
+    parameters = {
+        'DECAY' : 0,
+        'INPUT' : input,
+        'KERNEL' : 0, 
+        'OUTPUT' : output,
+        'OUTPUT_VALUE' : 0,
+        'PIXEL_SIZE' : resolution,
+        'RADIUS' : None,
+        'RADIUS_FIELD' : radius_field,
+        'WEIGHT_FIELD' : weight_field }
+    res = applyProcessingAlg("qgis","heatmapkerneldensityestimation",parameters,context,feedback)
+    return res
+
+    
+    
     
 """
     QGIS RASTER ALGORITHMS
