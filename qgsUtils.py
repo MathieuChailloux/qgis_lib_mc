@@ -296,6 +296,23 @@ def checkLayersCompatible(l1,l2):
                     + "' not compatible with geometry '" + str(geomType2)
                     + "' of layer " + l2.name())
     
+def createOrUpdateField(in_layer,func,out_field):
+    # if in_field not in in_layer.fields().names():
+        # raise QgsProcessingException("Field '" + in_field + "' does not exist")
+
+    out_field = self.FLUX_RADIUS_FIELD
+    if out_field not in in_layer.fields().names():
+        field = QgsField(out_field, QVariant.Double)
+        in_layer.dataProvider().addAttributes([field])
+        in_layer.updateFields()
+    
+    in_layer.startEditing()    
+    for f in in_layer.getFeatures():
+        f[out_field] = func(f)
+        in_layer.updateFeature(f)
+    in_layer.commitChanges()
+    
+    
 # Initialize new layer from existing one, importing CRS and geometry
 def createLayerFromExisting(inLayer,outName,geomType=None,crs=None):
     utils.debug("[createLayerFromExisting]")

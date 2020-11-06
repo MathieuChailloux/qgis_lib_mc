@@ -344,7 +344,7 @@ def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","saveselectedfeatures",parameters,context,feedback)
     return res
     
-def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
+def applyBufferFromExpr(in_layer,expr,out_layer,cap_style=0,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
     feedbacks.setSubText("Buffering")
     #feedbacks.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
@@ -355,7 +355,7 @@ def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None):
                    'DISTANCE' : expr,
                    'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
-                   'END_CAP_STYLE' : 0,
+                   'END_CAP_STYLE' : cap_style,
                    'JOIN_STYLE' : 0,
                    'MITER_LIMIT' : 2,
                    'SEGMENTS' : 5 }
@@ -454,7 +454,10 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
     res = applyProcessingAlg("qgis","heatmapkerneldensityestimation",parameters,context,feedback)
     return res
 
-    
+def assignProjection(input,crs,output,context=None,feedback=None):
+    parameters = { 'CRS' : crs, 'INPUT' : input, 'OUTPUT' : output }
+    res = applyProcessingAlg("native","assignprojection",parameters,context,feedback)
+    return res
     
     
 """
