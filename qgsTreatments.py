@@ -344,7 +344,7 @@ def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","saveselectedfeatures",parameters,context,feedback)
     return res
     
-def applyBufferFromExpr(in_layer,expr,out_layer,cap_style=0,context=None,feedback=None):
+def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None,cap_style=0):
     #utils.checkFileExists(in_layer)
     feedbacks.setSubText("Buffering")
     #feedbacks.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))

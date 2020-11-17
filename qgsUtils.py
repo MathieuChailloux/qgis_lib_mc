@@ -71,10 +71,12 @@ def removeVectorLayer(path):
 # Returns path from QgsMapLayer
 def pathOfLayer(l):
     uri = l.dataProvider().dataSourceUri()
-    if l.type() == QgsMapLayer.VectorLayer:
+    if l.type() == QgsMapLayer.VectorLayer and '|' in uri:
         path = uri[:uri.rfind('|')]
     else:
         path = uri
+    #utils.debug("pathOfLayer uri " + str(uri))
+    #utils.debug("pathOfLayer path " + str(path))
     return path
       
 def layerNameOfPath(p):
@@ -133,6 +135,7 @@ def loadVectorLayer(fname,loadProject=False):
 # Opens raster layer from path.
 # If loadProject is True, layer is added to QGIS project
 def loadRasterLayer(fname,loadProject=False):
+    utils.debug("loadRasterLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
         return getLayerByFilename(fname)
@@ -145,14 +148,14 @@ def loadRasterLayer(fname,loadProject=False):
 
 # Opens layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadLayerOld(fname,loadProject=False):
-    try:
-        return (loadVectorLayer(fname,loadProject))
-    except utils.CustomException:
-        try:
-            return (loadRasterLayer(fname,loadProject))
-        except utils.CustomException:
-            utils.user_error("Could not load layer '" + fname + "'")
+#def loadLayerOld(fname,loadProject=False):
+#    try:
+#        return (loadVectorLayer(fname,loadProject))
+#    except utils.CustomException:
+#        try:
+#            return (loadRasterLayer(fname,loadProject))
+#        except utils.CustomException:
+#            utils.user_error("Could not load layer '" + fname + "'")
             
 def loadVectorLayerNoError(fname):
     layer = QgsVectorLayer(fname, layerNameOfPath(fname), "ogr")
@@ -176,6 +179,7 @@ def loadRasterLayerNoError(fname):
     return layer
     
 def loadLayer(fname,loadProject=False):
+    utils.debug("loadLayer " + str(fname))
     if isLayerLoaded(fname):
         return getLayerByFilename(fname)
     layer = loadVectorLayerNoError(fname)
@@ -187,21 +191,22 @@ def loadLayer(fname,loadProject=False):
         QgsProject.instance().addMapLayer(layer)
     return layer
             
-def loadLayerGetTypeOld(fname,loadProject=False):
-    utils.checkFileExists(fname)
-    try:
-        layer = loadVectorLayer(fname,loadProject)
-        type = 'Vector'
-        return (layer, type)
-    except utils.CustomException:
-        try:
-            layer = loadRasterLayer(fname,loadProject)
-            type = 'Raster'
-            return (layer, type)
-        except utils.CustomException:
-            utils.user_error("Could not load layer '" + fname + "'")
+#def loadLayerGetTypeOld(fname,loadProject=False):
+#    utils.checkFileExists(fname)
+#    try:
+#        layer = loadVectorLayer(fname,loadProject)
+#        type = 'Vector'
+#        return (layer, type)
+#    except utils.CustomException:
+#        try:
+#            layer = loadRasterLayer(fname,loadProject)
+#            type = 'Raster'
+#            return (layer, type)
+#        except utils.CustomException:
+#            utils.user_error("Could not load layer '" + fname + "'")
     
 def loadLayerGetType(fname,loadProject=False):
+    utils.debug("loadLayerGetType " + str(fname))
     layer = loadVectorLayerNoError(fname)
     type = 'Vector'
     if layer is None:
