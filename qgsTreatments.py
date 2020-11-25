@@ -458,7 +458,10 @@ def assignProjection(input,crs,output,context=None,feedback=None):
     parameters = { 'CRS' : crs, 'INPUT' : input, 'OUTPUT' : output }
     res = applyProcessingAlg("native","assignprojection",parameters,context,feedback)
     return res
-    
+   
+def createSpatialIndex(input,context=None,feedback=None):
+    parameters = { 'INPUT' : input}
+    return applyProcessingAlg("native","createspatialindex",parameters,context,feedback)
     
 """
     QGIS RASTER ALGORITHMS

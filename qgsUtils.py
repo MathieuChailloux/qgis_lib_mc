@@ -302,10 +302,6 @@ def checkLayersCompatible(l1,l2):
                     + "' of layer " + l2.name())
     
 def createOrUpdateField(in_layer,func,out_field):
-    # if in_field not in in_layer.fields().names():
-        # raise QgsProcessingException("Field '" + in_field + "' does not exist")
-
-    out_field = self.FLUX_RADIUS_FIELD
     if out_field not in in_layer.fields().names():
         field = QgsField(out_field, QVariant.Double)
         in_layer.dataProvider().addAttributes([field])

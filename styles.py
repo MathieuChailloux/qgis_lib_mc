@@ -81,6 +81,7 @@ def setRenderer(layer,renderer):
     if not renderer:
         utils.internal_error("Could not create renderer")
     layer.setRenderer(renderer)
+    utils.info("about to repaint")
     layer.triggerRepaint()
     
 # Vector utilities
@@ -142,6 +143,7 @@ def mkQuantileShaderFromColorRamp(layer,colorRamp):
     min, med, max = getValuesFromLayer3(layer)
     colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
                                          classificationMode=QgsColorRampShader.Quantile)
+    utils.info("about to classify")
     colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
     if colorRampShader.isEmpty():
         utils.internal_error("Empty color ramp shader")
@@ -183,13 +185,21 @@ def mkRendererPalettedGnYlRd(layer):
     classData = QgsPalettedRasterRenderer.classDataFromRaster(pr,1,ramp=colorRamp)
     renderer = QgsPalettedRasterRenderer(pr,1,classes=classData)
     return renderer
-    
+        
 def setRendererPalettedGnYlRd(layer):
     renderer = mkRendererPalettedGnYlRd(layer)
-    if not renderer:
-        utils.internal_error("Could not create renderer")
-    layer.setRenderer(renderer)
-    layer.triggerRepaint()
+    setRenderer(renderer)
+    
+def setLightingQuantileStyle(layer):
+    utils.info("setLightingQuantileStyle")
+    colorRamp = mkColorRamp('Inferno')
+    if not colorRamp:
+        assert(False)
+    shader = mkQuantileShaderFromColorRamp(layer,colorRamp)
+    if not shader:
+        assert(False)
+    setSBPCRasterRenderer(layer,shader)
+    
     
 # def mkColorRampShaderPalettedGnYlRd(valueList,colorList):
     # lst =  []

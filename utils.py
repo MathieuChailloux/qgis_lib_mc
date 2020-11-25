@@ -35,6 +35,7 @@ import time
 import html
 import platform
 import glob
+import csv
 
 file_dir = os.path.dirname(__file__)
 if file_dir not in sys.path:
@@ -169,6 +170,23 @@ def writeFile(fname,str):
     with open(fname,"w",encoding="utf-8") as f:
         f.write(str)
         
+def parseAssocFileCSV(fname,fieldnames):
+    res = {}
+    if os.path.isfile(fname):
+        with open(fname,newline='') as csvfile:
+            reader = csv.DictReader(csvfile,fieldnames=fieldnames,delimiter=';')
+            for row in reader:
+                try:
+                    model, eff = row['Modele'], float(row['Eff'])
+                    if model:
+                        res[model] = eff
+                except ValueError:
+                    user_error("Could not parse " + str(row))
+                except TypeError:
+                    user_error("Could not parse " + str(row))
+    else:
+        raise Exception("File " + str(fname) + " does not exist")
+    return res
         
 # PATH UTILITIES
 
