@@ -188,7 +188,7 @@ def mkRendererPalettedGnYlRd(layer):
         
 def setRendererPalettedGnYlRd(layer):
     renderer = mkRendererPalettedGnYlRd(layer)
-    setRenderer(renderer)
+    setRenderer(layer,renderer)
     
 def setLightingQuantileStyle(layer):
     utils.info("setLightingQuantileStyle")
