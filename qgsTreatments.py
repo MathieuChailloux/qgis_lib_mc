@@ -280,13 +280,15 @@ def joinToReportingLayer(init_layer,reporting_layer_path,out_name):
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
     
         
-def extractByExpression(in_layer,expr,out_layer,context=None,feedback=None):
+def extractByExpression(in_layer,expr,out_layer,fail_out=None,context=None,feedback=None):
     #utils.checkFileExists(in_layer)
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'EXPRESSION' : expr,
                    'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
+    if fail_out:
+        parameters['FAIL_OUTPUT'] = fail_out
     res = applyProcessingAlg("native","extractbyexpression",parameters,context=context,feedback=feedback)
     return res
         
