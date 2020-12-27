@@ -461,9 +461,15 @@ def assignProjection(input,crs,output,context=None,feedback=None):
     res = applyProcessingAlg("native","assignprojection",parameters,context,feedback)
     return res
    
+# Careful with minimal version (3.16 ?)
 def createSpatialIndex(input,context=None,feedback=None):
     parameters = { 'INPUT' : input}
     return applyProcessingAlg("native","createspatialindex",parameters,context,feedback)
+
+def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
+    parameters = { 'INPUT' : input, 'BUFFER' : buffer, 'OUTPUT' : output }
+    return applyProcessingAlg("qgis","voronoipolygons",parameters,context,feedback)
+    
     
 """
     QGIS RASTER ALGORITHMS
