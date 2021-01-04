@@ -275,6 +275,21 @@ def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames,summaries,
         parameters,context=context,feedback=feedback)
     return res
     
+def joinByAttribute(layer1,field1,layer2,field2,out_layer,
+        copy_fields=None,method=1,prefix='',context=None,feedback=None):
+    parameters = { 'DISCARD_NONMATCHING' : True,
+        'FIELD' : field1,
+        'FIELDS_TO_COPY' : copy_fields,
+        'FIELD_2' : field2,
+        'INPUT' : layer1,
+        'INPUT_2' : layer2,
+        'METHOD' : method,
+        'OUTPUT' : out_layer,
+        'PREFIX' : prefix }
+    res = applyProcessingAlg("qgis","joinattributestable",
+        parameters,context=context,feedback=feedback)
+    return res
+    
 def joinToReportingLayer(init_layer,reporting_layer_path,out_name):
     init_pr = init_layer.dataProvider()
     out_layer = qgsUtils.createLayerFromExisting(in_layer,out_name)
