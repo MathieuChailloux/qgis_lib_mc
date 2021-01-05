@@ -113,6 +113,16 @@ def setCustomClasses(layer,renderer,class_bounds):
         if idx > 0:
             renderer.updateRangeUpperValue(idx-1,b)
         renderer.updateRangeLowerValue(idx,b)
+        
+def setCustomClasses2(layer,fieldname,color_ramp,class_bounds):
+    nb_bounds = len(class_bounds)
+    nb_classes = nb_bounds + 1
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=nb_classes)
+    renderer.updateClasses(layer,nb_classes)
+    for idx, b in enumerate(class_bounds,1):
+        renderer.updateRangeUpperValue(idx - 1,b)
+        renderer.updateRangeLowerValue(idx,b)
+    setRenderer(layer,renderer)
     
 def setCustomClassesDSFL(layer,fieldname):
     class_bounds = [0,10,20,25,35]
@@ -199,7 +209,6 @@ def setLightingQuantileStyle(layer):
     if not shader:
         assert(False)
     setSBPCRasterRenderer(layer,shader)
-    
     
 # def mkColorRampShaderPalettedGnYlRd(valueList,colorList):
     # lst =  []
