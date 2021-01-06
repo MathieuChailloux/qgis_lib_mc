@@ -86,12 +86,12 @@ def setRenderer(layer,renderer):
     
 # Vector utilities
 
-def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5):
+def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Jenks):
     # classif = QgsClassificationQuantile()
     # classes = classif.classes(layer,fieldname,nb_classes)
     renderer = QgsGraduatedSymbolRenderer(attrName=fieldname)
     renderer.setSourceColorRamp(color_ramp)
-    renderer.updateClasses(layer,QgsGraduatedSymbolRenderer.Jenks,nb_classes)
+    renderer.updateClasses(layer,classif_method,nb_classes)
     # renderer.setGraduatedMethod(QgsGraduatedSymbolRenderer.GraduatedColor)
     # renderer.setClassificationMethod(classif)
     return renderer
