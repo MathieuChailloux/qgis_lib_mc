@@ -25,6 +25,7 @@
 
 from qgis.core import (Qgis,
                        QgsProcessingFeedback,
+                       QgsProcessingAlgorithm,
                        QgsProcessingUtils,
                        QgsProject,
                        QgsProperty,
@@ -101,7 +102,9 @@ gdal_warp_cmd = None
             # utils.debug("gdalwarp command set to " + str(gdal_warp_cmd))
         # else:
             # utils.user_error("Could not find gdalwarp command")
-        
+
+# Processing call wrappers      
+  
 def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,onlyOutput=True):
     # Dummy function to enable running an alg inside an alg
     def no_post_process(alg, context, feedback):
@@ -168,6 +171,8 @@ def checkGrass7Installed():
 def applyGrassAlg(parameters,alg_name,context,feedback):
     checkGrass7Installed()
     return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
+
+# Custom treatments
 
 def selectGeomByExpression(in_layer,expr,out_path,out_name):
     #utils.info("Calling 'selectGeomByExpression' algorithm")
@@ -241,6 +246,19 @@ def classifByExpr(in_layer,expr,out_path,out_name):
                 internal_error("addFeature failed")
     out_layer.updateExtents()
     qgsUtils.writeVectorLayer(out_layer,out_path)
+   
+
+# Processing utils
+
+def parameterAsSourceLayer(obj_alg,parameters,paramName,context,feedback=None):
+    source = obj_alg.parameterAsSource(parameters,paramName,context)
+    if source:
+        layer = source.materialize(QgsFeatureRequest(),feedback=feedback)
+    else:
+        layer = None
+    return source, layer
+   
+# Vector algorithms
     
 def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
         discard=True,fields=[],method=0,prefix='',context=None,feedback=None):
