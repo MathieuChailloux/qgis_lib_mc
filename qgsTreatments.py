@@ -503,6 +503,15 @@ def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'BUFFER' : buffer, 'OUTPUT' : output }
     return applyProcessingAlg("qgis","voronoipolygons",parameters,context,feedback)
     
+def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],context=None,feedback=None):
+    parameters = { 'COLUMN_PREFIX' : prefix,
+        'INPUT' : vector,
+        'INPUT_RASTER' : raster,
+        'OUTPUT' : output,
+        'RASTER_BAND' : band,
+        'STATISTICS' : stats }
+    return applyProcessingAlg("native","zonalstatisticsfb",parameters,context,feedback)
+
     
 """
     QGIS RASTER ALGORITHMS
