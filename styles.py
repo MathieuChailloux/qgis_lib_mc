@@ -96,6 +96,12 @@ def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5,classif_method=Q
     # renderer.setClassificationMethod(classif)
     return renderer
     
+def setGraduatedStyle(layer,fieldname,color_ramp_name):
+    color_ramp = mkColorRamp(color_ramp_name)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+    
 def setGreenGraduatedStyle(layer,fieldname):
     color_ramp = mkColorRamp('Greens')
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
