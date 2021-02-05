@@ -512,6 +512,28 @@ def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],contex
         'STATISTICS' : stats }
     return applyProcessingAlg("native","zonalstatisticsfb",parameters,context,feedback)
 
+
+def fixShapefileFID(input,context=None,feedback=None):
+    feedback.pushDebugInfo("input = " + str(input))
+    feedback.pushDebugInfo("input type = " + str(type(input)))
+    if type(input) is str:
+        input_path = input
+        input_layer = qgsUtils.loadVectorLayer(input)
+    else:
+        input_path = qgsUtils.pathOfLayer(input)
+        input_layer = input
+    extension = os.path.splitext(input_path)[1].lower()
+    if extension != '.shp':
+        return input
+    fid_idx = input_layer.fields().indexFromName('fid')
+    if fid_idx == -1:
+        return input
+    else:
+        input_layer.startEditing()
+        input_layer.deleteAttribute(fid_idx)
+        input_layer.commitChanges()
+        return input
+    
     
 """
     QGIS RASTER ALGORITHMS
