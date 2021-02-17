@@ -497,7 +497,10 @@ def assignProjection(input,crs,output,context=None,feedback=None):
 # Careful with minimal version (3.16 ?)
 def createSpatialIndex(input,context=None,feedback=None):
     parameters = { 'INPUT' : input}
-    return applyProcessingAlg("native","createspatialindex",parameters,context,feedback)
+    try:
+        return applyProcessingAlg("native","createspatialindex",parameters,context,feedback)
+    except Exception as e:
+        feedback.reportError(str(e))
 
 def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'BUFFER' : buffer, 'OUTPUT' : output }
