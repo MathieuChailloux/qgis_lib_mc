@@ -561,6 +561,8 @@ class NormalizingParamsModel(QAbstractTableModel):
                 utils.user_error("Unexpected resolution : " + str(dict[self.RESOLUTION]))
         if self.EXTENT_LAYER in dict:
             self.setExtentLayer(dict[self.EXTENT_LAYER])
+        elif 'extent' in dict:
+            self.setExtentLayer(dict['extent'])
         if self.CRS in dict:
             crs = QgsCoordinateReferenceSystem(dict[self.CRS])
             self.setCrs(crs)
