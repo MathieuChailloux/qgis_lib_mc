@@ -125,12 +125,15 @@ def joinPath(p1,p2):
     res = pp1.joinpath(p2)
     return res.as_posix()
     
+def mkDir(dirname):
+    if not os.path.isdir(dirname):
+        info("Creating directory '" + dirname + "'")
+        os.makedirs(dirname)
+    return dirname
+    
 def createSubdir(par_dir,name):
     path = joinPath(par_dir,name)
-    if not os.path.isdir(path):
-        info("Creating directory '" + path + "'")
-        os.makedirs(path)
-    return path
+    return mkDir(path)
     
 def pathEquals(p1,p2):
     if p1 and p2:

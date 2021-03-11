@@ -168,7 +168,7 @@ def checkGrass7Installed():
     else:
         utils.user_error("GRASS is not installed, please launch QGIS with GRASS")
 
-def applyGrassAlg(parameters,alg_name,context,feedback):
+def applyGrassAlg(alg_name,parameters,context,feedback):
     checkGrass7Installed()
     return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
 
@@ -860,6 +860,14 @@ def applyRasterCalcMax(input_a,input_b,output,
     GRASS ALGORITHMS
 """
 
+def applyVRandom(vector_layer,nb_points,output,context=None,feedback=None):
+    parameters = { 'npoints' : nb_points,
+        'output' : output,
+        'restrict' : vector_layer }
+    return applyGrassAlg("v.random",parameters,context,feedback)
+
+{ '-a' : False, '-z' : False, 'GRASS_MIN_AREA_PARAMETER' : 0.0001, 'GRASS_OUTPUT_TYPE_PARAMETER' : 0, 'GRASS_REGION_PARAMETER' : None, 'GRASS_SNAP_TOLERANCE_PARAMETER' : -1, 'GRASS_VECTOR_DSCO' : '', 'GRASS_VECTOR_EXPORT_NOCAT' : False, 'GRASS_VECTOR_LCO' : '', 'column' : '', 'column_type' : None, 'npoints' : 100, 'output' : 'TEMPORARY_OUTPUT', 'restrict' : 'E:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Source/Reservoirs/RBP_PRAIRIE.shp', 'seed' : None, 'where' : '', 'zmax' : None, 'zmin' : None }
+
 # Apply raster calculator from expression 'expr'.
 # Calculation is made on a single file and a signled band renamed 'A'.
 # Output format is Integer32.
@@ -886,13 +894,13 @@ def applyRNull(in_path,new_val,out_path,context=None,feedback=None):
     parameters = { 'map' : in_path,
                    'null' : str(new_val),
                    'output' : out_path }
-    return applyGrassAlg(parameters,"r.null",context,feedback)
+    return applyGrassAlg("r.null",parameters,context,feedback)
     
 def applyRSetNull(in_path,new_val,out_path,context=None,feedback=None):
     parameters = { 'map' : in_path,
                    'setnull' : str(new_val),
                    'output' : out_path }
-    return applyGrassAlg(parameters,"r.null",context,feedback)
+    return applyGrassAlg("r.null",parameters,context,feedback)
     
 def applyRBuffer(in_path,buffer_vals,out_path,context=None,feedback=None):
     utils.checkFileExists(in_path,"Buffer input layer ")
@@ -913,7 +921,7 @@ def applyRBuffer(in_path,buffer_vals,out_path,context=None,feedback=None):
                     '-z' : False,
                     '--type' : 'Int32',
                     '--overwrite' : False}
-    return applyGrassAlg(parameters,"r.buffer.lowmem",context,feedback)
+    return applyGrassAlg("r.buffer.lowmem",parameters,context,feedback)
     
 def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
     utils.checkFileExists(start_path,"Dispersion Start Layer ")
@@ -941,14 +949,11 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     '-i' : False,
                     '-b' : False,
                     '--overwrite' : True}
-    return applyGrassAlg(parameters,"r.cost",context,feedback)
+    return applyGrassAlg("r.cost",parameters,context,feedback)
     
     
-def applyRSeries(layers,aggr_func,range,output,context=None,feedback=None):
-    feedback.pushDebugInfo('output = ' + str(output))
-    #tmp_path = QgsProcessingUtils.generateTempFilename("test.tif")
-    #tmp_path = "D:/tmp/testrigolo.tif"
-    tmp_path = output
+def applyRSeries(layers,aggr_func,output,range=None,context=None,feedback=None):
+    # aggre_func : 0=average, 1=count, 2=median, 3=mode, 4=minimum, 6=maximum, ...
     parameters = { 
                    '-n' : False,
                    '-z' : False,
@@ -958,12 +963,12 @@ def applyRSeries(layers,aggr_func,range,output,context=None,feedback=None):
                    'GRASS_REGION_PARAMETER' : None,
                    'input' : layers,
                    'method' : [aggr_func],
-                   'output' : tmp_path,
+                   'output' : output,
                    'range' : range,
                     '--overwrite' : True }
-    applyGrassAlg(parameters,"r.series",context,feedback)
-    qgsUtils.loadRasterLayer(tmp_path,loadProject=True)
-    return tmp_path
+    applyGrassAlg("r.series",parameters,context,feedback)
+    #qgsUtils.loadRasterLayer(output,loadProject=True)
+    return output
 
     
 """

@@ -142,30 +142,49 @@ def setCustomClassesDSFL(layer,fieldname):
 def getValuesFromLayer3(layer):
     return qgsUtils.getRasterMinMedMax(layer)
     
-def mkRandomColorRasterShader(layer):
+def mkRasterShader(layer,color_ramp,classif_mode=QgsColorRampShader.Continuous):
     min, med, max = getValuesFromLayer3(layer)
     rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
     colorRamp = getRandomSingleColorRamp()
-    if not colorRamp:
+    if not color_ramp:
         utils.internal_error("Could not create color ramp")        
-    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp)
+    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,
+        colorRamp=color_ramp,classificationMode=classif_mode)
     colorRampShader.classifyColorRamp(band=1,input=layer.dataProvider())
     if colorRampShader.isEmpty():
         utils.internal_error("Empty color ramp shader")
     rasterShader.setRasterShaderFunction(colorRampShader)
     return rasterShader
     
+def mkRandomColorRasterShader(layer):
+    colorRamp = getRandomSingleColorRamp()
+    return mkRasterShader(layer,colorRamp)
+# def mkRandomColorRasterShader(layer):
+    # min, med, max = getValuesFromLayer3(layer)
+    # rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
+    # colorRamp = getRandomSingleColorRamp()
+    # if not colorRamp:
+        # utils.internal_error("Could not create color ramp")        
+    # colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp)
+    # colorRampShader.classifyColorRamp(band=1,input=layer.dataProvider())
+    # if colorRampShader.isEmpty():
+        # utils.internal_error("Empty color ramp shader")
+    # rasterShader.setRasterShaderFunction(colorRampShader)
+    # return rasterShader
+    
 def mkQuantileShaderFromColorRamp(layer,colorRamp):
-    min, med, max = getValuesFromLayer3(layer)
-    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
-                                         classificationMode=QgsColorRampShader.Quantile)
-    utils.info("about to classify")
-    colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
-    if colorRampShader.isEmpty():
-        utils.internal_error("Empty color ramp shader")
-    rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
-    rasterShader.setRasterShaderFunction(colorRampShader)
-    return rasterShader
+    return mkRasterShader(layer,colorRamp,classif_mode=QgsColorRampShader.Quantile)
+# def mkQuantileShaderFromColorRamp(layer,colorRamp):
+    # min, med, max = getValuesFromLayer3(layer)
+    # colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
+                                         # classificationMode=QgsColorRampShader.Quantile)
+    # utils.info("about to classify")
+    # colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
+    # if colorRampShader.isEmpty():
+        # utils.internal_error("Empty color ramp shader")
+    # rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
+    # rasterShader.setRasterShaderFunction(colorRampShader)
+    # return rasterShader
     
 # SBPC = Single Band Pseudo Color
 def setSBPCRasterRenderer(layer,shader):
