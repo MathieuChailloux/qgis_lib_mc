@@ -474,7 +474,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self)
         
     def tr(self, msg):
-        return QCoreApplication.translate('Params', msg)
+        return QCoreApplication.translate(self.__class__.__name__, msg)
         
     def checkWorkspaceInit(self):
         if not self.workspace:
