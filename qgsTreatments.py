@@ -160,13 +160,24 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
 def checkGrass7Installed():
     grass7 = processing.algs.grass7.Grass7Utils.Grass7Utils
     if grass7:
+        grass7.checkGrassIsInstalled()
+        if grass7.isGrassInstalled:
+            return
+        version = grass7.version
+        if version:
+            utils.debug("GRASS version = " + str(version))
+            return
+        version = grass7.installedVersion
+        if version:
+            utils.debug("GRASS version = " + str(version))
+            return
         version = grass7.installedVersion()
         if version:
             utils.debug("GRASS version = " + str(version))
-        else:
-            utils.user_error("GRASS is not installed, please launch QGIS with GRASS")
+            return
+        utils.user_error("GRASS version not found, please launch QGIS with GRASS")
     else:
-        utils.user_error("GRASS is not installed, please launch QGIS with GRASS")
+        utils.user_error("GRASS module not found, please launch QGIS with GRASS")
 
 def applyGrassAlg(alg_name,parameters,context,feedback):
     checkGrass7Installed()
