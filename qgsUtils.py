@@ -34,7 +34,7 @@ except ImportError:
 
 from qgis.gui import *
 from qgis.core import *
-from PyQt5.QtCore import QVariant, pyqtSignal
+from PyQt5.QtCore import QCoreApplication, QVariant, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog
 
 from . import utils
@@ -637,3 +637,16 @@ class LayerComboDialog:
         
     def getLayer(self):
         return self.layer
+
+
+# Base algorithm
+class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
+    def __init__(self):
+        super().__init__()
+    def tr(self, string):
+        return QCoreApplication.translate(self.__class__.__name__, string)
+    def name(self):
+        return self.ALG_NAME
+    def createInstance(self):
+        return type(self)()
+    
