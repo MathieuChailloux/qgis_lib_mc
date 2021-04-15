@@ -38,7 +38,6 @@ from qgis.core import (Qgis,
                        QgsExpression)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
-import gdal
 
 import os.path
 import sys
