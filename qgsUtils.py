@@ -474,6 +474,8 @@ def getRasterValsBis(layer):
     
 def getRasterValsAndArray(path,nodata=None):
     raster = gdal.Open(str(path))
+    if not raster:
+        utils.user_error("Could not open raster path '" + str(path) + "'")
     if(raster.RasterCount==1):
         band = raster.GetRasterBand(1)
         if nodata == None:
