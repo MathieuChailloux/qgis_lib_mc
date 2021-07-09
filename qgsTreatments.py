@@ -78,11 +78,6 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
             context.setFeedback(feedback)
         feedback.pushDebugInfo("complete_name = " + str(complete_name))
         feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
-        # context = None
-        # if context is None:
-            # context = QgsProcessingContext()
-        # if feedback is None:
-            # feedback = QgsProcessingFeedback()
         res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)
         #res = processing.runAndLoadResults(complete_name,parameters,context=context,feedback=feedback)#,onFinish=no_post_process)
         feedback.pushDebugInfo("res1 = " + str(res))
@@ -110,6 +105,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         feedback.pushDebugInfo("End run " + alg_name)
         
         
+        
 def checkGrass7Installed():
     grass7 = processing.algs.grass7.Grass7Utils.Grass7Utils
     if grass7:
@@ -118,15 +114,13 @@ def checkGrass7Installed():
             return
         version = grass7.version
         if version:
-            utils.debug("GRASS version = " + str(version))
-            return
-        version = grass7.installedVersion
-        if version:
-            utils.debug("GRASS version = " + str(version))
+            utils.debug("GRASS version1 = " + str(version))
+            utils.debug("GRASS version1 type = " + str(type(version)))
             return
         version = grass7.installedVersion()
         if version:
-            utils.debug("GRASS version = " + str(version))
+            utils.debug("GRASS version3 = " + str(version))
+            utils.debug("GRASS version3 type = " + str(type(version)))
             return
         utils.user_error("GRASS version not found, please launch QGIS with GRASS")
     else:
@@ -135,6 +129,44 @@ def checkGrass7Installed():
 def applyGrassAlg(alg_name,parameters,context,feedback):
     checkGrass7Installed()
     return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
+
+# Types normalization
+
+USE_INPUT_TYPE = -1
+
+# QGIS type converted to integer to be passed as a processing alg parameter
+# Parameter shift return integer value according to TYPES list
+# If input qgis_type is unknown, it is cast to defaultType
+# If input value is -1, it means 'Use input layer data type' and return value is 0
+def qgsTypeToInt(qgis_type,shift=False,defaultType=Qgis.Float32):
+    if isinstance(qgis_type,Qgis.DataType):
+        TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
+                 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+        typeAssoc = { Qgis.UnknownDataType :0,
+                      Qgis.Byte : 1,
+                      Qgis.Int16 : 2,
+                      Qgis.UInt16 : 3,
+                      Qgis.UInt32 : 4,
+                      Qgis.Int32 : 5,
+                      Qgis.Float32 : 6,
+                      Qgis.Float64 : 7,
+                      Qgis.CInt16 : 8,
+                      Qgis.CInt32 : 9,
+                      Qgis.CFloat32 : 10,
+                      Qgis.CFloat64 : 11 }
+        if qgis_type in typeAssoc:
+            int_value = typeAssoc[qgis_type]
+            if int_value == 0:
+                int_value = typeAssoc[defaultType]
+            if shift:
+                int_value -= 1
+            utils.debug("qgsTypeToInt " + str(qgis_type) + " = " + str(int_value))
+            return int_value
+    elif isinstance(qgis_type,int):
+        int_value = 0 if qgis_type == USE_INPUT_TYPE else qgis_type
+        return int_value
+    else:
+        utils.internal_error("No integer value associated to qgis type " + str(qgis_type))
 
 # Custom treatments
 
@@ -541,7 +573,8 @@ def applyReclassifyByTable(input,table,output,
                            nodata_val=nodata_val,out_type=Qgis.Float32,
                            boundaries_mode=1,nodata_missing=False,
                            context=None,feedback=None):
-    parameters = { 'DATA_TYPE' : out_type,
+    # Types : 0 = Byte, ...
+    parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
                    'INPUT_RASTER' : input,
                    'NODATA_FOR_MISSING' : nodata_missing,
                    'NO_DATA' : nodata_val,
@@ -581,7 +614,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
         qgsUtils.removeRaster(out_path)
     parameters = { 'ALL_TOUCH' : all_touch,
                    'BURN' : burn_val,
-                   'DATA_TYPE' : out_type,
+                   'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
                    'EXTENT' : extent,
                    'FIELD' : field,
                    'HEIGHT' : resolution,
@@ -600,17 +633,12 @@ def applyRasterization(in_path,out_path,extent,resolution,
         else:
             parameters['ALL_TOUCH'] = True
     res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
-    # context = QgsProcessingContext()
-    # feedback = QgsProcessingFeedback()
-    # res = processing.run("gdal:rasterize",parameters,context=context,feedback=feedback)["OUTPUT"]
-    #res = None
     return res
     
 def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        src_crs=None,extent=None,extent_crs=None,
-                       resolution=None,out_type=0,nodata_val=nodata_val,overwrite=False,
-                       context=None,feedback=None):
-    # { 'DATA_TYPE' : 3, 'EXTRA' : '', 'INPUT' : 'D:/Projets/BioDispersal/Tests/BousquetOrbExtended/SousTrames/forest/forest_disp_1000.tif', 'MULTITHREADING' : False, 'NODATA' : -999, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'RESAMPLING' : 0, 'SOURCE_CRS' : QgsCoordinateReferenceSystem('EPSG:2154'), 'TARGET_CRS' : QgsCoordinateReferenceSystem('EPSG:7411'), 'TARGET_EXTENT' : '693953.28055333,727528.28055333,6268374.87768497,6308149.87768497 [EPSG:2154]', 'TARGET_EXTENT_CRS' : None, 'TARGET_RESOLUTION' : 10 }
+                       resolution=None,out_type=USE_INPUT_TYPE,nodata_val=nodata_val,
+                       overwrite=False,context=None,feedback=None):
     feedbacks.setSubText("Warp")
     modes = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
              'average','mode', 'max', 'min', 'med', 'q1', 'q3']
@@ -624,7 +652,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     TYPES = ['Use input layer data type', 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32',
              'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     # Parameters
-    parameters = { 'DATA_TYPE' : out_type,
+    parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type),
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
                    'OUTPUT' : out_path,
@@ -636,11 +664,12 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                    'TARGET_RESOLUTION' : resolution }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
-def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
+def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
                    crs=None,context=None,feedback=None):
     feedbacks.setSubText("Tanslate")
+    # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
-                   'DATA_TYPE' : data_type,
+                   'DATA_TYPE' : qgsTypeToInt(data_type),
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
                    'OUTPUT' : out_path,
@@ -650,13 +679,13 @@ def applyTranslate(in_path,out_path,data_type=0,nodata_val=nodata_val,
     
 def clipRasterFromVector(raster_path,vector_path,out_path,
                          resolution=None,x_res=None,y_res=None,keep_res=True,
-                         crop_cutline=True,nodata=None,data_type=0,
+                         crop_cutline=True,nodata=None,data_type=USE_INPUT_TYPE,
                          context=None,feedback=None):
     # data type 0 = input raster type
     feedbacks.setSubText("Clip raster")
     parameters = { 'ALPHA_BAND' : False,
                    'CROP_TO_CUTLINE' : crop_cutline,
-                   'DATA_TYPE' : data_type,
+                   'DATA_TYPE' : qgsTypeToInt(data_type),
                    'INPUT' : raster_path,
                    'KEEP_RESOLUTION' : keep_res,
                    'MASK' : vector_path,
@@ -671,17 +700,19 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         parameters['SET_RESOLUTION'] = True
         parameters['X_RESOLUTION'] = x_res
         parameters['Y_RESOLUTION'] = y_res
+    utils.debug("parameters = " + str(parameters))
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
     
 def clipRasterAllTouched(raster_path,vector_path,dst_crs,
-                         out_path=None,nodata=None,data_type=0,
+                         out_path=None,nodata=None,data_type=USE_INPUT_TYPE,
                          resolution=None,context=None,feedback=None):
     feedbacks.setSubText("Clip raster at")
+    # data type 0 = input raster type
     if isinstance(vector_path,QgsVectorLayer):
         vector_path = qgsUtils.pathOfLayer(vector_path)
     extra_params = "-cutline " + str(vector_path)
     extra_params += " -crop_to_cutline -wo CUTLINE_ALL_TOUCHED=True"
-    parameters = { 'DATA_TYPE' : data_type,
+    parameters = { 'DATA_TYPE' : qgsTypeToInt(data_type),
                    'INPUT' : raster_path,
                    'NODATA' : nodata,
                    'OUTPUT' : out_path,
@@ -693,11 +724,11 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
     
 
     
-def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,
+def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     feedbacks.setSubText("Merge raster")
-    parameters = { 'DATA_TYPE' : out_type,
+    parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
                    'INPUT' : files,
                    'NODATA_INPUT' : nodata_input,
                    'NODATA_OUTPUT' : nodata_val,
@@ -706,7 +737,7 @@ def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=5,
     
                    
 def applyRasterCalcProc(input_a,output,expr,
-                    nodata_val=nodata_val,out_type=5,
+                    nodata_val=nodata_val,out_type=Qgis.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     feedbacks.setSubText("Raster Calc")
@@ -715,13 +746,14 @@ def applyRasterCalcProc(input_a,output,expr,
                    'INPUT_A' : input_a,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
-                   'RTYPE' : out_type }
+                   'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     
 # Temporary workaround to fix UnicodeDecodeError
 def applyRasterCalc(input_a,output,expr,
-                    nodata_val=nodata_val,out_type=5,
+                    nodata_val=nodata_val,out_type=Qgis.Float32,
                     context=None,feedback=None):
+    out_type = qgsTypeToInt(out_type,shift=True)
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     type_str = TYPE[out_type]
     if isinstance(input_a,QgsRasterLayer):
@@ -732,19 +764,19 @@ def applyRasterCalc(input_a,output,expr,
     return output
     
 def applyRasterCalcLT(input,output,max_val,
-                      nodata_val=nodata_val,out_type=5,
+                      nodata_val=nodata_val,out_type=Qgis.Float32,
                       context=None,feedback=None):
     expr = "less(A," + str(max_val) + ")*A+less_equal(" + str(max_val) + ",A)*" + str(nodata_val)
     return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
     
 def applyRasterCalcLE(input,output,max_val,
-                      nodata_val=nodata_val,out_type=5,
+                      nodata_val=nodata_val,out_type=Qgis.Float32,
                       context=None,feedback=None):
     expr = "less_equal(A," + str(max_val) + ")*A+less(" + str(max_val) + ",A)*" + str(nodata_val)
     return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
     
 def applyRasterCalcAB(input_a,input_b,output,expr,
-                    nodata_val=nodata_val,out_type=5,
+                    nodata_val=nodata_val,out_type=Qgis.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : 1,
@@ -754,11 +786,11 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'INPUT_B' : input_b,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
-                   'RTYPE' : out_type }
+                   'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     
 def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
-                    nodata_val=nodata_val,out_type=5,
+                    nodata_val=nodata_val,out_type=Qgis.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     if os.path.isfile(output):
@@ -783,7 +815,7 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                    'INPUT_B' : nonull_b,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : nonull_ab,
-                   'RTYPE' : out_type }
+                   'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     reset_nodata_expr = '(A==' + str(tmp_no_data_val) + ')*' + str(nodata_val)
     reset_nodata_expr += '+(A!=' + str(tmp_no_data_val) + ')*A'
@@ -792,21 +824,15 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
     # return applyRSetNull(nonull_reset,nodata_val,output)
                        
 def applyRasterCalcMult(input_a,input_b,output,
-                        nodata_val=nodata_val,out_type=5,
+                        nodata_val=nodata_val,out_type=Qgis.Float32,
                         context=None,feedback=None):
     expr = "A*B"
     return applyRasterCalcAB(input_a,input_b,output,expr,
                              nodata_val=nodata_val,out_type=out_type,
                              context=context,feedback=feedback)
-    
-# def applyRasterCalcMult_Bnonull(input_a,input_b,output,
-                               # nodata_val=nodata_val,out_type=5,
-                               # context=None,feedback=None):
-    # nonull = applyRNull(input_b,1,'TEMPORARY_OUTPUT',context=context,feedback=feedback)
-    # return applyRasterCalcAB(input_a,nonull,output,expr,nodata_val,out_type,context,feedback)
                    
 def applyRasterCalcMin(input_a,input_b,output,
-                       nodata_val=nodata_val,out_type=5,
+                       nodata_val=nodata_val,out_type=Qgis.Float32,
                        context=None,feedback=None):
     min = qgsUtils.getRastersMinMax([input_a,input_b])
     min
@@ -814,7 +840,7 @@ def applyRasterCalcMin(input_a,input_b,output,
     return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
                    
 def applyRasterCalcMax(input_a,input_b,output,
-                       nodata_val=nodata_val,out_type=5,
+                       nodata_val=nodata_val,out_type=Qgis.Float32,
                        context=None,feedback=None):
     expr = 'B*less_equal(A,B) + A*less(B,A) '
     return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
@@ -1015,10 +1041,6 @@ def applyWarpGdal(in_path,out_path,resampling_mode,
     x_max = transformed_extent.xMaximum()
     y_min = transformed_extent.yMinimum()
     y_max = transformed_extent.yMaximum()
-    #x_min = extent.xMinimum()
-    #x_max = extent.xMaximum()
-    #y_min = extent.yMinimum()
-    #y_max = extent.yMaximum()
     if not resolution:
         resolution = in_layer.rasterUnitsPerPixelX()
         utils.warn("Setting rasterization resolution to " + str(resolution))
@@ -1106,9 +1128,6 @@ def applyFilterGdalFromMaxVal(in_path,out_path,max_val,load_flag=False):
         + '+(' + str(nodata_val) + '*less(' + str(max_val) + ',A))'
         + '+(' + str(nodata_val) + '*less(A,0))')
     applyGdalCalc(in_path,out_path,expr,load_flag,more_args=['--type=Float32'])
-    # utils.executeCmdAsScript(cmd_args)
-    # res_layer = qgsUtils.loadRasterLayer(out_path)
-    # QgsProject.instance().addMapLayer(res_layer)
     
 # Applies reclassification from 'in_path' to 'out_path' according to 'reclass_dict'.
 # Dictionary contains associations of type {old_val -> new_val}.
@@ -1121,10 +1140,6 @@ def applyReclassGdalFromDict(in_path,out_path,reclass_dict,load_flag=False):
             expr += '+'
         expr += str(new_cls) + '*(A==' + str(old_cls)+ ')'
     applyGdalCalc(in_path,out_path,expr,load_flag)
-    # cmd_args.append(expr)
-    # utils.executeCmd(cmd_args)
-    # res_layer = qgsUtils.loadRasterLayer(out_path)
-    # QgsProject.instance().addMapLayer(res_layer)
     
 def applyGdalCalcAB_ANull(in_path1,in_path2,out_path,expr,load_flag=False):
     utils.debug("qgsTreatments.applyGdalCalcAB")

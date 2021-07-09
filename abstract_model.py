@@ -448,7 +448,7 @@ class DictModel(AbstractGroupModel):
         step_feedback.setCurrentStep(0)
         for cpt, n in enumerate(indexes,1):
             i = self.items[n]
-            self.applyItemWithContext(i,context,feedback)
+            self.applyItemWithContext(i,context,step_feedback)
             step_feedback.setCurrentStep(cpt)
     
 class NormalizingParamsModel(QAbstractTableModel):
