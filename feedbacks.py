@@ -64,7 +64,8 @@ def endJob():
 class ProgressFeedback(QgsProcessingFeedback):
     
     GDAL_ERROR_PREFIX = 'ERROR '
-    SET_COLOR_ERROR = 'ERROR 6: SetColorTable'
+    SET_COLOR_ERROR = 'ERROR 6:'
+    SET_COLOR_MSG = 'SetColorTable'
     FILE_NOT_FOUND_ERROR = 'FileNotFoundError'
     
     def __init__(self,dlg):
@@ -92,7 +93,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         
     def reportError(self,error,fatalError=False):
         error_msg = str(error)
-        if error_msg.startswith(self.SET_COLOR_ERROR):
+        if self.SET_COLOR_ERROR in error_msg and self.SET_COLOR_MSG in error_msg:
             utils.warn(error_msg)
         elif fatalError:
             utils.internal_error("reportError : " + error_msg)
