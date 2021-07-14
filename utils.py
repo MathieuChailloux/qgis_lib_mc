@@ -64,7 +64,8 @@ class CustomException(Exception):
 
 
 def printDate(msg):
-    print_func ("[" + str(datetime.datetime.now()) + "] " + msg)
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print_func ("[" + date_str + "] " + msg)
     
 def debug(msg):
     if debug_flag:
@@ -74,7 +75,7 @@ def info(msg):
     printDate("<font color=\"black\">[info] " + msg + "</font>")
     
 def warn(msg):
-    printDate("<font color=\"orange\">[warn] " + html.escape(msg) + "</font>")
+    printDate("<font color=\"orange\">[warn] " + msg + "</font>")
     
 def mkBoldRed(msg):
     return "<b><font color=\"red\">" + msg + "</font></b>"
