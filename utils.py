@@ -35,6 +35,7 @@ import time
 import html
 import platform
 import glob
+import csv
 
 file_dir = os.path.dirname(__file__)
 if file_dir not in sys.path:
@@ -125,12 +126,15 @@ def joinPath(p1,p2):
     res = pp1.joinpath(p2)
     return res.as_posix()
     
+def mkDir(dirname):
+    if not os.path.isdir(dirname):
+        info("Creating directory '" + dirname + "'")
+        os.makedirs(dirname)
+    return dirname
+    
 def createSubdir(par_dir,name):
     path = joinPath(par_dir,name)
-    if not os.path.isdir(path):
-        info("Creating directory '" + path + "'")
-        os.makedirs(path)
-    return path
+    return mkDir(path)
     
 def pathEquals(p1,p2):
     if p1 and p2:
@@ -143,9 +147,7 @@ def pathEquals(p1,p2):
 def fileExists(fname,prefix=""):
     if not fname:
         return False
-    print("fe 1")
     path = pathlib.Path(fname)
-    print("fe 2")
     if not path.exists():
         return False
     if not (os.path.isfile(fname)):
@@ -172,6 +174,23 @@ def writeFile(fname,str):
     with open(fname,"w",encoding="utf-8") as f:
         f.write(str)
         
+def parseAssocFileCSV(fname,fieldnames):
+    res = {}
+    if os.path.isfile(fname):
+        with open(fname,newline='') as csvfile:
+            reader = csv.DictReader(csvfile,fieldnames=fieldnames,delimiter=';')
+            for row in reader:
+                try:
+                    model, eff = row['Modele'], float(row['Eff'])
+                    if model:
+                        res[model] = eff
+                except ValueError:
+                    user_error("Could not parse " + str(row))
+                except TypeError:
+                    user_error("Could not parse " + str(row))
+    else:
+        raise Exception("File " + str(fname) + " does not exist")
+    return res
         
 # PATH UTILITIES
 

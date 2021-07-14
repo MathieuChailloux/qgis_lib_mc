@@ -25,6 +25,7 @@
 
 import time
 import sys
+import datetime
 
 from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
 
@@ -45,11 +46,27 @@ def beginSection(msg):
 def endSection():
     if progressFeedback:
         progressFeedback.endSection()
+        progressFeedback.setProgress(100)
+        
+def setProgressText(text):
+    if progressFeedback:
+        progressFeedback.setProgressText(text)
+        
+def setSubText(text):
+    if progressFeedback:
+        progressFeedback.setSubText(text)
+        
+def endJob():
+    if progressFeedback:
+        progressFeedback.endJob()
+    
 
 class ProgressFeedback(QgsProcessingFeedback):
     
-    GDAL_ERROR_PREFIX = 'ERROR 1'
-    SET_COLOR_ERROR = 'ERROR 6: SetColorTable'
+    GDAL_ERROR_PREFIX = 'ERROR '
+    SET_COLOR_ERROR = 'ERROR 6:'
+    SET_COLOR_MSG = 'SetColorTable'
+    FILE_NOT_FOUND_ERROR = 'FileNotFoundError'
     
     def __init__(self,dlg):
         self.dlg = dlg
@@ -62,8 +79,11 @@ class ProgressFeedback(QgsProcessingFeedback):
         utils.debug(msg)
         
     def pushConsoleInfo(self,msg):
+        #if msg.startswith(self.GDAL_ERROR_PREFIX):
         if msg.startswith(self.GDAL_ERROR_PREFIX):
             self.reportError(msg)
+        else:
+            utils.debug(msg)
         
     def pushDebugInfo(self,msg):
         utils.debug(msg)
@@ -73,26 +93,29 @@ class ProgressFeedback(QgsProcessingFeedback):
         
     def reportError(self,error,fatalError=False):
         error_msg = str(error)
-        if error_msg.startswith(self.SET_COLOR_ERROR):
+        if self.SET_COLOR_ERROR in error_msg and self.SET_COLOR_MSG in error_msg:
             utils.warn(error_msg)
         elif fatalError:
             utils.internal_error("reportError : " + error_msg)
+        elif error_msg.startswith(self.FILE_NOT_FOUND_ERROR):
+            utils.user_error(error_msg)
         else:
-            utils.warn(error_msg)
+            utils.internal_error(error_msg)
+            #utils.warn(error_msg)
         
     def beginSection(self,txt):
         self.sectionText = txt
         self.dlg.lblProgress.setText(txt)
         self.setProgress(0)
         self.start_time = time.time()
-        utils.info(self.sectionHeader + " BEGIN : " + txt)
+        self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
         
     def endSection(self):
         if self.sectionText:
             self.setSubText("DONE")
         self.end_time = time.time()
         diff_time = self.end_time - self.start_time
-        utils.info(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
+        self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
         self.sectionText = ""
             
     def setSubText(self,txt):
@@ -107,24 +130,24 @@ class ProgressFeedback(QgsProcessingFeedback):
         QGuiApplication.processEvents()
         
     def setProgress(self,value):
-        #utils.debug("setProgress " + str(value))
         fv = float(value)
-        utils.debug("fv = " + str(fv))
+        # self.pushDebugInfo("fv = " + str(fv))
         if str(fv) == 'inf':
             self.pushInfo("Unexpected value in progress bar : " + str(value))
         else:
             self.progressBar.setValue(value)
         
     def setPercentage(self,percentage):
-        utils.info("setperc")
+        pass
+        #utils.info("setperc")
         #utils.internal_error("percentage : " + str(percentage))
         
     def focusLogTab(self):
-        self.dlg.mTabWidget.setCurrentWidget(self.dlg.logTab)
+        # self.dlg.mTabWidget.setCurrentWidget(self.dlg.logTab)
         self.dlg.txtLog.verticalScrollBar().setValue(self.dlg.txtLog.verticalScrollBar().maximum())
         
     def endJob(self):
-        self.setProgress(100)
+        # self.setProgress(100)
         self.focusLogTab()
         
     def initGui(self):
@@ -153,17 +176,21 @@ class FileFeedback(QgsProcessingFeedback):
     def __init__(self,fname):
         self.fname = fname
         super().__init__()
+        self.sectionText = ""
+        self.sectionHeader = "********"
         
     def printFunc(self,msg):
         with open(self.fname,"a") as f:
-            f.write(str(msg.encode('utf-8')) + "\n")
-    #f.write(str(msg + "\n"))
+            #f.write(str(msg.encode('utf-8')) + "\n")
+            f.write(str("[" + str(datetime.datetime.now()) + "] " + msg + "\n"))
         
     def pushCommandInfo(self,msg):
         self.printFunc(msg)
         
     def pushConsoleInfo(self,msg):
-        self.printFunc(msg)
+        #self.printFunc(msg)
+        if msg.startswith(ProgressFeedback.GDAL_ERROR_PREFIX):
+            self.reportError(msg)
         
     def pushDebugInfo(self,msg):
         self.printFunc(msg)
@@ -175,6 +202,17 @@ class FileFeedback(QgsProcessingFeedback):
         #print("reportError : " + str(error))
         self.printFunc("reportError : " + str(error.encode('utf-8')))
         self.printFunc("reportError : " + str(error))
+        
+    def beginSection(self,txt):
+        self.sectionText = txt
+        self.start_time = time.time()
+        self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
+        
+    def endSection(self):
+        self.end_time = time.time()
+        diff_time = self.end_time - self.start_time
+        self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
+        self.sectionText = ""
         
     def setProgressText(self,text):
         pass

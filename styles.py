@@ -28,7 +28,6 @@ import random
 from PyQt5.QtGui import QColor
 from qgis.core import (QgsColorRampShader,
                        QgsRasterShader,
-                       QgsColorRampShader,
                        QgsColorBrewerColorRamp,
                        QgsGradientColorRamp,
                        QgsCptCityColorRamp,
@@ -36,6 +35,7 @@ from qgis.core import (QgsColorRampShader,
                        QgsRasterBandStats,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
+                       QgsGraduatedSymbolRenderer,
                        QgsStyle)
                        
 from . import utils, qgsUtils
@@ -51,6 +51,8 @@ singleColorRampList = [ 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds' ]
 
 def getDefaultStyle():
     return QgsStyle.defaultStyle()
+    
+# Color utilities
     
 def getPresetGnYlRd():
     colors = [redCol,yellowCol,greenCol]
@@ -75,42 +77,121 @@ def getRandomSingleColorRamp():
     rampName = random.choice(singleColorRampList)
     return mkColorRamp(rampName,invert=True)  
     
+def setRenderer(layer,renderer):
+    if not renderer:
+        utils.internal_error("Could not create renderer")
+    layer.setRenderer(renderer)
+    utils.info("about to repaint")
+    layer.triggerRepaint()
+    
+# Vector utilities
+
+def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Jenks):
+    # classif = QgsClassificationQuantile()
+    # classes = classif.classes(layer,fieldname,nb_classes)
+    renderer = QgsGraduatedSymbolRenderer(attrName=fieldname)
+    renderer.setSourceColorRamp(color_ramp)
+    renderer.updateClasses(layer,classif_method,nb_classes)
+    # renderer.setGraduatedMethod(QgsGraduatedSymbolRenderer.GraduatedColor)
+    # renderer.setClassificationMethod(classif)
+    return renderer
+    
+def setGraduatedStyle(layer,fieldname,color_ramp_name):
+    color_ramp = mkColorRamp(color_ramp_name)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+    
+def setGreenGraduatedStyle(layer,fieldname):
+    color_ramp = mkColorRamp('Greens')
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+def setRdYlGnGraduatedStyle(layer,fieldname):
+    color_ramp = mkColorRamp('RdYlGn')
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+    setRenderer(layer,renderer)
+    
+def setCustomClasses(layer,renderer,class_bounds):
+    nb_bounds = len(class_bounds)
+    renderer.updateClasses(layer,nb_bounds)
+    for idx, b in enumerate(class_bounds):
+        if idx > 0:
+            renderer.updateRangeUpperValue(idx-1,b)
+        renderer.updateRangeLowerValue(idx,b)
+        
+def setCustomClasses2(layer,fieldname,color_ramp,class_bounds):
+    nb_bounds = len(class_bounds)
+    nb_classes = nb_bounds + 1
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=nb_classes)
+    renderer.updateClasses(layer,nb_classes)
+    for idx, b in enumerate(class_bounds,1):
+        renderer.updateRangeUpperValue(idx - 1,b)
+        renderer.updateRangeLowerValue(idx,b)
+    setRenderer(layer,renderer)
+    
+def setCustomClassesDSFL(layer,fieldname):
+    class_bounds = [0,10,20,25,35]
+    color_ramp = getGradientColorRampRdYlGn()
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5)
+    setCustomClasses(layer,renderer,class_bounds)
+    setRenderer(layer,renderer)
+    
+# Raster utilities
+    
 def getValuesFromLayer3(layer):
     return qgsUtils.getRasterMinMedMax(layer)
     
-def mkRandomColorRasterShader(layer):
+def mkRasterShader(layer,color_ramp,classif_mode=QgsColorRampShader.Continuous):
     min, med, max = getValuesFromLayer3(layer)
     rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
     colorRamp = getRandomSingleColorRamp()
-    if not colorRamp:
+    if not color_ramp:
         utils.internal_error("Could not create color ramp")        
-    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp)
+    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,
+        colorRamp=color_ramp,classificationMode=classif_mode)
     colorRampShader.classifyColorRamp(band=1,input=layer.dataProvider())
     if colorRampShader.isEmpty():
         utils.internal_error("Empty color ramp shader")
     rasterShader.setRasterShaderFunction(colorRampShader)
     return rasterShader
     
+def mkRandomColorRasterShader(layer):
+    colorRamp = getRandomSingleColorRamp()
+    return mkRasterShader(layer,colorRamp)
+# def mkRandomColorRasterShader(layer):
+    # min, med, max = getValuesFromLayer3(layer)
+    # rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
+    # colorRamp = getRandomSingleColorRamp()
+    # if not colorRamp:
+        # utils.internal_error("Could not create color ramp")        
+    # colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp)
+    # colorRampShader.classifyColorRamp(band=1,input=layer.dataProvider())
+    # if colorRampShader.isEmpty():
+        # utils.internal_error("Empty color ramp shader")
+    # rasterShader.setRasterShaderFunction(colorRampShader)
+    # return rasterShader
+    
 def mkQuantileShaderFromColorRamp(layer,colorRamp):
-    min, med, max = getValuesFromLayer3(layer)
-    colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
-                                         classificationMode=QgsColorRampShader.Quantile)
-    colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
-    if colorRampShader.isEmpty():
-        utils.internal_error("Empty color ramp shader")
-    rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
-    rasterShader.setRasterShaderFunction(colorRampShader)
-    return rasterShader
+    return mkRasterShader(layer,colorRamp,classif_mode=QgsColorRampShader.Quantile)
+# def mkQuantileShaderFromColorRamp(layer,colorRamp):
+    # min, med, max = getValuesFromLayer3(layer)
+    # colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,colorRamp=colorRamp,
+                                         # classificationMode=QgsColorRampShader.Quantile)
+    # utils.info("about to classify")
+    # colorRampShader.classifyColorRamp(classes=5,band=1,input=layer.dataProvider())
+    # if colorRampShader.isEmpty():
+        # utils.internal_error("Empty color ramp shader")
+    # rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
+    # rasterShader.setRasterShaderFunction(colorRampShader)
+    # return rasterShader
     
 # SBPC = Single Band Pseudo Color
 def setSBPCRasterRenderer(layer,shader):
     if not shader:
         utils.internal_error("Could not create raster shader")
     renderer = QgsSingleBandPseudoColorRenderer(input=layer.dataProvider(),band=1,shader=shader)
-    if not renderer:
-        utils.internal_error("Could not create renderer")
-    layer.setRenderer(renderer)
-    layer.triggerRepaint()
+    setRenderer(layer,renderer)
     
 def setRandomColorRasterRenderer(layer):
     rasterShader = mkRandomColorRasterShader(layer)
@@ -139,13 +220,20 @@ def mkRendererPalettedGnYlRd(layer):
     classData = QgsPalettedRasterRenderer.classDataFromRaster(pr,1,ramp=colorRamp)
     renderer = QgsPalettedRasterRenderer(pr,1,classes=classData)
     return renderer
-    
+        
 def setRendererPalettedGnYlRd(layer):
     renderer = mkRendererPalettedGnYlRd(layer)
-    if not renderer:
-        utils.internal_error("Could not create renderer")
-    layer.setRenderer(renderer)
-    layer.triggerRepaint()
+    setRenderer(layer,renderer)
+    
+def setLightingQuantileStyle(layer):
+    utils.info("setLightingQuantileStyle")
+    colorRamp = mkColorRamp('Inferno')
+    if not colorRamp:
+        assert(False)
+    shader = mkQuantileShaderFromColorRamp(layer,colorRamp)
+    if not shader:
+        assert(False)
+    setSBPCRasterRenderer(layer,shader)
     
 # def mkColorRampShaderPalettedGnYlRd(valueList,colorList):
     # lst =  []
