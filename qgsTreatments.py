@@ -144,8 +144,8 @@ def qgsTypeToInt(qgis_type,shift=False,defaultType=Qgis.Float32):
                  'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
         typeAssoc = { Qgis.UnknownDataType :0,
                       Qgis.Byte : 1,
-                      Qgis.Int16 : 2,
-                      Qgis.UInt16 : 3,
+                      Qgis.UInt16 : 2,
+                      Qgis.Int16 : 3,
                       Qgis.UInt32 : 4,
                       Qgis.Int32 : 5,
                       Qgis.Float32 : 6,
