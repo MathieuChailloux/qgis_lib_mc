@@ -254,13 +254,31 @@ def isMultipartLayer(layer):
     return is_multi
     
 # Returns smallest unisgned type (GDAL type) in which max_val can be represented
-def getGDALTypeAndND(max_val):
+def getGDALUnsignedType(max_val):
+    if max_val < 256:
+        return gdal.GDT_Byte
+    elif max_val < 65536:
+        return gdal.GDT_UInt16
+    else:
+        return gdal.GDT_UInt32
+
+# Returns smallest unisgned type (GDAL type) in which max_val can be represented
+def getGDALUnsignedTypeAndND(max_val):
     if max_val < 255:
         return gdal.GDT_Byte, 255
     elif max_val < 65535:
-        return gdal.GDT_UInt16, 65536
+        return gdal.GDT_UInt16, 65535
     else:
         return gdal.GDT_UInt32, sys.maxsize
+    
+# Returns smallest unisgned type (GDAL type) in which max_val can be represented
+# def getGDALTypeAndND(max_val):
+    # if max_val < 255:
+        # return gdal.GDT_Byte, 255
+    # elif max_val < 65535:
+        # return gdal.GDT_UInt16, 65535
+    # else:
+        # return gdal.GDT_UInt32, sys.maxsize
         
 # Returns maximum value that can be represented in input unsigned type (QGIS type)
 def getQGISTypeMaxVal(type):
