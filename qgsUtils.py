@@ -411,7 +411,9 @@ def getLayerAssocs(layer,key_field,val_field):
         else:
             assoc[k] = [v]
     return assoc
-    
+   
+""" Raster utilities """
+   
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
@@ -570,6 +572,8 @@ def getVectorVals(layer,field_name):
     idx = layer.dataProvider().fieldNameIndex(field_name)
     return layer.uniqueValues(idx)
 
+""" GPKG """ 
+
 # Geopackages 'fid'
 def getMaxFid(layer):
     max = 1
@@ -589,7 +593,9 @@ def normFids(layer):
         #f.setId(max_fid)
         max_fid += 1
     layer.commitChanges()
-    
+
+
+""" UI utilities """    
     
 # Opens file dialog in open mode
 def openFileDialog(parent,msg="",filter=""):
@@ -659,6 +665,8 @@ class LayerComboDialog:
         return self.layer
 
 
+""" Processing utlities """
+
 # Base algorithm
 class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
     def __init__(self):
@@ -669,4 +677,19 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
         return self.ALG_NAME
     def createInstance(self):
         return type(self)()
+    def parameterAsSourceLayer(self,parameters,paramName,context,feedback=None):
+        source = self.parameterAsSource(parameters,paramName,context)
+        if source:
+            layer = source.materialize(QgsFeatureRequest(),feedback=feedback)
+        else:
+            layer = None
+        return source, layer
     
+def checkPluginInstalled(pluginName):
+    pluginList = QgsProviderRegistry.instance().pluginList()
+    utils.debug("pluginList = " + str(pluginList))
+    return (pluginName in pluginList)
+    
+    
+def mkProcTmpPath(fname):
+    return QgsProcessingUtils.generateTempFilename(fname)

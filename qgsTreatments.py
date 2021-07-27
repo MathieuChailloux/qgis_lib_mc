@@ -324,6 +324,7 @@ def extractByExpression(in_layer,expr,out_layer,fail_out=None,context=None,feedb
 # predicate = 0 <=> intersection
 def extractByLoc(in_layer,loc_layer,out_layer,predicate=[0],context=None,feedback=None):
     parameters = { 'PREDICATE' : predicate,
+                   'INTERSECT' : loc_layer,
                    'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","extractbylocation",parameters,context=context,feedback=feedback)
@@ -334,6 +335,14 @@ def selectByExpression(in_layer,expr,context=None,feedback=None):
                    'INPUT' : in_layer,
                    'METHOD' : 0 }
     res = applyProcessingAlg("qgis","selectbyexpression",parameters,context=context,feedback=feedback)
+    return res
+        
+def selectByLoc(source_layer,intersect_layer,method=0,predicate=[0],context=None,feedback=None):
+    parameters = { 'INPUT' : source_layer,
+                   'INTERSECT' : intersect_layer,
+                   'METHOD' : method,
+                   'PREDICATE' : predicate }
+    res = applyProcessingAlg("native","selectbylocation",parameters,context=context,feedback=feedback)
     return res
     
 def saveSelectedAttributes(in_layer,out_layer,context=None,feedback=None):
