@@ -96,21 +96,25 @@ def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5,classif_method=Q
     # renderer.setClassificationMethod(classif)
     return renderer
     
-def setGraduatedStyle(layer,fieldname,color_ramp_name):
-    color_ramp = mkColorRamp(color_ramp_name)
-    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
+def setGraduatedStyle(layer,fieldname,color_ramp_name,invert_ramp=False,
+        classif_method=QgsGraduatedSymbolRenderer.Jenks):
+    color_ramp = mkColorRamp(color_ramp_name,invert=invert_ramp)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
     setRenderer(layer,renderer)
     
     
 def setGreenGraduatedStyle(layer,fieldname):
-    color_ramp = mkColorRamp('Greens')
-    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
-    setRenderer(layer,renderer)
+    setGraduatedStyle(layer,fieldname,'Greens')
+    # color_ramp = mkColorRamp('Greens')
+    # renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
+    # setRenderer(layer,renderer)
     
-def setRdYlGnGraduatedStyle(layer,fieldname):
-    color_ramp = mkColorRamp('RdYlGn')
-    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp)
-    setRenderer(layer,renderer)
+def setRdYlGnGraduatedStyle(layer,fieldname,invert_ramp=False,
+        classif_method=QgsGraduatedSymbolRenderer.Jenks):
+    setGraduatedStyle(layer,fieldname,'RdYlGn',invert_ramp=invert_ramp,classif_method=classif_method)
+    # color_ramp = mkColorRamp('RdYlGn')
+    # renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
+    # setRenderer(layer,renderer)
     
 def setCustomClasses(layer,renderer,class_bounds):
     nb_bounds = len(class_bounds)
