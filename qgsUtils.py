@@ -55,6 +55,12 @@ def qgisTypeIsInteger(t):
     int_types = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32]
     return (t in int_types)
     
+def isVectorLayer(layer):
+    return layer.type() == QgsMapLayer.VectorLayer
+    
+def isRasterLayer(layer):
+    return layer.type() == QgsMapLayer.RasterLayer
+    
 # Delete raster file and associated xml file
 def removeRaster(path):
     if isLayerLoaded(path):
@@ -669,6 +675,8 @@ class LayerComboDialog:
 
 # Base algorithm
 class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
+    INPUT = 'INPUT'
+    OUTPUT = 'OUTPUT'
     def __init__(self):
         super().__init__()
     def tr(self, string):
@@ -677,6 +685,8 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
         return self.ALG_NAME
     def createInstance(self):
         return type(self)()
+    def mkTmpPath(self,fname):
+        return QgsProcessingUtils.generateTempFilename(fname)
     def parameterAsSourceLayer(self,parameters,paramName,context,feedback=None):
         source = self.parameterAsSource(parameters,paramName,context)
         if source:
