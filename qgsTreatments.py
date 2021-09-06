@@ -855,7 +855,7 @@ def applyRasterCalcMax(input_a,input_b,output,
     expr = 'B*less_equal(A,B) + A*less(B,A) '
     return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
   
-def applyProximity(input,output,classes=[],band=1,units=0,context=None,feedback=None):
+def applyProximity(input,output,classes='',band=1,units=0,context=None,feedback=None):
     # { 'BAND' : 1, 'DATA_TYPE' : 5, 'EXTRA' : '', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/data/clc_lines_raster.tif', 'MAX_DISTANCE' : 0, 'NODATA' : 0, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'REPLACE' : 0, 'UNITS' : 0, 'VALUES' : '1,2,3,4,5' }
     parameters = {
         'INPUT' : input,
