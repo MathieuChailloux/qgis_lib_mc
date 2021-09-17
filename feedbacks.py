@@ -35,33 +35,33 @@ from . import qgsUtils
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QGuiApplication
 
-progressFeedback = None
+# progressFeedback = None
 
-def beginSection(msg):
-    if progressFeedback:
-        progressFeedback.beginSection(msg)
-    else:
-        utils.debug("No progress feedback")
+# def beginSection(msg):
+    # if progressFeedback:
+        # progressFeedback.beginSection(msg)
+    # else:
+        # utils.debug("No progress feedback")
         
-def endSection():
-    if progressFeedback:
-        progressFeedback.endSection()
-        progressFeedback.setProgress(100)
+# def endSection():
+    # if progressFeedback:
+        # progressFeedback.endSection()
+        # progressFeedback.setProgress(100)
         
-def setProgressText(text):
-    if progressFeedback:
-        progressFeedback.setProgressText(text)
+# def setProgressText(text):
+    # if progressFeedback:
+        # progressFeedback.setProgressText(text)
         
-def setSubText(text):
-    if progressFeedback:
-        progressFeedback.setSubText(text)
+# def setSubText(text):
+    # if progressFeedback:
+        # progressFeedback.setSubText(text)
         
-def endJob():
-    if progressFeedback:
-        progressFeedback.endJob()
+# def endJob():
+    # if progressFeedback:
+        # progressFeedback.endJob()
     
 
-class ProgressFeedback(QgsProcessingFeedback):
+class TabProgressFeedback(QgsProcessingFeedback):
     
     GDAL_ERROR_PREFIX = 'ERROR '
     SET_COLOR_ERROR = 'ERROR 6:'
@@ -73,35 +73,68 @@ class ProgressFeedback(QgsProcessingFeedback):
         self.progressBar = dlg.progressBar
         self.sectionText = ""
         self.sectionHeader = "********"
+        self.debug_flag = False
+        if not self.dlg.txtLog:
+            raise utils.CustomException("No 'txtLog' widget in dialog")
+        if not self.dlg.lblProgress:
+            raise utils.CustomException("No 'lblProgress' widget in dialog")
         super().__init__()
         
+    def print_func(self,msg):
+        self.dlg.txtLog.append(msg)
+
+    def printDate(self,msg):
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.print_func ("[" + date_str + "] " + msg)
+        
     def pushCommandInfo(self,msg):
-        utils.debug(msg)
+        self.pushDebugInfo(msg)
         
     def pushConsoleInfo(self,msg):
-        #if msg.startswith(self.GDAL_ERROR_PREFIX):
         if msg.startswith(self.GDAL_ERROR_PREFIX):
             self.reportError(msg)
         else:
-            utils.debug(msg)
+            self.pushDebugInfo(msg)
         
     def pushDebugInfo(self,msg):
-        utils.debug(msg)
+        if self.debug_flag:
+            self.printDate("<font color=\"gray\">[debug] " + msg + "</font>")
         
     def pushInfo(self,msg):
-        utils.info(msg)
+        self.printDate("<font color=\"black\">[info] " + msg + "</font>")
+        
+    def pushWarning(self,msg):
+        self.printDate("<font color=\"orange\">[warn] " + msg + "</font>")
+    
+    def mkBoldRed(self,msg):
+        return "<b><font color=\"red\">" + msg + "</font></b>"
+        
+    def error_msg(self,msg,prefix=""):
+        self.printDate(mkBoldRed("[" + prefix + "] " + msg))
+        
+    def user_error(self,msg):
+        self.error_msg(msg,"user error")
+        raise utils.CustomException(msg)
+        
+    def internal_error(msg):
+        self.error_msg(msg,"internal error")
+        raise utils.CustomException(msg)
+        
+    def todo_error(msg):
+        self.error_msg(msg,"Feature not yet implemented")
+        raise utils.CustomException(msg)
         
     def reportError(self,error,fatalError=False):
         error_msg = str(error)
         if self.SET_COLOR_ERROR in error_msg and self.SET_COLOR_MSG in error_msg:
-            utils.warn(error_msg)
+            self.pushWarning(error_msg)
         elif fatalError:
-            utils.internal_error("reportError : " + error_msg)
+            self.internal_error("reportError : " + error_msg)
         elif error_msg.startswith(self.FILE_NOT_FOUND_ERROR):
-            utils.user_error(error_msg)
+            self.user_error(error_msg)
         else:
-            utils.internal_error(error_msg)
-            #utils.warn(error_msg)
+            self.internal_error(error_msg)
+            #self.pushWarning(error_msg)
         
     def beginSection(self,txt):
         self.sectionText = txt
@@ -161,7 +194,7 @@ class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):
  
     def __init__(self,nb_steps,feedback):
         if nb_steps == 0:
-            utils.user_error("No steps in ProgressMultiStepFeedback initialization (empty model ?)")
+            raise utils.CustomException("No steps in ProgressMultiStepFeedback initialization (empty model ?)")
         self.nb_steps = nb_steps
         self.step_range = 100 / nb_steps
         self.feedback = feedback

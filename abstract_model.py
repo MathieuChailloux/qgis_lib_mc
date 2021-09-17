@@ -69,15 +69,16 @@ class AbstractGroupItem:
 # Array elements order must be fixed.
 class ArrayItem(AbstractGroupItem):
     
-    def __init__(self,arr):
+    def __init__(self,arr,feedback=None):
         self.arr = arr
         self.nb_fields = len(arr)
+        self.feedback = feedback
         
     def getNField(self,n):
         if n < self.nb_fields:
             return self.arr[n]
         else:
-            utils.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
+            self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             return None
             #assert false
             
@@ -94,13 +95,14 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict,fields=None):
+    def __init__(self,dict,fields=None,feedback=None):
         if not fields:
             fields = list(dict.keys())
         self.field_to_idx = {f : fields.index(f) for f in fields}
         self.idx_to_fields = {fields.index(f) : f for f in fields}
         self.nb_fields = len(fields)
         self.dict = dict
+        self.feedback = feedback
         
     def __str__(self):
         return str(self.dict)
@@ -111,13 +113,14 @@ class DictItem(AbstractGroupItem):
         self.idx_to_fields = {fields.index(f) : f for f in fields}
         self.nb_fields = len(fields)
         
+    # getNField is used by data function in DictModel to display value in table
     def getNField(self,n):
         if n < self.nb_fields:
             return self.dict[self.idx_to_fields[n]]
         else:
-            utils.debug("getNField " + str(n))
-            utils.debug("item fields = " + str(self.dict.keys()))
-            utils.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
+            self.feedback.pushDebugInfo("getNField " + str(n))
+            self.feedback.pushDebugInfo("item fields = " + str(self.dict.keys()))
+            self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             return None
             #utils.internal_error("Accessing " + str(n) + " field >= " + str(self.nb_fields))
             
@@ -132,7 +135,7 @@ class DictItem(AbstractGroupItem):
         
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
-        utils.debug("item = " + str(self))
+        self.pushDebugInfo("item = " + str(self))
         for k,v in self.dict.items():
             utils.debug(str(v))
             xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
@@ -145,10 +148,11 @@ class DictItem(AbstractGroupItem):
 # Used for parameters for instance.
 class FieldsModel(QAbstractTableModel):
 
-    def __init__(self,parent,dict):
+    def __init__(self,parent,dict,feedback=None):
         QAbstractTableModel.__init__(self)
         self.dict = dict
         self.fields = dict.keys()
+        self.feedback = feedback
         
     # Number of rows = numberf of fields
     def rowCount(self,parent=QModelIndex()):
@@ -187,9 +191,10 @@ class FieldsModel(QAbstractTableModel):
 # Items must implement AbstractGroupItem class.
 class AbstractGroupModel(QAbstractTableModel):
 
-    def __init__(self,parent,fields):
+    def __init__(self,parent,fields,feedback=None):
         QAbstractTableModel.__init__(self)
         self.fields = fields
+        self.feedback = feedback
         self.items = []
         self.orders = {}
 
@@ -197,9 +202,12 @@ class AbstractGroupModel(QAbstractTableModel):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
         return res
         
+    def tr(self, msg):
+        return QCoreApplication.translate(self.__class__.__name__, msg)
+        
     def checkNotEmpty(self):
         if len(self.items) == 0:
-            utils.internal_error("Empty buffer model")
+            self.feedback.internal_error("Empty buffer model")
         
     def getItems(self):
         return self.items
@@ -211,10 +219,9 @@ class AbstractGroupModel(QAbstractTableModel):
         if n < self.rowCount():
             return self.items[n]
         else:
-            utils.warn("[" + self.__class__.__name__ + "] Unexpected index " + str(n))
+            self.feedback.pushWarning("[" + self.__class__.__name__
+                + "] Unexpected index " + str(n))
             return None
-            # utils.internal_error("[" + self.__class__.__name__ + "] Unexpected index " + str(n))
-            # return None
         
     def rowCount(self,parent=QModelIndex()):
         return len(self.items)
@@ -225,10 +232,11 @@ class AbstractGroupModel(QAbstractTableModel):
     def headerData(self,col,orientation,role):
         if col >= len(self.fields):
             pass
-            #utils.warn("Header out of bounds : " + self.__class__.__name__
+            #utils.pushWarning("Header out of bounds : " + self.__class__.__name__
             #            + " " + str(col) + " " + str(self.fields))
         elif orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return QVariant(self.fields[col])
+            #return QVariant(self.fields[col])
+            return QVariant(self.tr(self.fields[col]))
         return QVariant()
             
     # This function is called by Qt to display information at 'index' position.
@@ -251,8 +259,8 @@ class AbstractGroupModel(QAbstractTableModel):
             
     # This function is called by Qt when the view is modified at 'index' position.
     def setData(self, index, value, role):
-        utils.debug("setData (" + str(index.row()) + ","
-                    + str(index.column()) + ") : " + str(value))
+        self.feedback.pushDebugInfo("setData (" + str(index.row()) + ","
+            + str(index.column()) + ") : " + str(value))
         if role == Qt.EditRole:
             item = self.getNItem(index.row())
             item.updateNField(index.column(),value)
@@ -266,11 +274,10 @@ class AbstractGroupModel(QAbstractTableModel):
     # Add new item in model if not already existing.
     # layoutChanged signal must be emitted to update view.
     def addItem(self,item):
-        utils.debug("addItem")
         for i in self.items:
             if i.equals(item):
-                warn("Item " + str(item) + " already exists")
-                return
+                self.reportError("Item " + str(item) + " already exists")
+                # return
         self.items.append(item)
         self.insertRow(0)
         self.layoutChanged.emit()
@@ -283,7 +290,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # so only unique rows are extracted to delete items.
     # layoutChanged signal must be emitted to update view.
     def removeItems(self,indexes):
-        utils.debug("[removeItems] nb of items = " + str(len(self.items)))
+        self.feedback.pushDebugInfo("[removeItems] nb of items = " + str(len(self.items)))
         rows = sorted(set([i.row() for i in indexes]))
         self.removeItemsFromRows(rows)
         
@@ -291,7 +298,7 @@ class AbstractGroupModel(QAbstractTableModel):
         n = 0
         for row in rows:
             roww = row - n
-            utils.debug("[removeItems] Deleting row " + str(roww))
+            self.feedback.pushDebugInfo("[removeItems] Deleting row " + str(roww))
             del self.items[roww]
             n += 1
         self.layoutChanged.emit()
@@ -299,7 +306,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # Apply items for 'indexes' (position in item list, not index from Qt selection)
     # If no 'indexes' given, apply each item
     def applyItems(self,indexes=None):
-        utils.debug("[applyItems]")
+        self.feedback.pushDebugInfo("[applyItems]")
         if not indexes:
             indexes = range(0,len(self.items))
         for n in indexes:
@@ -331,12 +338,12 @@ class AbstractGroupModel(QAbstractTableModel):
         # self.layoutChanged.emit()
         
     def upgradeElem(self,row):
-        utils.debug("upgradeElem " + str(row))
+        self.feedback.pushDebugInfo("upgradeElem " + str(row))
         if row > 0:
             self.swapItems(row -1, row)
         
     def downgradeElem(self,row):
-        utils.debug("downgradeElem " + str(row))
+        self.feedback.pushDebugInfo("downgradeElem " + str(row))
         if row < len(self.items) - 1:
             self.swapItems(row, row + 1)
             
@@ -348,8 +355,9 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,parent,fields):
+    def __init__(self,parent,fields,feedback=None):
         AbstractGroupModel.__init__(self,parent,fields)
+        self.feedback = feedback
         
     def sort(self,col,order):
         sorted_items = sorted(self.items, key=lambda i: i.dict[i.idx_to_fields[col]])
@@ -367,35 +375,31 @@ class DictModel(AbstractGroupModel):
     def itemExists(self,item):
         matching_item = self.getMatchingItem(item)
         return (matching_item != None)
-        # for i in self.items:
-            # if i.equals(item):
-                # return True
-        # return False
         
     def addItem(self,item):
-        utils.debug("DictItem.addItem " + str(item))
+        self.feedback.pushDebugInfo("DictItem.addItem " + str(item))
         if not item:
-            utils.internal_error("Empty item")
+            self.feedback.internal_error("Empty item")
         item.checkItem()
         if self.itemExists(item):
-            utils.warn("Item " + str(item) + " already exists")
+            self.pushWarning("Item " + str(item) + " already exists")
         else:
-            utils.debug("adding item")
+            self.feedback.pushDebugInfo("adding item")
             self.items.append(item)
             self.insertRow(0)
             
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
     def removeField(self,fieldname):
-        utils.debug("removeField " + fieldname)
+        self.feedback.pushDebugInfo("removeField " + fieldname)
         for i in self.items:
             utils.debug(str(i.dict.items()))
             if fieldname not in i.dict:
-                utils.warn("Could not delete field '" + str(fieldname))
+                self.pushWarning("Could not delete field '" + str(fieldname))
             else:
                 del i.dict[fieldname]
             i.recompute()
-        utils.debug("self = " + str(self))
+        self.feedback.pushDebugInfo("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
         self.layoutChanged.emit()
@@ -413,7 +417,7 @@ class DictModel(AbstractGroupModel):
         self.layoutChanged.emit()
         
     def toXML(self,indent=" ",attribs_dict=None):
-        utils.debug("toXML " + self.parser_name)
+        self.feedback.pushDebugInfo("toXML " + self.parser_name)
         xmlStr = indent + "<" + self.parser_name
         if attribs_dict:
             for k,v in attribs_dict.items():
@@ -434,13 +438,13 @@ class DictModel(AbstractGroupModel):
             writer = csv.DictWriter(f,fieldnames=self.fields,delimiter=';')
             writer.writeheader()
             for i in self.items:
-                utils.debug("writing row " + str(i.dict))
+                self.feedback.pushDebugInfo("writing row " + str(i.dict))
                 writer.writerow(i.dict)
-        utils.info("Model saved to file '" + str(fname) + "'")
+        self.feedback.pushDebugInfo("Model saved to file '" + str(fname) + "'")
         
     def applyItemsWithContext(self,context,feedback,indexes=None):
         if not self.items:
-            feedback.reportError("Empty Model")
+            self.feedback.reportError("Empty Model")
         if not indexes:
             indexes = range(0,len(self.items))
         nb_steps = len(indexes)
@@ -450,6 +454,7 @@ class DictModel(AbstractGroupModel):
             i = self.items[n]
             self.applyItemWithContext(i,context,step_feedback)
             step_feedback.setCurrentStep(cpt)
+
     
 class NormalizingParamsModel(QAbstractTableModel):
 
@@ -463,7 +468,7 @@ class NormalizingParamsModel(QAbstractTableModel):
     DEFAULT_FIELDS = [WORKSPACE,EXTENT_LAYER,
         RESOLUTION,PROJECT,CRS]
     
-    def __init__(self,fields=DEFAULT_FIELDS):
+    def __init__(self,fields=DEFAULT_FIELDS,feedback=None):
         self.workspace = None
         self.extentLayer = None
         self.extentType = None
@@ -471,6 +476,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         self.projectFile = ""
         self.crs = self.DEFAULT_CRS
         self.fields = fields
+        self.feedback = feedback
         QAbstractTableModel.__init__(self)
         
     def tr(self, msg):
@@ -478,23 +484,23 @@ class NormalizingParamsModel(QAbstractTableModel):
         
     def checkWorkspaceInit(self):
         if not self.workspace:
-            utils.user_error(self.tr("Workspace parameter not initialized"))
+            self.feedback.user_error(self.tr("Workspace parameter not initialized"))
         if not os.path.isdir(self.workspace):
-            utils.user_error("Workspace directory '" + self.workspace + "' does not exist")
+            self.feedback.user_error("Workspace directory '" + self.workspace + "' does not exist")
             
     def checkExtentInit(self):
         if not self.extentLayer:
-            utils.user_error(self.tr("Extent parameter not initialized"))
+            self.feedback.user_error(self.tr("Extent parameter not initialized"))
             
     def checkResolutionInit(self):
         if not self.resolution or self.resolution <= 0:
-            utils.user_error(self.tr("Resolution parameter not initialized"))
+            self.feedback.user_error(self.tr("Resolution parameter not initialized"))
             
     def checkCrsInit(self):
         if not self.crs:
-            utils.user_error(self.tr("CRS parameter not initialized"))
+            self.feedback.user_error(self.tr("CRS parameter not initialized"))
         if not self.crs.isValid():
-            utils.user_error(self.tr("Invalid CRS"))
+            self.feedback.user_error(self.tr("Invalid CRS"))
             
     def checkInit(self):
         checkWorkspaceInit()
@@ -505,17 +511,17 @@ class NormalizingParamsModel(QAbstractTableModel):
     def setExtentLayer(self,path):
         if path:
             path = self.normalizePath(path)
-        utils.info("Setting extent layer to " + str(path))
+        self.feedback.pushInfo("Setting extent layer to " + str(path))
         self.extentLayer = path
         self.layoutChanged.emit()
         
     def setResolution(self,resolution):
-        utils.info("Setting resolution to " + str(resolution))
+        self.feedback.pushInfo("Setting resolution to " + str(resolution))
         self.resolution = resolution
         self.layoutChanged.emit()
         
     def setCrs(self,crs):
-        utils.info("Setting extent CRS to " + crs.description())
+        self.feedback.pushInfo("Setting extent CRS to " + crs.description())
         self.crs = crs
         self.layoutChanged.emit()
         
@@ -540,14 +546,14 @@ class NormalizingParamsModel(QAbstractTableModel):
     def setWorkspace(self,path):
         norm_path = utils.normPath(path)
         self.workspace = norm_path
-        utils.info("Workspace directory set to '" + norm_path)
+        self.feedback.pushInfo("Workspace directory set to '" + norm_path)
         if not os.path.isdir(norm_path):
-            utils.user_error("Directory '" + norm_path + "' does not exist")
+            self.feedback.user_error("Directory '" + norm_path + "' does not exist")
         return norm_path
             
     def fromXMLRoot(self,root):
         dict = root.attrib
-        utils.debug("params dict = " + str(dict))
+        self.feedback.pushDebugInfo("params dict = " + str(dict))
         return self.fromXMLDict(dict)
     
     def fromXMLDict(self,dict):
@@ -558,7 +564,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             try:
                 self.setResolution(float(dict[self.RESOLUTION]))
             except ValueError:
-                utils.user_error("Unexpected resolution : " + str(dict[self.RESOLUTION]))
+                self.feedback.user_error("Unexpected resolution : " + str(dict[self.RESOLUTION]))
         if self.EXTENT_LAYER in dict:
             self.setExtentLayer(dict[self.EXTENT_LAYER])
         elif 'extent' in dict:
@@ -612,22 +618,23 @@ class NormalizingParamsModel(QAbstractTableModel):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant("value")
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
-            return QVariant(self.fields[col])
+            #return QVariant(self.fields[col])
+            return QVariant(self.tr(self.fields[col]))
         return QVariant()
         
     # Checks that workspace is intialized and is an existing directory.
     def checkWorkspaceInit(self):
         if not self.workspace:
-            utils.user_error("Workspace parameter not initialized")
+            self.feedback.user_error("Workspace parameter not initialized")
         if not os.path.isdir(self.workspace):
-            utils.user_error("Workspace directory '" + self.workspace + "' does not exist")
+            self.feedback.user_error("Workspace directory '" + self.workspace + "' does not exist")
             
     # Returns relative path w.r.t. workspace directory.
     # File separator is set to common slash '/'.
     def normalizePath(self,path):
         self.checkWorkspaceInit()
         if not path:
-            utils.user_error("Empty path")
+            self.feedback.user_error("Empty path")
         norm_path = utils.normPath(path)
         if os.path.isabs(norm_path):
             rel_path = os.path.relpath(norm_path,self.workspace)
@@ -640,7 +647,7 @@ class NormalizingParamsModel(QAbstractTableModel):
     def getOrigPath(self,path):
         self.checkWorkspaceInit()
         if path is None or path == "":
-            utils.user_error("Empty path")
+            self.feedback.user_error("Empty path")
         elif os.path.isabs(path):
             return path
         else:
@@ -652,18 +659,18 @@ class NormalizingParamsModel(QAbstractTableModel):
     def checkInit(self):
         self.checkWorkspaceInit()
         if not self.extentLayer:
-            utils.user_error("Extent layer parameter not initialized")
+            self.feedback.user_error("Extent layer parameter not initialized")
         extent_path = self.getOrigPath(self.extentLayer)
-        utils.debug("extent_path = " + str(extent_path))
+        self.feedback.pushDebugInfo("extent_path = " + str(extent_path))
         utils.checkFileExists(extent_path,"Extent layer ")
         if not self.resolution:
-            utils.user_error("Resolution parameter not initialized")
+            self.feedback.user_error("Resolution parameter not initialized")
         if self.resolution == 0.0:
-            utils.user_error("Null resolution")
+            self.feedback.user_error("Null resolution")
         if not self.crs:
-            utils.user_error("CRS parameter not initialized")
+            self.feedback.user_error("CRS parameter not initialized")
         if not self.crs.isValid():
-            utils.user_error("Invalid CRS")
+            self.feedback.user_error("Invalid CRS")
             
     def getResolution(self):
         return float(self.resolution)
@@ -699,7 +706,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         if extent_path:
             return qgsUtils.coordsOfExtentPath(extent_path)
         else:
-            utils.user_error("Extent layer not initialized")
+            self.feedback.user_error("Extent layer not initialized")
             
     # Checks that given layer matches extent layer coordinates
     def equalsParamsExtent(self,path):
@@ -758,7 +765,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         if not self.extentLayer:
             return input
         extent_layer, extent_layer_type = self.getExtentLayerAndType()
-        utils.debug("extent_layer_type = " + str(extent_layer_type))
+        self.feedback.pushDebugInfo("extent_layer_type = " + str(extent_layer_type))
         resolution = self.getResolution()
         if extent_layer_type == 'Vector':
             extent_path = self.getExtentLayer()
@@ -768,7 +775,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         else:
             extent = self.getExtentRectangle()
             warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
-            utils.warn("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
+            self.feedback.pushWarning("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
             res = qgsTreatments.applyWarpReproject(path,out_path,resampling_mode,
                 dst_crs=self.crs,resolution=resolution,extent=extent,
                 context=context,feedback=feedback)
@@ -782,8 +789,8 @@ class AbstractConnector:
         self.model = model
         self.view = view
         self.addButton = addButton
-        self.removeButton = removeButton
         self.onlySelection = False
+        self.removeButton = removeButton
         self.runButton = runButton
         self.selectionCheckbox = selectionCheckbox
         
@@ -814,13 +821,13 @@ class AbstractConnector:
                 
     def switchOnlySelection(self):
         new_val = not self.onlySelection
-        utils.debug("setting onlySelection to " + str(new_val))
+        self.feedback.pushDebugInfo("setting onlySelection to " + str(new_val))
         self.onlySelection = new_val
         
     # This function build model item from view and is called by addItem
     @abstractmethod
     def mkItem(self):
-        utils.todo_error(" [" + self.__class__.__name__ + "] mkItem not implemented")
+        self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItem not implemented")
         
     def getSelectedIndexes(self):
         if self.onlySelection:
@@ -831,24 +838,24 @@ class AbstractConnector:
         
     def applyItems(self):
         indexes = self.getSelectedIndexes()
-        utils.debug("Selected indexes = " + str(indexes))
+        self.feedback.pushDebugInfo("Selected indexes = " + str(indexes))
         self.model.applyItemsWithContext(None,self.dlg.feedback,indexes)
         #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback,indexes)
         
     def addItem(self):
-        utils.debug("AbstractConnector.addItem")
+        self.feedback.pushDebugInfo("AbstractConnector.addItem")
         item = self.mkItem()
         self.model.addItem(item)
         self.model.layoutChanged.emit()
         
     def removeItems(self):
         indices = self.view.selectedIndexes()
-        utils.debug(str(indices))
+        self.feedback.pushDebugInfo(str(indices))
         self.model.removeItems(indices)
         
     # Upgrade selected item rank (only single selection for now)
     def upgradeItem(self):
-        utils.debug("upgradeItem")
+        self.feedback.pushDebugInfo("upgradeItem")
         indices = self.view.selectedIndexes()
         rows = list(set([i.row() for i in indices]))
         nb_rows = len(rows)
@@ -860,24 +867,24 @@ class AbstractConnector:
                 self.model.swapItems(row - 1, row)
                 self.view.selectRow(row - 1)
         else:
-            utils.warn("Several rows selected, please select only one")
+            self.feedback.pushWarning("Several rows selected, please select only one")
             
     # Downgrade selected item rank (only single selection for now)
     def downgradeItem(self):
-        utils.debug("downgradeItem")
+        self.feedback.pushDebugInfo("downgradeItem")
         indices = self.view.selectedIndexes()
         rows = list(set([i.row() for i in indices]))
         #nb_indices = len(indices)
         nb_rows = len(rows)
         if nb_rows == 0:
-            utils.debug("no idx selected")
+            self.feedback.pushDebugInfo("no idx selected")
         elif nb_rows == 1:
             row = rows[0]
             if row < len(self.model.getItems()) - 1:
                 self.model.swapItems(row, row + 1)
                 self.view.selectRow(row + 1)
         else:
-            utils.warn("Several rows selected, please select only one")
+            self.feedback.pushWarning("Several rows selected, please select only one")
 
             
 # Code snippet from https://stackoverflow.com/questions/17748546/pyqt-column-of-checkboxes-in-a-qtableview
@@ -931,13 +938,13 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         if the user presses the left mousebutton or presses
         Key_Space or Key_Select and this cell is editable. Otherwise do nothing.
         '''
-        utils.debug('Check Box editor Event detected : ')
-        utils.debug(str(event.type()))
+        self.feedback.pushDebugInfo('Check Box editor Event detected : ')
+        self.feedback.pushDebugInfo(str(event.type()))
         #if not (index.flags() & QtCore.Qt.ItemIsEditable) > 0:
         if not (index.flags() & QtCore.Qt.ItemIsEditable):
             return False
 
-        utils.debug('Check Box editor Event detected : passed first check')
+        self.feedback.pushDebugInfo('Check Box editor Event detected : passed first check')
         # Do not change the checkbox-state
         if event.type() == QtCore.QEvent.MouseButtonPress:
           return False
@@ -960,9 +967,9 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         '''
         The user wanted to change the old state in the opposite.
         '''
-        utils.debug('SetModelData')
+        self.feedback.pushDebugInfo('SetModelData')
         newValue = not bool(index.data())
-        utils.debug('New Value : {0}'.format(newValue))
+        self.feedback.pushDebugInfo('New Value : {0}'.format(newValue))
         model.setData(index, newValue, QtCore.Qt.EditRole)
 
     def getCheckBoxRect(self, option):
