@@ -479,21 +479,6 @@ def fixGeometries(input,output,context=None,feedback=None):
     res = applyProcessingAlg("native","fixgeometries",parameters,context,feedback)
     return res
     
-def applyHeatmap(input, output, resolution=5, radius_field=None,
-        weight_field=None, context=None, feedback=None):
-    parameters = {
-        'DECAY' : 0,
-        'INPUT' : input,
-        'KERNEL' : 0, 
-        'OUTPUT' : output,
-        'OUTPUT_VALUE' : 0,
-        'PIXEL_SIZE' : resolution,
-        'RADIUS' : None,
-        'RADIUS_FIELD' : radius_field,
-        'WEIGHT_FIELD' : weight_field }
-    res = applyProcessingAlg("qgis","heatmapkerneldensityestimation",parameters,context,feedback)
-    return res
-
 def assignProjection(input,crs,output,context=None,feedback=None):
     parameters = { 'CRS' : crs, 'INPUT' : input, 'OUTPUT' : output }
     res = applyProcessingAlg("native","assignprojection",parameters,context,feedback)
@@ -511,15 +496,8 @@ def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'BUFFER' : buffer, 'OUTPUT' : output }
     return applyProcessingAlg("qgis","voronoipolygons",parameters,context,feedback)
     
-def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],context=None,feedback=None):
-    parameters = { 'COLUMN_PREFIX' : prefix,
-        'INPUT' : vector,
-        'INPUT_RASTER' : raster,
-        'OUTPUT' : output,
-        'RASTER_BAND' : band,
-        'STATISTICS' : stats }
-    return applyProcessingAlg("native","zonalstatisticsfb",parameters,context,feedback)
-
+def convertGeomType(input,type,output,context=None,feedback=None):
+    parameters = { 'INPUT' : input, 'TYPE' : type, 'OUTPUT' : output }
 
 def fixShapefileFID(input,context=None,feedback=None):
     feedback.pushDebugInfo("input = " + str(input))
@@ -577,7 +555,15 @@ def getRasterUniqueVals(input,feedback):
     feedback.pushDebugInfo("unique_vals = " + str(unique_vals))
     return unique_vals
     
-
+def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],context=None,feedback=None):
+    parameters = { 'COLUMN_PREFIX' : prefix,
+        'INPUT' : vector,
+        'INPUT_RASTER' : raster,
+        'OUTPUT' : output,
+        'RASTER_BAND' : band,
+        'STATISTICS' : stats }
+    return applyProcessingAlg("native","zonalstatisticsfb",parameters,context,feedback)
+    
 def applyReclassifyByTable(input,table,output,
                            nodata_val=nodata_val,out_type=Qgis.Float32,
                            boundaries_mode=1,nodata_missing=False,
@@ -592,6 +578,21 @@ def applyReclassifyByTable(input,table,output,
                    'RASTER_BAND' : 1,
                    'TABLE' : table }
     return applyProcessingAlg("native","reclassifybytable",parameters,context,feedback)
+    
+def applyHeatmap(input, output, resolution=5, radius_field=None,
+        weight_field=None, context=None, feedback=None):
+    parameters = {
+        'DECAY' : 0,
+        'INPUT' : input,
+        'KERNEL' : 0, 
+        'OUTPUT' : output,
+        'OUTPUT_VALUE' : 0,
+        'PIXEL_SIZE' : resolution,
+        'RADIUS' : None,
+        'RADIUS_FIELD' : radius_field,
+        'WEIGHT_FIELD' : weight_field }
+    res = applyProcessingAlg("qgis","heatmapkerneldensityestimation",parameters,context,feedback)
+    return res
     
 # def applyReclassifyByTableInt(input,tuples,output,nodata_val=nodata_val,context=None,feedback=None):
     # table = []
@@ -853,7 +854,16 @@ def applyRasterCalcMax(input_a,input_b,output,
                        context=None,feedback=None):
     expr = 'B*less_equal(A,B) + A*less(B,A) '
     return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
-                
+  
+def applyProximity(input,output,classes='',band=1,units=0,context=None,feedback=None):
+    # { 'BAND' : 1, 'DATA_TYPE' : 5, 'EXTRA' : '', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/data/clc_lines_raster.tif', 'MAX_DISTANCE' : 0, 'NODATA' : 0, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'REPLACE' : 0, 'UNITS' : 0, 'VALUES' : '1,2,3,4,5' }
+    parameters = {
+        'INPUT' : input,
+        'OUTPUT' : output,
+        'VALUES' : classes,
+        'BAND' : band,
+        'UNITS' : units }
+    return applyProcessingAlg("gdal","proximity",parameters,context,feedback)
                 
 """
     GRASS ALGORITHMS
@@ -865,7 +875,7 @@ def applyVRandom(vector_layer,nb_points,output,context=None,feedback=None):
         'restrict' : vector_layer }
     return applyGrassAlg("v.random",parameters,context,feedback)
 
-{ '-a' : False, '-z' : False, 'GRASS_MIN_AREA_PARAMETER' : 0.0001, 'GRASS_OUTPUT_TYPE_PARAMETER' : 0, 'GRASS_REGION_PARAMETER' : None, 'GRASS_SNAP_TOLERANCE_PARAMETER' : -1, 'GRASS_VECTOR_DSCO' : '', 'GRASS_VECTOR_EXPORT_NOCAT' : False, 'GRASS_VECTOR_LCO' : '', 'column' : '', 'column_type' : None, 'npoints' : 100, 'output' : 'TEMPORARY_OUTPUT', 'restrict' : 'E:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Source/Reservoirs/RBP_PRAIRIE.shp', 'seed' : None, 'where' : '', 'zmax' : None, 'zmin' : None }
+# { '-a' : False, '-z' : False, 'GRASS_MIN_AREA_PARAMETER' : 0.0001, 'GRASS_OUTPUT_TYPE_PARAMETER' : 0, 'GRASS_REGION_PARAMETER' : None, 'GRASS_SNAP_TOLERANCE_PARAMETER' : -1, 'GRASS_VECTOR_DSCO' : '', 'GRASS_VECTOR_EXPORT_NOCAT' : False, 'GRASS_VECTOR_LCO' : '', 'column' : '', 'column_type' : None, 'npoints' : 100, 'output' : 'TEMPORARY_OUTPUT', 'restrict' : 'E:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Source/Reservoirs/RBP_PRAIRIE.shp', 'seed' : None, 'where' : '', 'zmax' : None, 'zmin' : None }
 
 # Apply raster calculator from expression 'expr'.
 # Calculation is made on a single file and a signled band renamed 'A'.
