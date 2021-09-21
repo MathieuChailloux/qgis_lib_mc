@@ -64,37 +64,37 @@ class CustomException(Exception):
         super().__init__(message)
 
 
-# def printDate(msg):
-    # date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # print_func ("[" + date_str + "] " + msg)
+def printDate(msg):
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print_func ("[" + date_str + "] " + msg)
     
-# def debug(msg):
-    # if debug_flag:
-        # printDate("<font color=\"gray\">[debug] " + msg + "</font>")
+def debug(msg):
+    if debug_flag:
+        printDate("<font color=\"gray\">[debug] " + msg + "</font>")
     
-# def info(msg):
-    # printDate("<font color=\"black\">[info] " + msg + "</font>")
+def info(msg):
+    printDate("<font color=\"black\">[info] " + msg + "</font>")
     
-# def warn(msg):
-    # printDate("<font color=\"orange\">[warn] " + msg + "</font>")
+def warn(msg):
+    printDate("<font color=\"orange\">[warn] " + msg + "</font>")
     
-# def mkBoldRed(msg):
-    # return "<b><font color=\"red\">" + msg + "</font></b>"
+def mkBoldRed(msg):
+    return "<b><font color=\"red\">" + msg + "</font></b>"
     
-# def error_msg(msg,prefix=""):
-    # printDate(mkBoldRed("[" + prefix + "] " + msg))
+def error_msg(msg,prefix=""):
+    printDate(mkBoldRed("[" + prefix + "] " + msg))
     
-# def user_error(msg):
-    # error_msg(msg,"user error")
-    # raise CustomException(msg)
+def user_error(msg):
+    error_msg(msg,"user error")
+    raise CustomException(msg)
     
-# def internal_error(msg):
-    # error_msg(msg,"internal error")
-    # raise CustomException(msg)
+def internal_error(msg):
+    error_msg(msg,"internal error")
+    raise CustomException(msg)
     
-# def todo_error(msg):
-    # error_msg(msg,"Feature not yet implemented")
-    # raise CustomException(msg)
+def todo_error(msg):
+    error_msg(msg,"Feature not yet implemented")
+    raise CustomException(msg)
 
 class Section:
 

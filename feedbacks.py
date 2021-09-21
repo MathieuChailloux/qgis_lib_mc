@@ -110,17 +110,17 @@ class TabProgressFeedback(QgsProcessingFeedback):
         return "<b><font color=\"red\">" + msg + "</font></b>"
         
     def error_msg(self,msg,prefix=""):
-        self.printDate(mkBoldRed("[" + prefix + "] " + msg))
+        self.printDate(self.mkBoldRed("[" + prefix + "] " + msg))
         
     def user_error(self,msg):
         self.error_msg(msg,"user error")
         raise utils.CustomException(msg)
         
-    def internal_error(msg):
+    def internal_error(self,msg):
         self.error_msg(msg,"internal error")
         raise utils.CustomException(msg)
         
-    def todo_error(msg):
+    def todo_error(self,msg):
         self.error_msg(msg,"Feature not yet implemented")
         raise utils.CustomException(msg)
         
@@ -184,10 +184,30 @@ class TabProgressFeedback(QgsProcessingFeedback):
         self.focusLogTab()
         
     def initGui(self):
-        pass
+        self.dlg.debugButton.setChecked(self.debug_flag)
         
     def connectComponents(self):
+        self.dlg.debugButton.clicked.connect(self.switchDebugMode)
+        self.dlg.logSaveAs.clicked.connect(self.saveLogAs)
+        self.dlg.logClear.clicked.connect(self.myClearLog)
         self.progressChanged.connect(self.setProgress)
+        
+    def switchDebugMode(self):
+        if self.dlg.debugButton.isChecked():
+            self.debug_flag = True
+            self.pushInfo("Debug mode activated")
+        else:
+            self.debug_flag = False
+            self.pushInfo("Debug mode deactivated")
+            
+    def saveLogAs(self):
+        txt = self.dlg.txtLog.toPlainText()
+        fname = qgsUtils.saveFileDialog(self.dlg,msg="Enregistrer le journal sous",filter="*.txt")
+        utils.writeFile(fname,txt)
+        self.pushIngo("Log saved to file '" + fname + "'")
+        
+    def myClearLog(self):
+        self.dlg.txtLog.clear()
         
         
 class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):

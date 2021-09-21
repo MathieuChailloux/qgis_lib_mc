@@ -22,7 +22,12 @@
 import os.path
 import csv
 
-from qgis.core import QgsCoordinateReferenceSystem, QgsRectangle, QgsProject, QgsCoordinateTransform, QgsProcessingUtils, QgsProcessingFeedback
+from qgis.core import (QgsCoordinateReferenceSystem,
+                       QgsRectangle,
+                       QgsProject,
+                       QgsCoordinateTransform,
+                       QgsProcessingUtils,
+                       QgsProcessingFeedback)
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication

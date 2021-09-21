@@ -643,6 +643,18 @@ class LayerComboDialog:
         self.vector_mode = None
         self.combo.setFilters(QgsMapLayerProxyModel.All)
         
+    def setLayerPath(self,fname):
+        self.layer_name = fname
+        if self.vector_mode is None:
+            self.layer = loadLayer(fname,loadProject=True)
+        elif self.vector_mode:
+            self.layer = loadVectorLayer(fname,loadProject=True)
+        else:
+            self.layer = loadRasterLayer(fname,loadProject=True)
+        # utils.debug("self.layer = " +str(self.layer))
+        self.combo.setLayer(self.layer)
+        
+        
     def getFileFilters(self):
         if self.vector_mode:
             return getVectorFilters()
@@ -654,15 +666,7 @@ class LayerComboDialog:
                                      msg="Ouvrir la couche",
                                      filter=self.getFileFilters())
         if fname:
-            self.layer_name = fname
-            if self.vector_mode is None:
-                self.layer = loadLayer(fname,loadProject=True)
-            elif self.vector_mode:
-                self.layer = loadVectorLayer(fname,loadProject=True)
-            else:
-                self.layer = loadRasterLayer(fname,loadProject=True)
-            utils.debug("self.layer = " +str(self.layer))
-            self.combo.setLayer(self.layer)
+            self.setLayerPath(fname)
             #self.combo.layerChanged.emit(self.layer)
         else:
             utils.user_error("Could not open file " + str(fname))
