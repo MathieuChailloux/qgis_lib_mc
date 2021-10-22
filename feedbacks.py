@@ -61,7 +61,7 @@ from PyQt5.QtGui import QGuiApplication
         # progressFeedback.endJob()
     
 
-class TabProgressFeedback(QgsProcessingFeedback):
+class ProgressFeedback(QgsProcessingFeedback):
     
     GDAL_ERROR_PREFIX = 'ERROR '
     SET_COLOR_ERROR = 'ERROR 6:'
