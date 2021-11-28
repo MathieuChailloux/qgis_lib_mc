@@ -387,7 +387,7 @@ class DictModel(AbstractGroupModel):
             self.feedback.internal_error("Empty item")
         item.checkItem()
         if self.itemExists(item):
-            self.pushWarning("Item " + str(item) + " already exists")
+            self.feedback.pushWarning("Item " + str(item) + " already exists")
         else:
             self.feedback.pushDebugInfo("adding item")
             self.items.append(item)
