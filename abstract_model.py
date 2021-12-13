@@ -43,6 +43,36 @@ from abc import ABC, abstractmethod
     Abstract and usual classes to implement MVC (Model-View-Controller) design pattern.
 """
 
+# class BaseField:
+
+    # BOOL = 0
+    # INTEGER = 1
+    # FLOAT = 2
+    # STRING = 3
+    # FILE_PATH = 4
+    # LAYER_PATH = 5
+
+    # def __init__(self,name,type,val=None):
+        # self.name = name
+        # self.type = type
+        # self.val = val
+        
+    # def __str__(self):
+        # return str(self.val)
+        
+    # def __eq__(self, other):
+        # return isinstance(other, self.__class__) and self.name = other.name
+
+    # def __ne__(self, other):
+        # return not self.__eq__(other)
+        
+    # def updateFromStr(self,str):
+        # if self.type == self.BOOL
+        
+# class IntField(BaseField):
+
+    # def fromStr
+
 # Abstract class for model items containing multiple information
 # Each method must be implemented
 class AbstractGroupItem:
@@ -100,13 +130,16 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict,fields=None,feedback=None):
+    def __init__(self,dict,fields=None,feedback=None,display_fields=None):
         if not fields:
             fields = list(dict.keys())
-        self.field_to_idx = {f : fields.index(f) for f in fields}
-        self.idx_to_fields = {fields.index(f) : f for f in fields}
-        self.nb_fields = len(fields)
-        self.dict = dict
+        # self.field_to_idx = {f : fields.index(f) for f in fields}
+        if not display_fields:
+            display_fields = fields
+        self.idx_to_fields = {fields.index(f) : f for f in display_fields}
+        self.display_fields = display_fields
+        self.nb_fields = len(self.display_fields)
+        self.dict = { f:dict[f] for f in dict }
         self.feedback = feedback
         
     def __str__(self):
@@ -114,8 +147,7 @@ class DictItem(AbstractGroupItem):
         
     def recompute(self):
         fields = list(self.dict.keys())
-        self.field_to_idx = {f : fields.index(f) for f in fields}
-        self.idx_to_fields = {fields.index(f) : f for f in fields}
+        self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
         self.nb_fields = len(fields)
         
     # getNField is used by data function in DictModel to display value in table
@@ -140,13 +172,17 @@ class DictItem(AbstractGroupItem):
         
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
-        self.pushDebugInfo("item = " + str(self))
+        self.feedback.pushDebugInfo("item = " + str(self))
         for k,v in self.dict.items():
-            utils.debug(str(v))
+            self.feedback.pushDebugInfo(str(v))
             xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
             #xmlStr += indent + " " + k + "=\"" + str(v).replace('"','&quot;') + "\""
         xmlStr += "/>"
         return xmlStr
+            
+    def updateFromOther(self,other):
+        for k in other.dict:
+            self.dict[k] = other.dict[k]
     
 # FieldsModel modelizes a unique dictionary.
 # Displayed in vertical mode (1 line = 1 field, single column).
@@ -850,8 +886,9 @@ class AbstractConnector:
     def addItem(self):
         self.feedback.pushDebugInfo("AbstractConnector.addItem")
         item = self.mkItem()
-        self.model.addItem(item)
-        self.model.layoutChanged.emit()
+        if item:
+            self.model.addItem(item)
+            self.model.layoutChanged.emit()
         
     def removeItems(self):
         indices = self.view.selectedIndexes()
@@ -891,6 +928,253 @@ class AbstractConnector:
         else:
             self.feedback.pushWarning("Several rows selected, please select only one")
 
+
+# Table Model with extensive fields (possibility to add columns)
+# Conceived for DictItem but might work with other items
+class ExtensiveTableModel(DictModel):
+
+    ROW_NAME = 'NAME'
+    ROW_DESCR = 'DESCR'
+    ROW_CODE = 'CODE'
+    BASE_FIELDS = [ ROW_NAME, ROW_DESCR, ROW_CODE ]
+
+    def __init__(self,parentModel,nameField=ROW_NAME,
+                 baseFields=BASE_FIELDS):
+        super().__init__(self,baseFields)
+        self.parentModel = parentModel
+        self.feedback = parentModel.feedback
+        self.defaultVal = None
+        self.rowNames = []
+        self.fields = baseFields
+        self.extFields = []
+        self.nameField = nameField
+        
+    # True if item matching class 'rowName' exists, False otherwise.
+    def rowExists(self,rowName):
+        for fr in self.items:
+            if fr.dict[self.nameField] == rowName:
+                return True
+        return False
+        
+    # Returns item matching class 'rowName', None if there is no match.
+    def getRowByName(self,rowName):
+        for i in self.items:
+            if i.dict[self.nameField] == rowName:
+                return i
+        return None
+        
+    # Creates RowItem from dict
+    def createRowFromDict(self,d):
+        return DictModel(d,self.fields,feedback=self.feedback)
+    # Adds new FrictionRowItem in model from given baseRowItem.
+    def addRowItem(self,baseRowItem):
+        rowItem = self.createRowFromDict(baseRowItem.dict)
+        self.addRowFields(rowItem)
+        self.addItem(rowItem)
+        self.layoutChanged.emit()
+        
+    # Removes item matching class 'name' from model.
+    def removeRowFromName(self,name):
+        self.feedback.pushDebugInfo("removing row " + str(name) + " from table")
+        self.rowNames = [rowName for rowName in self.rowNames if rowName != name]
+        for i in range(0,len(self.items)):
+            if self.items[i].dict[self.nameField] == name:
+                del self.items[i]
+                self.layoutChanged.emit()
+                return
+        
+    # Adds subnetwork columns to given FrictionRowItem.
+    # Friction values are set to defaultVal (None).
+    def addRowFields(self,row):
+        self.feedback.pushDebugInfo("addRowFields")
+        for f in self.extFields:
+            row[f] = self.defaultVal
+            
+    # Adds new subnetwork entry to all items of model from given STItem.
+    def addCol(self,col_name):
+        self.feedback.pushDebugInfo("addSTItem " + str(col_name))
+        if col_name not in self.fields:
+            for i in self.items:
+                if col_name not in i.dict:
+                    i.dict[col_name] = self.defaultVal
+                    i.recompute()
+            self.fields.append(col_name)
+            self.extFields.append(col_name)
+            self.layoutChanged.emit()
+        
+    # Removes subnetwork 'st_name' entry for all items of model.
+    def removeColFromName(self,col_name):
+        self.feedback.pushDebugInfo("removeColFromName " + str(col_name))
+        self.removeField(col_name)
+        self.layoutChanged.emit()
+        
+    # Reload items of model to match current ClassModel.
+    def reloadModel(self,baseRowItems,colNames):
+        self.feedback.pushDebugInfo("reloadModel")
+        currNames = [i.dict[self.nameField] for i in self.items]
+        rowNames = [bri.dict[self.nameField] for bri in baseRowItems]
+        toDeleteNames = currNames - rowNames
+        toAddNames = rowNames - currNames
+        self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
+        self.items = [i for i in self.items if i.dict[self.nameField] in rowNames]
+        for bri in baseRowItems:
+            currItem = self.getRowByName(bri.dict[self.nameField])
+            if currItem:
+                for f in self.baseFields:
+                    bri_val = bri.dict[f]
+                    if bri_val:
+                        currItem.dict[f] = bri_val
+            else:
+                self.addRowItem(bri)
+        self.layoutChanged.emit()
+                            
+    # Returns reclassify matrix (list) for native:reclassifybytable call.
+    def getReclassifyMatrixes(self,colNames):
+        matrixes = { colName : [] for colName in colNames }
+        for item in self.items:
+            for name in colNames:
+                if name not in self.fields:
+                    self.feedback.internal_error("Subnetwork '" + str(name)
+                        + "' not found in friction model")
+                new_val = item.dict[name]
+                if new_val is None:
+                    self.pushWarnInfo("No friction assigned to subnetwork " + str(name)
+                                     + " for class " + str(item.dict[self.NAME]))
+                    # float(new_val) causes exception is new_val = None
+                    new_val = ''
+                if new_val == qgsTreatments.nodata_val:
+                    self.feedback.internal_error("Reclassify to nodata "
+                        + str(new_val) + "in " + str(item))
+                try:
+                    float(new_val)
+                except ValueError:
+                    self.pushWarnInfo("Ignoring non-numeric value " + str(new_val))
+                    new_val = qgsTreatments.nodata_val
+                # TODO : change self.ROW_CODE to something like self.codeField
+                matrixes[name] += [ item.dict[self.ROW_CODE], item.dict[self.ROW_CODE], new_val ]
+        return matrixes
+        
+    # Returns set of item' code (value in input raster)
+    def getCodes(self):
+        codes = set([int(item.dict[self.ROW_CODE]) for item in self.items])
+        return codes
+        
+    # Raise an error in values of input raster do no match codes of friction items.
+    def checkInVals(self,in_path):
+        in_vals = qgsUtils.getRasterValsFromPath(in_path)
+        codes = self.getCodes()
+        diff = in_vals.difference(codes)
+        if len(diff) > 0:
+            self.feedback.user_error("Some values of " + str(in_path) + " are not associated to a friction value " + str(diff))
+            
+    # Saves friction coefficients to CSV file 'fname'
+    def saveCSV(self,fname):
+        with open(fname,"w", newline='') as f:
+            writer = csv.DictWriter(f,fieldnames=self.fields,delimiter=';')
+            writer.writeheader()
+            for i in self.items:
+                self.feedback.pushDebugInfo("writing row " + str(i.dict))
+                writer.writerow(i.dict)
+        self.feedback.pushInfo("Friction saved to file '" + str(fname) + "'")
+                
+    # Imports CSV row as an item
+    def fromCSVRow(self,row):
+        if self.nameField not in row:
+            self.feedback.user_error("No field '" + str(self.nameField)
+                + "' in row " + str(row))
+        rowName = row[self.nameField]
+        rowItem = self.getRowByName(rowName)
+        if rowItem:
+            for f in self.fields:
+                if f in row:
+                    rowItem[f] = row[f]
+                else:
+                    self.pushWarnInfo("No entry for row '" + rowName
+                        + "' and col '" + str(f) + "'")
+        else:
+            rowItem = self.createRowFromDict(row)
+            self.addItem(rowItem)
+            
+    # Loads CSV file 'fname' into model (insertion or update).
+    def fromCSVUpdate(self,fname):
+        with open(fname,"r") as f:
+            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=';')
+            first_line = next(reader)
+            for row in reader:
+                self.fromCSVRow(row)
+        self.layoutChanged.emit()
+        
+    # Loads friction coefficients from CSV file 'fname' into model.
+    # Existing items are erased.
+    def fromCSV(self,fname):
+        self.items = []
+        with open(fname,"r") as f:
+            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=';')
+            header = reader.fieldnames
+            self.fields = header
+            first_line = next(reader)
+            for row in reader:
+                self.fromCSVRow(row)
+        self.layoutChanged.emit()
+        
+    # Loads model from XML root (tag 'FrictionModel')    
+    def fromXMLRoot(self,root):
+        self.items = []
+        for fr in root:
+                self.fromCSVRow(fr.attrib)
+        self.layoutChanged.emit()
+        
+    def flags(self, index):
+        if index.column() in [1,2]:
+            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        else:
+            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        return flags
+
+# Table view with dialog to build items
+# Butonn to create new item, double click to edit selected item
+class TableToDialogConnector(AbstractConnector):
+
+    def __init__(self,model,view,addButton=None,removeButton=None,
+                 runButton=None,selectionCheckbox=None):
+        super().__init__(model,view,addButton=addButton,
+            removeButton=removeButton,runButton=runButton,
+            selectionCheckbox=selectionCheckbox)
+
+    def connectComponents(self):
+        super().connectComponents()
+        self.view.doubleClicked.connect(self.openDialogEdit)
+    
+    def openDialogEdit(self,index):
+        row = index.row()
+        item = self.model.getNItem(row)
+        self.feedback.pushDebugInfo("openDialog item = " +str(item))
+        item_dlg = self.openDialog(item)
+        dlg_item = item_dlg.showDialog()
+        if dlg_item:
+            item.updateFromOther(dlg_item)
+            self.model.layoutChanged.emit()
+            
+    def mkItem(self):
+        item_dlg = self.openDialog(None)
+        dlg_item = item_dlg.showDialog()
+        return dlg_item
+        # if dlg_item:
+            # return self.mkItemFromDlgItem(dlg_item)
+        # else:
+            # return None
+       
+    @abstractmethod
+    def openDialog(self,item): 
+        pass
+    
+    # @abstractmethod
+    # def updateFromDlgItem(self,item,dlg_item): 
+        # pass
+    # @abstractmethod
+    # def mkItemFromDlgItem(self,dlg_item): 
+        # pass
+     
             
 # Code snippet from https://stackoverflow.com/questions/17748546/pyqt-column-of-checkboxes-in-a-qtableview
 class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
