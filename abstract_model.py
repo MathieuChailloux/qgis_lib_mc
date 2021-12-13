@@ -891,9 +891,12 @@ class AbstractConnector:
             self.model.layoutChanged.emit()
         
     def removeItems(self):
-        indices = self.view.selectedIndexes()
-        self.feedback.pushDebugInfo(str(indices))
-        self.model.removeItems(indices)
+        if self.model.items:
+            indices = self.view.selectedIndexes()
+            self.feedback.pushDebugInfo(str([i.row() for i in indices]))
+            self.model.removeItems(indices)
+        else:
+            self.feedback.pushWarning("Empty model, nothing to remove")
         
     # Upgrade selected item rank (only single selection for now)
     def upgradeItem(self):
