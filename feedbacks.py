@@ -59,7 +59,13 @@ from PyQt5.QtGui import QGuiApplication
 # def endJob():
     # if progressFeedback:
         # progressFeedback.endJob()
-    
+  
+
+def launchDialog(origin,title,msg):
+    QMessageBox.information(None,title,msg)
+    # QMessageBox.information(None,
+        # self.translate('osraster_raster', "ERROR : Raster encoding value"),
+        # self.translate('osraster_raster', "A code value set isn't valid."))
 
 class ProgressFeedback(QgsProcessingFeedback):
     
