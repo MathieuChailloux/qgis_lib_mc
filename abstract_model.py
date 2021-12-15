@@ -21,6 +21,7 @@
 
 import os.path
 import csv
+import ast
 
 from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsRectangle,
@@ -144,6 +145,13 @@ class DictItem(AbstractGroupItem):
         
     def __str__(self):
         return str(self.dict)
+    @classmethod
+    def fromDict(cls,dict):
+        return cls(dict)
+    @classmethod
+    def fromStr(cls,s):
+        d = ast.literal_eval(s)
+        return cls(d)
         
     def recompute(self):
         fields = list(self.dict.keys())
@@ -242,6 +250,17 @@ class AbstractGroupModel(QAbstractTableModel):
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
         return res
+        
+    @abstractmethod
+    def mkItemFromStr(self,s):
+        return DictItem.fromStr(s)
+    def fromStr(self,s):
+        assert(len(s)>=4)
+        items_str = s[2:-2].split(",")
+        for i_str in items_str:
+            i = self.mkItemFromStr(i_str)
+            self.addItem(i)
+        self.layoutChanged.emit()
         
     def tr(self, msg):
         return QCoreApplication.translate(self.__class__.__name__, msg)
@@ -445,8 +464,12 @@ class DictModel(AbstractGroupModel):
             self.fields.remove(fieldname)
         self.layoutChanged.emit()
         
+    @abstractmethod
+    def mkItemFromDict(self,dict):
+        self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")
+    @abstractmethod
     def fromXMLAttribs(self,attribs):
-        pass
+        self.feedback.todo_error(" [" + self.__class__.__name__ + "] fromXMLAttribs not implemented")
         
     def fromXMLRoot(self,root):
         self.fromXMLAttribs(root.attrib)
