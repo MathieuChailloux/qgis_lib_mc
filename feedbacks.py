@@ -34,6 +34,7 @@ from . import qgsUtils
 
 from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QGuiApplication
+from PyQt5.QtWidgets import QMessageBox
 
 # progressFeedback = None
 
