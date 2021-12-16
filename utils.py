@@ -286,5 +286,16 @@ def executeCmdAsScript(cmd_args):
     debug(str(new_args))
     ret = subprocess.call(new_args)
     debug("return code = " + str(ret))
-    
-        
+   
+   
+# Misc
+def getIntValues(nb_values,start=1,exclude_values=[]):
+    cpt = 0
+    currVal = start
+    res = []
+    while cpt < nb_values:
+        if currVal not in exclude_values:
+            res.append(currVal)
+            cpt += 1
+        currVal += 1
+    return res
