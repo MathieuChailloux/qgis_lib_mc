@@ -135,11 +135,11 @@ class DictItem(AbstractGroupItem):
         if not fields:
             fields = list(dict.keys())
         # self.field_to_idx = {f : fields.index(f) for f in fields}
-        if not display_fields:
-            display_fields = fields
-        self.idx_to_fields = {fields.index(f) : f for f in display_fields}
-        self.display_fields = display_fields
-        self.nb_fields = len(self.display_fields)
+        # if not display_fields:
+            # display_fields = fields
+        # self.idx_to_fields = {fields.index(f) : f for f in display_fields}
+        # self.display_fields = display_fields
+        # self.nb_fields = len(self.display_fields)
         self.dict = { f:dict[f] for f in dict }
         self.feedback = feedback
         
@@ -153,27 +153,26 @@ class DictItem(AbstractGroupItem):
         d = ast.literal_eval(s)
         return cls(d)
         
-    def recompute(self):
-        fields = list(self.dict.keys())
-        self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
-        self.nb_fields = len(fields)
+    # def recompute(self):
+        # fields = list(self.dict.keys())
+        # self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
+        # self.nb_fields = len(fields)
         
     # getNField is used by data function in DictModel to display value in table
-    def getNField(self,n):
-        if n < self.nb_fields:
-            return self.dict[self.idx_to_fields[n]]
-        else:
-            self.feedback.pushDebugInfo("getNField " + str(n))
-            self.feedback.pushDebugInfo("item fields = " + str(self.dict.keys()))
-            self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
-            return None
+    # def getNField(self,n):
+        # if n < self.nb_fields:
+            # return self.dict[self.idx_to_fields[n]]
+        # else:
+            # self.feedback.pushDebugInfo("getNField " + str(n))
+            # self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
+            # return None
             #utils.internal_error("Accessing " + str(n) + " field >= " + str(self.nb_fields))
             
-    def updateNField(self,n,value):
-        if n < self.nb_fields:
-            self.dict[self.idx_to_fields[n]] = value
-        else:
-            assert false
+    # def updateNField(self,n,value):
+        # if n < self.nb_fields:
+            # self.dict[self.idx_to_fields[n]] = value
+        # else:
+            # assert false
             
     def equals(self,other):
         return (self.dict == other.dict)
@@ -282,6 +281,8 @@ class AbstractGroupModel(QAbstractTableModel):
             self.feedback.pushWarning("[" + self.__class__.__name__
                 + "] Unexpected index " + str(n))
             return None
+    def getNField(self,item,n):
+        return item.getNField(n)
         
     def rowCount(self,parent=QModelIndex()):
         return len(self.items)
@@ -314,7 +315,7 @@ class AbstractGroupModel(QAbstractTableModel):
         item = self.getNItem(row)
         if not item:
             return QVariant()
-        val = item.getNField(index.column())
+        val = self.getNField(item,index.column())
         if role not in [Qt.DisplayRole,Qt.EditRole]:
             return QVariant()
         elif row < self.rowCount():
@@ -322,13 +323,16 @@ class AbstractGroupModel(QAbstractTableModel):
         else:
             return QVariant()
             
+    def setDataXY(self,x,y,value):
+        item = self.getNItem(x)
+        item.updateNField(index.column(),value)
+    
     # This function is called by Qt when the view is modified at 'index' position.
     def setData(self, index, value, role):
         self.feedback.pushDebugInfo("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
         if role == Qt.EditRole:
-            item = self.getNItem(index.row())
-            item.updateNField(index.column(),value)
+            self.setDataXY(index.row(),index.column(),value)
             self.dataChanged.emit(index, index)
             return True
         return False
@@ -420,9 +424,20 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,parent,fields,feedback=None):
+    def __init__(self,parent,fields,feedback=None,display_fields=None):
         AbstractGroupModel.__init__(self,parent,fields)
+        if not display_fields:
+            display_fields = fields
+        self.idx_to_fields = {fields.index(f) : f for f in display_fields}
+        self.display_fields = display_fields
+        self.nb_fields = len(self.display_fields)
         self.feedback = feedback
+        
+    def getNField(self,item,n):
+        return item.dict[self.idx_to_fields[n]]
+    def setDataXY(self,x,y,value):
+        item = self.getNItem(x)
+        item.dict[self.idx_to_fields[y]] = value
         
     def sort(self,col,order):
         sorted_items = sorted(self.items, key=lambda i: i.dict[i.idx_to_fields[col]])
@@ -452,6 +467,21 @@ class DictModel(AbstractGroupModel):
             self.feedback.pushDebugInfo("adding item")
             self.items.append(item)
             self.insertRow(0)
+        
+    def recompute(self):
+        fields = list(self.dict.keys())
+        self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
+        self.nb_fields = len(fields)
+            
+    def addField(self,field,defaultVal=None):
+        if field not in self.fields:
+            self.fields.append(field)
+            self.display_fields.append(field)
+            self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
+            self.nb_fields = len(self.fields)
+            for i in self.items:
+                i.dict[field] = defaultVal
+            self.layoutChanged.emit()
             
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
@@ -971,12 +1001,12 @@ class ExtensiveTableModel(DictModel):
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  baseFields=BASE_FIELDS):
-        super().__init__(self,baseFields)
+        super().__init__(self,list(baseFields))
         self.parentModel = parentModel
         self.feedback = parentModel.feedback
         self.defaultVal = None
         self.rowNames = []
-        self.fields = baseFields
+        self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField
         
@@ -1029,15 +1059,8 @@ class ExtensiveTableModel(DictModel):
             
     # Adds new subnetwork entry to all items of model from given STItem.
     def addCol(self,col_name):
-        self.feedback.pushDebugInfo("addSTItem " + str(col_name))
-        if col_name not in self.fields:
-            for i in self.items:
-                if col_name not in i.dict:
-                    i.dict[col_name] = self.defaultVal
-                    i.recompute()
-            self.fields.append(col_name)
-            self.extFields.append(col_name)
-            self.layoutChanged.emit()
+        self.feedback.pushDebugInfo("addCol " + str(col_name))
+        super().addField(col_name,defaultVal = self.defaultVal)
         
     # Removes subnetwork 'st_name' entry for all items of model.
     def removeColFromName(self,col_name):
