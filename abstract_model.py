@@ -289,6 +289,9 @@ class AbstractGroupModel(QAbstractTableModel):
     def columnCount(self,parent=QModelIndex()):
         return len(self.fields)
         
+    def getHeaderString(self,col):
+        return None
+        
     def headerData(self,col,orientation,role):
         if col >= len(self.fields):
             pass
@@ -296,7 +299,9 @@ class AbstractGroupModel(QAbstractTableModel):
             #            + " " + str(col) + " " + str(self.fields))
         elif orientation == Qt.Horizontal and role == Qt.DisplayRole:
             #return QVariant(self.fields[col])
-            return QVariant(self.tr(self.fields[col]))
+            headerStr = self.getHeaderString(col)
+            headerStr = headerStr if headerStr else self.fields[col]
+            return QVariant(headerStr)
         return QVariant()
             
     # This function is called by Qt to display information at 'index' position.
@@ -959,12 +964,12 @@ class AbstractConnector:
 # Conceived for DictItem but might work with other items
 class ExtensiveTableModel(DictModel):
 
-    ROW_NAME = 'NAME'
+    # ROW_NAME = 'NAME'
     ROW_DESCR = 'DESCR'
     ROW_CODE = 'CODE'
-    BASE_FIELDS = [ ROW_NAME, ROW_DESCR, ROW_CODE ]
+    BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
 
-    def __init__(self,parentModel,nameField=ROW_NAME,
+    def __init__(self,parentModel,idField=ROW_CODE,
                  baseFields=BASE_FIELDS):
         super().__init__(self,baseFields)
         self.parentModel = parentModel
@@ -973,28 +978,34 @@ class ExtensiveTableModel(DictModel):
         self.rowNames = []
         self.fields = baseFields
         self.extFields = []
-        self.nameField = nameField
+        self.idField = idField
         
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
         for fr in self.items:
-            if fr.dict[self.nameField] == rowName:
+            if fr.dict[self.idField] == rowName:
                 return True
         return False
         
     # Returns item matching class 'rowName', None if there is no match.
     def getRowByName(self,rowName):
         for i in self.items:
-            if i.dict[self.nameField] == rowName:
+            if i.dict[self.idField] == rowName:
                 return i
         return None
         
     # Creates RowItem from dict
     def createRowFromDict(self,d):
-        return DictModel(d,self.fields,feedback=self.feedback)
+        return DictItem(d,self.fields,feedback=self.feedback)
     # Adds new FrictionRowItem in model from given baseRowItem.
     def addRowItem(self,baseRowItem):
         rowItem = self.createRowFromDict(baseRowItem.dict)
+        self.addRowFields(rowItem)
+        self.addItem(rowItem)
+        self.layoutChanged.emit()
+    def addRowFromCode(self,code,descr=""):
+        d = { self.ROW_CODE : code, self.ROW_DESCR : descr }
+        rowItem = self.createRowFromDict(d)
         self.addRowFields(rowItem)
         self.addItem(rowItem)
         self.layoutChanged.emit()
@@ -1004,7 +1015,7 @@ class ExtensiveTableModel(DictModel):
         self.feedback.pushDebugInfo("removing row " + str(name) + " from table")
         self.rowNames = [rowName for rowName in self.rowNames if rowName != name]
         for i in range(0,len(self.items)):
-            if self.items[i].dict[self.nameField] == name:
+            if self.items[i].dict[self.idField] == name:
                 del self.items[i]
                 self.layoutChanged.emit()
                 return
@@ -1037,16 +1048,18 @@ class ExtensiveTableModel(DictModel):
     # Reload items of model to match current ClassModel.
     def reloadModel(self,baseRowItems,colNames):
         self.feedback.pushDebugInfo("reloadModel")
-        currNames = [i.dict[self.nameField] for i in self.items]
-        rowNames = [bri.dict[self.nameField] for bri in baseRowItems]
+        currNames = [i.dict[self.idField] for i in self.items]
+        rowNames = [bri.dict[self.idField] for bri in baseRowItems]
         toDeleteNames = currNames - rowNames
         toAddNames = rowNames - currNames
         self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
-        self.items = [i for i in self.items if i.dict[self.nameField] in rowNames]
+        self.items = [i for i in self.items if i.dict[self.idField] in rowNames]
         for bri in baseRowItems:
-            currItem = self.getRowByName(bri.dict[self.nameField])
+            currItem = self.getRowByName(bri.dict[self.idField])
             if currItem:
                 for f in self.baseFields:
+                    if f not in bri.dict:
+                        assert(False)
                     bri_val = bri.dict[f]
                     if bri_val:
                         currItem.dict[f] = bri_val
@@ -1065,7 +1078,7 @@ class ExtensiveTableModel(DictModel):
                 new_val = item.dict[name]
                 if new_val is None:
                     self.pushWarnInfo("No friction assigned to subnetwork " + str(name)
-                                     + " for class " + str(item.dict[self.NAME]))
+                                     + " for class " + str(item.dict[self.idField]))
                     # float(new_val) causes exception is new_val = None
                     new_val = ''
                 if new_val == qgsTreatments.nodata_val:
@@ -1077,12 +1090,12 @@ class ExtensiveTableModel(DictModel):
                     self.pushWarnInfo("Ignoring non-numeric value " + str(new_val))
                     new_val = qgsTreatments.nodata_val
                 # TODO : change self.ROW_CODE to something like self.codeField
-                matrixes[name] += [ item.dict[self.ROW_CODE], item.dict[self.ROW_CODE], new_val ]
+                matrixes[name] += [ item.dict[self.idField], item.dict[self.idField], new_val ]
         return matrixes
         
     # Returns set of item' code (value in input raster)
     def getCodes(self):
-        codes = set([int(item.dict[self.ROW_CODE]) for item in self.items])
+        codes = set([int(item.dict[self.idField]) for item in self.items])
         return codes
         
     # Raise an error in values of input raster do no match codes of friction items.
@@ -1105,10 +1118,10 @@ class ExtensiveTableModel(DictModel):
                 
     # Imports CSV row as an item
     def fromCSVRow(self,row):
-        if self.nameField not in row:
-            self.feedback.user_error("No field '" + str(self.nameField)
+        if self.idField not in row:
+            self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
-        rowName = row[self.nameField]
+        rowName = row[self.idField]
         rowItem = self.getRowByName(rowName)
         if rowItem:
             for f in self.fields:
