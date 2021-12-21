@@ -19,9 +19,12 @@
  ***************************************************************************/
 """
 
+import sys
 import os.path
 import csv
 import ast
+import traceback
+from io import StringIO
 
 from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsRectangle,
@@ -32,7 +35,7 @@ from qgis.core import (QgsCoordinateReferenceSystem,
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
-from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks
+from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
 
 from abc import ABC, abstractmethod
 #class Abstract(ABC):
@@ -179,9 +182,9 @@ class DictItem(AbstractGroupItem):
         
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
-        self.feedback.pushDebugInfo("item = " + str(self))
+        # self.feedback.pushDebugInfo("item = " + str(self))
         for k,v in self.dict.items():
-            self.feedback.pushDebugInfo(str(v))
+            # self.feedback.pushDebugInfo(str(v))
             xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
             #xmlStr += indent + " " + k + "=\"" + str(v).replace('"','&quot;') + "\""
         xmlStr += "/>"
@@ -245,6 +248,7 @@ class AbstractGroupModel(QAbstractTableModel):
         self.feedback = feedback
         self.items = []
         self.orders = {}
+        self.parser_name = self.__class__.__name__
 
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
@@ -1193,6 +1197,168 @@ class ExtensiveTableModel(DictModel):
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         return flags
 
+# Main model for plugins that can be saved to XML file
+class MainModel:
+
+    def toXML(self,indent=""):
+        xmlStr = indent + "<" + self.parser_name + ">"
+        new_indent = indent + " "
+        for model in self.models:
+            xmlStr += "\n" + indent + model.toXML(indent=new_indent)
+        xmlStr += "\n" + indent + "</" + self.parser_name + ">"
+        return xmlStr
+        
+    def getModelFromParserName(self,name):
+        for model in self.models:
+            if model.parser_name == name:
+                return model
+        return None
+        
+    def fromXMLRoot(self,root):
+        for child in root:
+            utils.debug("tag = " + str(child.tag))
+            model = self.getModelFromParserName(child.tag)
+            if model:
+                model.fromXMLRoot(child)
+                model.layoutChanged.emit()
+
+# Main dialog for multi-tabs plugins            
+class MainDialog(QtWidgets.QDialog):
+
+    # Initialize Graphic elements for each tab
+    def initGui(self):
+        if self.provider:
+            QgsApplication.processingRegistry().addProvider(self.provider)
+        for tab in self.connectors:
+            tab.initGui()
+            
+    def tr(self, message):
+        return QCoreApplication.translate(self.pluginName, message)
+
+    # Exception hook, i.e. function called when exception raised.
+    # Displays traceback and error message in log tab.
+    # Ignores CustomException : exception raised from BioDispersal and already displayed.
+    def pluginExcHook(self,excType, excValue, tracebackobj):
+        self.feedback.pushDebugInfo("pluginExcHook")
+        if excType == utils.CustomException:
+            msgStart = self.tr("Ignoring custom exception : ")
+            self.feedback.pushDebugInfo(msgStart + str(excValue))
+        else:
+            tbinfofile = StringIO()
+            traceback.print_tb(tracebackobj, None, tbinfofile)
+            tbinfofile.seek(0)
+            tbinfo = tbinfofile.read()
+            errmsg = str(excType) + " : " + str(excValue)
+            separator = '-' * 80
+            sections = [separator, errmsg, separator]
+            self.feedback.pushDebugInfo(str(sections))
+            msg = '\n'.join(sections)
+            self.feedback.pushDebugInfo(str(msg))
+            final_msg = tbinfo + "\n" + msg
+            self.feedback.pushDebugInfo("traceback : " + str(tbinfo))
+            self.feedback.error_msg(errmsg,prefix="Unexpected error")
+        self.mTabWidget.setCurrentWidget(self.logTab)
+        feedbacks.progressFeedback.clear()
+        
+    # Connects view and model components for each tab.
+    # Connects global elements such as project file and language management.
+    def connectComponents(self):
+        for tab in self.connectors:
+            tab.connectComponents()
+        # Main tab connectors
+        self.saveProjectAs.clicked.connect(self.saveModelAsAction)
+        self.saveProject.clicked.connect(self.saveModel)
+        self.openProject.clicked.connect(self.loadModelAction)
+        self.langEn.clicked.connect(self.switchLangEn)
+        self.langFr.clicked.connect(self.switchLangFr)
+        self.aboutButton.clicked.connect(self.openHelpDialog)
+        sys.excepthook = self.pluginExcHook
+                
+    def initLog(self):
+        utils.print_func = self.txtLog.append
+        
+    def switchLang(self,lang):
+        utils.debug("switchLang " + str(lang))
+        #loc_lang = locale.getdefaultlocale()
+        #utils.info("locale = " + str(loc_lang))
+        plugin_dir = os.path.dirname(__file__)
+        lang_path = os.path.join(plugin_dir,'i18n',self.pluginName
+            + '_' + lang + '.qm')
+        if os.path.exists(lang_path):
+            self.translator = QTranslator()
+            self.translator.load(lang_path)
+            if qVersion() > '4.3.3':
+                utils.debug("Installing translator " + str(lang_path))
+                QCoreApplication.installTranslator(self.translator)
+            else:
+                utils.internal_error("Unexpected qVersion : " + str(qVersion()))
+        else:
+            utils.warn("No translation file : " + str(lang_path))
+        self.retranslateUi(self)
+        # self.paramsConnector.refreshProjectName()
+        # utils.curr_language = lang
+        self.connectors["Tabs"].loadHelpFile()
+        
+    def switchLangEn(self):
+        self.switchLang("en")
+        self.langEn.setChecked(True)
+        self.langFr.setChecked(False)
+        
+    def switchLangFr(self):
+        self.switchLang("fr")
+        self.langEn.setChecked(False)
+        self.langFr.setChecked(True)
+        
+    def openHelpDialog(self):
+        pass
+        
+    # Recompute self.parsers in case they have been reloaded
+    def recomputeParsers(self):
+        self.parsers = [self.pluginModel]
+        
+    # Return XML string describing project
+    def toXML(self):
+        return self.pluginModel.toXML()
+
+    # Save project to 'fname'
+    def saveModelAs(self,fname):
+        self.recomputeParsers()
+        xmlStr = self.toXML()
+        #self.pluginModel.paramsModel.projectFile = fname
+        # self.paramsConnector.setProjectFile(fname)
+        utils.writeFile(fname,xmlStr)
+        self.feedback.pushInfo(self.tr("Model saved into file '") + fname + "'")
+        
+    def saveModelAsAction(self):
+        fname = qgsUtils.saveFileDialog(parent=self,
+                                        msg=self.tr("Save project as"),
+                                        filter="*.xml")
+        if fname:
+            self.saveModelAs(fname)
+        
+    # Save project to projectFile if existing
+    def saveModel(self):
+        fname = self.pluginModel.paramsModel.projectFile
+        utils.checkFileExists(fname,"Project ")
+        self.saveModelAs(fname)
+   
+    # Load project from 'fname' if existing
+    def loadModel(self,fname):
+        self.feedback.pushDebugInfo("loadModel " + str(fname))
+        utils.checkFileExists(fname)
+        config_parsing.setConfigParsers(self.pluginModel.models)
+        #self.pluginModel.paramsModel.projectFile = fname
+        # self.paramsConnector.setProjectFile(fname)
+        config_parsing.parseConfig(fname)
+        self.feedback.pushInfo("Model loaded from file '" + fname + "'")
+        
+    def loadModelAction(self):
+        fname = qgsUtils.openFileDialog(parent=self,
+                                        msg=self.tr("Open project"),
+                                        filter="*.xml")
+        if fname:
+            self.loadModel(fname)
+        
 # Table view with dialog to build items
 # Butonn to create new item, double click to edit selected item
 class TableToDialogConnector(AbstractConnector):

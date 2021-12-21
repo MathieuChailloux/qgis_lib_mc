@@ -63,7 +63,7 @@ from PyQt5.QtWidgets import QMessageBox
   
 
 def launchDialog(origin,title,msg):
-    QMessageBox.information(None,title,msg)
+    QMessageBox.information(origin,title,msg)
     # QMessageBox.information(None,
         # self.translate('osraster_raster', "ERROR : Raster encoding value"),
         # self.translate('osraster_raster', "A code value set isn't valid."))
