@@ -56,5 +56,5 @@ def parseModel(parser_root):
     utils.debug("parse " + str(parser_tag))
     utils.debug("config_parsers " + str(config_parsers))
     parser = getParserByName(parser_tag)
-    parser.fromXMLRoot(parser_root)
+    parser.fromXML(parser_root)
         

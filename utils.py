@@ -233,7 +233,21 @@ def is_integer(s):
         return True
     except ValueError:
         return False
-        
+       
+def castDict(d):
+    res = {}
+    for k,v in d.items():
+        if v in ["True","False"]:
+            newVal = bool(v)
+        elif v.isnumeric():
+            newVal = int(v)
+        else:
+            try:
+                newVal = float(v)
+            except ValueError:
+                newVal = v
+        res[k] = newVal
+    return res
         
 # Validity checkers
         

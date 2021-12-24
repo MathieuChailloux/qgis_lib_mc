@@ -24,6 +24,8 @@ import os.path
 import csv
 import ast
 import traceback
+import json
+import inspect
 from io import StringIO
 
 from qgis.core import (QgsCoordinateReferenceSystem,
@@ -134,9 +136,9 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict,fields=None,feedback=None,display_fields=None):
-        if not fields:
-            fields = list(dict.keys())
+    def __init__(self,dict=dict,fields=None,feedback=None,display_fields=None):
+        # if not fields:
+            # fields = list(dict.keys())
         # self.field_to_idx = {f : fields.index(f) for f in fields}
         # if not display_fields:
             # display_fields = fields
@@ -144,17 +146,25 @@ class DictItem(AbstractGroupItem):
         # self.display_fields = display_fields
         # self.nb_fields = len(self.display_fields)
         self.dict = { f:dict[f] for f in dict }
+        self.children = []
         self.feedback = feedback
         
     def __str__(self):
         return str(self.dict)
+    # def toJSON(self):
+        # return json.dumps(self)
     @classmethod
-    def fromDict(cls,dict):
-        return cls(dict)
+    def fromDict(cls,dict,feedback=None):
+        dict = utils.castDict(dict)
+        return cls(dict=dict)
     @classmethod
     def fromStr(cls,s):
         d = ast.literal_eval(s)
-        return cls(d)
+        return cls(dict=d)
+    @classmethod
+    def fromXML(cls,root,feedback=None):
+        o = cls.fromDict(dict=root.attrib,feedback=feedback)
+        return o
         
     # def recompute(self):
         # fields = list(self.dict.keys())
@@ -183,16 +193,68 @@ class DictItem(AbstractGroupItem):
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
         # self.feedback.pushDebugInfo("item = " + str(self))
+        childrenStr = ""
         for k,v in self.dict.items():
             # self.feedback.pushDebugInfo(str(v))
+            # self.feedback.pushDebugInfo(str(v.__class__.__name__))
+            # self.feedback.pushDebugInfo(str(type(v)))
+            # self.feedback.pushDebugInfo("isclass1 " + str(inspect.isclass(v)))
+            # self.feedback.pushDebugInfo("isclass2 " + str(inspect.isclass(v.__class__)))
+            # self.feedback.pushDebugInfo("isclass3 " + str(inspect.isclass(v.__class__.__name__)))
+            # if hasattr(v.__class__,'toXML') and callable(getattr(v.__class__, 'toXML')):
+                # self.feedback.pushDebugInfo("isclass " + str(v))
+                # childrenStr += v.toXML(indent = indent + "  ")
+            # else:
             xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
             #xmlStr += indent + " " + k + "=\"" + str(v).replace('"','&quot;') + "\""
-        xmlStr += "/>"
+        xmlStr += ">\n"
+        # for c in self.children:
+            # xmlStr += c.toXML()
+        xmlStr += "</" + self.__class__.__name__ +">"
         return xmlStr
             
     def updateFromOther(self,other):
         for k in other.dict:
             self.dict[k] = other.dict[k]
+    
+class DictItemWithChildren(DictItem):
+    
+    def __init__(self,dict=dict,feedback=None,children=[]):
+        super().__init__(dict=dict,feedback=feedback)
+        self.children = children
+    def toXML(self,indent=""):
+        xmlStr = indent + "<" + self.__class__.__name__
+        childrenStr = ""
+        for k,v in self.dict.items():
+            xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
+        xmlStr += ">\n"
+        for c in self.children:
+            xmlStr += c.toXML()
+        xmlStr += "</" + self.__class__.__name__ +">"
+        return xmlStr
+    # @classmethod
+    # def fromDict(self,dict):
+        # d = utils.castDict(dict)
+        # return 
+    @classmethod
+    def fromXML(cls,root):
+        o = cls.fromDict(root.attrib)
+        for child in root:
+            childTag = child.tag
+            classObj = getattr(sys.modules[__name__], childTag)
+            childObj = classOb.fromXML(child)
+            o.children.append(childObj)
+        return o
+    # return getattr(sys.modules[__name__], str)
+# print str_to_class("Foobar")
+# print type(Foobar)
+        # for child in root:
+            # utils.debug("tag = " + str(child.tag))
+            # model = self.getModelFromParserName(child.tag)
+            # if model:
+                # model.fromXMLRoot(child)
+                # model.layoutChanged.emit()
+    
     
 # FieldsModel modelizes a unique dictionary.
 # Displayed in vertical mode (1 line = 1 field, single column).
@@ -242,21 +304,31 @@ class FieldsModel(QAbstractTableModel):
 # Items must implement AbstractGroupItem class.
 class AbstractGroupModel(QAbstractTableModel):
 
-    def __init__(self,parent,fields,feedback=None):
+    def __init__(self,itemClass,fields=[],feedback=None):
         QAbstractTableModel.__init__(self)
-        self.fields = fields
         self.feedback = feedback
         self.items = []
         self.orders = {}
         self.parser_name = self.__class__.__name__
+        self.itemClass = itemClass
+        # print(str(itemClassName))
+        # self.itemClass = getattr(sys.modules[__name__], itemClassName)
+        if fields:
+            self.fields = fields
+        else:
+            self.fields = self.itemClass.FIELDS
 
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
         return res
-        
+    
+    # @abstractmethod
+    # def setItemClass(itemClass):
+        # self.itemClass = itemClass
     @abstractmethod
     def mkItemFromStr(self,s):
-        return DictItem.fromStr(s)
+        return self.itemClass.fromStr(s)
+        # return DictItem.fromStr(s)
     def fromStr(self,s):
         assert(len(s)>=4)
         items_str = s[2:-2].split(",")
@@ -347,6 +419,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # Add new item in model if not already existing.
     # layoutChanged signal must be emitted to update view.
     def addItem(self,item):
+        # self.feedback.pushInfo("json = " + str(item.toJSON()))
         for i in self.items:
             if i.equals(item):
                 self.reportError("Item " + str(item) + " already exists")
@@ -428,11 +501,13 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,parent,fields,feedback=None,display_fields=None):
-        AbstractGroupModel.__init__(self,parent,fields)
+    def __init__(self,parent,itemClass=None,fields=[],feedback=None,display_fields=None):
+        if not itemClass:
+            itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+        AbstractGroupModel.__init__(self,itemClass,fields=fields)
         if not display_fields:
-            display_fields = fields
-        self.idx_to_fields = {fields.index(f) : f for f in display_fields}
+            display_fields = self.fields
+        self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
         self.display_fields = display_fields
         self.nb_fields = len(self.display_fields)
         self.feedback = feedback
@@ -444,7 +519,7 @@ class DictModel(AbstractGroupModel):
         item.dict[self.idx_to_fields[y]] = value
         
     def sort(self,col,order):
-        sorted_items = sorted(self.items, key=lambda i: i.dict[i.idx_to_fields[col]])
+        sorted_items = sorted(self.items, key=lambda i: i.dict[self.idx_to_fields[col]])
         if order == Qt.DescendingOrder:
             sorted_items.reverse()
         self.items = sorted_items
@@ -461,7 +536,9 @@ class DictModel(AbstractGroupModel):
         return (matching_item != None)
         
     def addItem(self,item):
-        self.feedback.pushDebugInfo("DictItem.addItem " + str(item))
+        self.feedback.pushDebugInfo(str(self.__class__.__name__
+            + " addItem " + str(item)))
+        # self.feedback.pushInfo("json = " + str(item.toJSON()))
         if not item:
             self.feedback.internal_error("Empty item")
         item.checkItem()
@@ -503,19 +580,38 @@ class DictModel(AbstractGroupModel):
             self.fields.remove(fieldname)
         self.layoutChanged.emit()
         
-    @abstractmethod
-    def mkItemFromDict(self,dict):
-        self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")
-    @abstractmethod
+    # @abstractmethod
+    def mkItemFromDict(self,dict,parent=None,feedback=None):
+        return self.itemClass.fromDict(dict,feedback=feedback)
+        # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")    @abstractmethod
+    def mkItemFromXML(self,root,parent=None,feedback=None):
+        return self.itemClass.fromXML(root)
+        # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
+    # @abstractmethod
     def fromXMLAttribs(self,attribs):
-        self.feedback.todo_error(" [" + self.__class__.__name__ + "] fromXMLAttribs not implemented")
+        self.dict = {}
+        for k,v in attribs.items():
+            if v in ["True","False"]:
+                newVal = bool(v)
+            elif v.isnumeric():
+                newVal = int(v)
+            else:
+                try:
+                    newVal = float(v)
+                except ValueError:
+                    newVal = v
+            self.dict[newVal] = v
+        # self.dict = attribs
+        # self.feedback.todo_error(" [" + self.__class__.__name__ + "] fromXMLAttribs not implemented")
         
-    def fromXMLRoot(self,root):
+    def fromXML(self,root,feedback=None):
         self.fromXMLAttribs(root.attrib)
         self.items = []
+        if not feedback:
+            feedback = self.feedback
         for parsed_item in root:
             dict = parsed_item.attrib
-            item = self.mkItemFromDict(dict)
+            item = self.mkItemFromXML(parsed_item,feedback=feedback)
             self.addItem(item)
         self.layoutChanged.emit()
         
@@ -654,7 +750,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             self.feedback.user_error("Directory '" + norm_path + "' does not exist")
         return norm_path
             
-    def fromXMLRoot(self,root):
+    def fromXML(self,root,feedback=None):
         dict = root.attrib
         self.feedback.pushDebugInfo("params dict = " + str(dict))
         return self.fromXMLDict(dict)
@@ -1005,7 +1101,7 @@ class ExtensiveTableModel(DictModel):
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  baseFields=BASE_FIELDS):
-        super().__init__(self,list(baseFields))
+        super().__init__(self,fields=list(baseFields))
         self.parentModel = parentModel
         self.feedback = parentModel.feedback
         self.defaultVal = None
@@ -1184,7 +1280,7 @@ class ExtensiveTableModel(DictModel):
         self.layoutChanged.emit()
         
     # Loads model from XML root (tag 'FrictionModel')    
-    def fromXMLRoot(self,root):
+    def fromXML(self,root):
         self.items = []
         for fr in root:
                 self.fromCSVRow(fr.attrib)
@@ -1219,7 +1315,7 @@ class MainModel:
             utils.debug("tag = " + str(child.tag))
             model = self.getModelFromParserName(child.tag)
             if model:
-                model.fromXMLRoot(child)
+                model.fromXML(child)
                 model.layoutChanged.emit()
 
 # Main dialog for multi-tabs plugins            
@@ -1258,7 +1354,7 @@ class MainDialog(QtWidgets.QDialog):
             self.feedback.pushDebugInfo("traceback : " + str(tbinfo))
             self.feedback.error_msg(errmsg,prefix="Unexpected error")
         self.mTabWidget.setCurrentWidget(self.logTab)
-        feedbacks.progressFeedback.clear()
+        # self.feedback.clear()
         
     # Connects view and model components for each tab.
     # Connects global elements such as project file and language management.
