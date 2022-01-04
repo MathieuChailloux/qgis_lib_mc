@@ -677,6 +677,9 @@ class LayerComboDialog:
 
 """ Processing utlities """
 
+def mkTmpPath(fname):
+    return QgsProcessingUtils.generateTempFilename(fname)
+        
 # Base algorithm
 class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
     INPUT = 'INPUT'

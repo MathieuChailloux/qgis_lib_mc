@@ -36,7 +36,7 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsProcessingFeedback)
 
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication
+from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication, pyqtSlot
 from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
 
 from abc import ABC, abstractmethod
@@ -1595,3 +1595,42 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
                             option.rect.height() / 2 -
                             check_box_rect.height() / 2)
         return QtCore.QRect(check_box_point, check_box_rect.size())
+
+# Code snippet from https://stackoverflow.com/questions/28037126/how-to-use-qcombobox-as-delegate-with-qtableview
+class ComboDelegate(QtWidgets.QItemDelegate):
+    editorItems=[]
+    height = 20
+    width = 200
+    
+    def __init__(self,items):
+        super().__init__()
+        self.editorItems = items
+        self.height = 20
+        self.width = 200
+    
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QListWidget(parent)
+        # editor.addItems(self.editorItems)
+        # editor.setEditable(True)
+        editor.currentItemChanged.connect(self.currentItemChanged)
+        return editor
+
+    def setEditorData(self,editor,index):
+        z = 0
+        for item in self.editorItems:
+            ai = QtWidgets.QListWidgetItem(item)
+            editor.addItem(ai)
+            if item == index.data():
+                editor.setCurrentItem(editor.item(z))
+            z += 1
+        editor.setGeometry(0,index.row()*self.height,self.width,self.height*len(self.editorItems))
+
+    def setModelData(self, editor, model, index):
+        editorIndex=editor.currentIndex()
+        text=editor.currentItem().text() 
+        model.setData(index, text,role=Qt.EditRole)
+        # print '\t\t\t ...setModelData() 1', text
+
+    @pyqtSlot()
+    def currentItemChanged(self): 
+        self.commitData.emit(self.sender())
