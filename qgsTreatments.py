@@ -46,7 +46,7 @@ import time
 
 import processing
 
-from . import utils, qgsUtils, feedbacks
+from . import utils, qgsUtils
 
 nodata_val = '-9999'
 MEMORY_LAYER_NAME = 'memory:'
@@ -63,8 +63,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
     def no_post_process(alg, context, feedback):
         pass
     if feedback is None:
-        utils.debug("initializing feedback")
-        feedback = feedbacks.progressFeedback
+        utils.internal_error("No feedback")
     feedback.pushDebugInfo("parameters : " + str(parameters))
     QGuiApplication.processEvents()
     try:
@@ -85,7 +84,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,o
         diff_time = end_time - start_time
         feedback.pushInfo("Call to " + alg_name + " successful"
                     + ", performed in " + str(diff_time) + " seconds")
-        feedbacks.endJob()
+        # feedback.endJob()
         feedback.pushDebugInfo("res = " + str(res))
         if onlyOutput:
             if "OUTPUT" in res:
@@ -357,7 +356,7 @@ def cloneLayer(layer):
     return clone_layer
                    
 def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Multi to single geometry")
+    feedback.setProgressText("Multi to single geometry")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","multiparttosingleparts",parameters,context=context,feedback=feedback)
@@ -365,8 +364,8 @@ def multiToSingleGeom(in_layer,out_layer,context=None,feedback=None):
     
 def dissolveLayer(in_layer,out_layer,fields=[],context=None,feedback=None):
     #utils.checkFileExists(in_layer)
-    feedbacks.setSubText("Dissolve")
-    #feedbacks.setSubText("Dissolve " + str(in_layer))
+    feedback.setProgressText("Dissolve")
+    #feedback.setProgressText("Dissolve " + str(in_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'FIELD' : fields,
@@ -378,7 +377,7 @@ def dissolveLayer(in_layer,out_layer,fields=[],context=None,feedback=None):
     return res
     
 def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
-    # feedbacks.setSubText("Save selected")
+    # feedback.setProgressText("Save selected")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer }
     res = applyProcessingAlg("native","saveselectedfeatures",parameters,context,feedback)
@@ -386,8 +385,8 @@ def saveSelectedFeatures(in_layer,out_layer,context=None,feedback=None):
     
 def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None,cap_style=0):
     #utils.checkFileExists(in_layer)
-    feedbacks.setSubText("Buffering")
-    #feedbacks.setSubText("Buffer (" + str(expr) + ") on " + str(out_layer))
+    feedback.setProgressText("Buffering")
+    #feedback.setProgressText("Buffer (" + str(expr) + ") on " + str(out_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
     parameters = { 'DISSOLVE' : False,
@@ -403,7 +402,7 @@ def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None,cap_s
     return res
     
 def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Merge vector layers")
+    feedback.setProgressText("Merge vector layers")
     parameters = { 'CRS' : crs,
                    'LAYERS' : in_layers,
                    'OUTPUT' : out_layer }
@@ -412,7 +411,7 @@ def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
                    
     
 def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Difference")
+    feedback.setProgressText("Difference")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : diff_layer }
@@ -420,7 +419,7 @@ def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
     return res  
     
 def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Clip")
+    feedback.setProgressText("Clip")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : clip_layer }
@@ -428,7 +427,7 @@ def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
     return res  
     
 def clipVectorByExtent(in_layer,extent,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Clip")
+    feedback.setProgressText("Clip")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'EXTENT' : extent }
@@ -436,7 +435,7 @@ def clipVectorByExtent(in_layer,extent,out_layer,context=None,feedback=None):
     return res
     
 def applyIntersection(in_layer,clip_layer,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Intersection")
+    feedback.setProgressText("Intersection")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : clip_layer }
@@ -444,7 +443,7 @@ def applyIntersection(in_layer,clip_layer,out_layer,context=None,feedback=None):
     return res
     
 def selectIntersection(in_layer,overlay_layer,context=None,feedback=None):
-    #feedbacks.setSubText("Intersection")
+    #feedback.setProgressText("Intersection")
     parameters = { 'INPUT' : in_layer,
                    'INTERSECT' : overlay_layer,
                    'METHOD' : 0,
@@ -454,7 +453,7 @@ def selectIntersection(in_layer,overlay_layer,context=None,feedback=None):
     
     
 def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None):
-    feedbacks.setSubText("Reproject")
+    feedback.setProgressText("Reproject")
     parameters = { 'INPUT' : in_layer,
                    'OUTPUT' : out_layer,
                    'TARGET_CRS' : target_crs }
@@ -619,7 +618,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     utils.debug("applyRasterization")
-    feedbacks.setSubText("Rasterize")
+    feedback.setProgressText("Rasterize")
     if overwrite:
         qgsUtils.removeRaster(out_path)
     parameters = { 'ALL_TOUCH' : all_touch,
@@ -649,7 +648,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        src_crs=None,extent=None,extent_crs=None,
                        resolution=None,out_type=USE_INPUT_TYPE,nodata_val=nodata_val,
                        overwrite=False,context=None,feedback=None):
-    feedbacks.setSubText("Warp")
+    feedback.setProgressText("Warp")
     modes = ['near', 'bilinear', 'cubic', 'cubicspline', 'lanczos',
              'average','mode', 'max', 'min', 'med', 'q1', 'q3']
     # Resampling mode
@@ -676,7 +675,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     
 def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
                    crs=None,context=None,feedback=None):
-    feedbacks.setSubText("Tanslate")
+    feedback.setProgressText("Tanslate")
     # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
                    'DATA_TYPE' : qgsTypeToInt(data_type),
@@ -692,7 +691,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                          crop_cutline=True,nodata=None,data_type=USE_INPUT_TYPE,
                          context=None,feedback=None):
     # data type 0 = input raster type
-    feedbacks.setSubText("Clip raster")
+    feedback.setProgressText("Clip raster")
     parameters = { 'ALPHA_BAND' : False,
                    'CROP_TO_CUTLINE' : crop_cutline,
                    'DATA_TYPE' : qgsTypeToInt(data_type),
@@ -716,7 +715,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
 def clipRasterAllTouched(raster_path,vector_path,dst_crs,
                          out_path=None,nodata=None,data_type=USE_INPUT_TYPE,
                          resolution=None,context=None,feedback=None):
-    feedbacks.setSubText("Clip raster at")
+    feedback.setProgressText("Clip raster at")
     # data type 0 = input raster type
     if isinstance(vector_path,QgsVectorLayer):
         vector_path = qgsUtils.pathOfLayer(vector_path)
@@ -737,7 +736,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
-    feedbacks.setSubText("Merge raster")
+    feedback.setProgressText("Merge raster")
     parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
                    'INPUT' : files,
                    'NODATA_INPUT' : nodata_input,
@@ -750,7 +749,7 @@ def applyRasterCalcProc(input_a,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
-    feedbacks.setSubText("Raster Calc")
+    feedback.setProgressText("Raster Calc")
     parameters = { 'BAND_A' : 1,
                    'FORMULA' : expr,
                    'INPUT_A' : input_a,

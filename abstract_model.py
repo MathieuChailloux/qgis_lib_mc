@@ -156,6 +156,7 @@ class DictItem(AbstractGroupItem):
     @classmethod
     def fromDict(cls,dict,feedback=None):
         dict = utils.castDict(dict)
+        utils.debug("fromDict " + str(cls.__name__))
         return cls(dict=dict)
     @classmethod
     def fromStr(cls,s):
@@ -304,7 +305,7 @@ class FieldsModel(QAbstractTableModel):
 # Items must implement AbstractGroupItem class.
 class AbstractGroupModel(QAbstractTableModel):
 
-    def __init__(self,itemClass,fields=[],feedback=None):
+    def __init__(self,itemClass=None,fields=[],feedback=None):
         QAbstractTableModel.__init__(self)
         self.feedback = feedback
         self.items = []
@@ -513,7 +514,13 @@ class DictModel(AbstractGroupModel):
         self.feedback = feedback
         
     def getNField(self,item,n):
-        return item.dict[self.idx_to_fields[n]]
+        try:
+            return item.dict[self.idx_to_fields[n]]
+        except Exception as e:
+            self.feedback.pushDebugInfo("idx_to_fields = " + str(self.idx_to_fields))
+            self.feedback.pushDebugInfo("dict = " + str(item.dict))
+            self.feedback.pushDebugInfo("n = " + str(n))
+            raise e
     def setDataXY(self,x,y,value):
         item = self.getNItem(x)
         item.dict[self.idx_to_fields[y]] = value
@@ -571,7 +578,7 @@ class DictModel(AbstractGroupModel):
         for i in self.items:
             utils.debug(str(i.dict.items()))
             if fieldname not in i.dict:
-                self.pushWarning("Could not delete field '" + str(fieldname))
+                self.feedback.pushWarning("Could not delete field '" + str(fieldname))
             else:
                 del i.dict[fieldname]
             i.recompute()
@@ -986,6 +993,7 @@ class AbstractConnector:
     def __init__(self,model,view,addButton=None,removeButton=None,
                  runButton=None,selectionCheckbox=None):
         self.model = model
+        self.feedback = model.feedback
         self.view = view
         self.addButton = addButton
         self.onlySelection = False
@@ -1095,16 +1103,18 @@ class AbstractConnector:
 class ExtensiveTableModel(DictModel):
 
     # ROW_NAME = 'NAME'
-    ROW_DESCR = 'DESCR'
-    ROW_CODE = 'CODE'
+    ROW_DESCR = 'class_descr'
+    ROW_CODE = 'code'
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
+    
+    DEFAULT_VAL = None
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  baseFields=BASE_FIELDS):
         super().__init__(self,fields=list(baseFields))
         self.parentModel = parentModel
         self.feedback = parentModel.feedback
-        self.defaultVal = None
+        self.defaultVal = self.DEFAULT_VAL
         self.rowNames = []
         self.fields = list(baseFields)
         self.extFields = []
@@ -1158,7 +1168,7 @@ class ExtensiveTableModel(DictModel):
             row[f] = self.defaultVal
             
     # Adds new subnetwork entry to all items of model from given STItem.
-    def addCol(self,col_name):
+    def addCol(self,col_name,defaultVal=DEFAULT_VAL):
         self.feedback.pushDebugInfo("addCol " + str(col_name))
         super().addField(col_name,defaultVal = self.defaultVal)
         
@@ -1200,7 +1210,7 @@ class ExtensiveTableModel(DictModel):
                         + "' not found in friction model")
                 new_val = item.dict[name]
                 if new_val is None:
-                    self.pushWarnInfo("No friction assigned to subnetwork " + str(name)
+                    self.feedback.pushWarning("No friction assigned to subnetwork " + str(name)
                                      + " for class " + str(item.dict[self.idField]))
                     # float(new_val) causes exception is new_val = None
                     new_val = ''
@@ -1210,7 +1220,7 @@ class ExtensiveTableModel(DictModel):
                 try:
                     float(new_val)
                 except ValueError:
-                    self.pushWarnInfo("Ignoring non-numeric value " + str(new_val))
+                    self.feedback.pushWarning("Ignoring non-numeric value " + str(new_val))
                     new_val = qgsTreatments.nodata_val
                 # TODO : change self.ROW_CODE to something like self.codeField
                 matrixes[name] += [ item.dict[self.idField], item.dict[self.idField], new_val ]
@@ -1251,7 +1261,7 @@ class ExtensiveTableModel(DictModel):
                 if f in row:
                     rowItem[f] = row[f]
                 else:
-                    self.pushWarnInfo("No entry for row '" + rowName
+                    self.feedback.pushWarning("No entry for row '" + rowName
                         + "' and col '" + str(f) + "'")
         else:
             rowItem = self.createRowFromDict(row)
