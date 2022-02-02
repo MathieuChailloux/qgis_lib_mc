@@ -927,7 +927,8 @@ class NormalizingParamsModel(QAbstractTableModel):
                             float(coords[2]),float(coords[3]))
         return rect 
         
-    def clipByExtent(self,input,name="",out_path="",clip_raster=True,context=None,feedback=None):
+    def clipByExtent(self,input,name="",out_path="",clip_raster=True,
+            context=None,feedback=None):
         extentLayer = self.getExtentLayer()
         if not extentLayer or extentLayer == input:
             return input
@@ -967,7 +968,8 @@ class NormalizingParamsModel(QAbstractTableModel):
         return res
                 
     # Normalize given raster layer to match global extent and resolution
-    def normalizeRaster(self,path,out_path=None,resampling_mode="near",context=None,feedback=None):
+    def normalizeRaster(self,path,out_path=None,resampling_mode="near",
+            context=None,feedback=None):
         if not self.extentLayer:
             return input
         extent_layer, extent_layer_type = self.getExtentLayerAndType()
@@ -1116,6 +1118,7 @@ class ExtensiveTableModel(DictModel):
         self.feedback = parentModel.feedback
         self.defaultVal = self.DEFAULT_VAL
         self.rowNames = []
+        self.baseFields = baseFields
         self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField

@@ -58,7 +58,8 @@ gdal_warp_cmd = None
 
 # Processing call wrappers      
   
-def applyProcessingAlg(provider,alg_name,parameters,context=None,feedback=None,onlyOutput=True):
+def applyProcessingAlg(provider,alg_name,parameters,context=None,
+        feedback=None,onlyOutput=True):
     # Dummy function to enable running an alg inside an alg
     def no_post_process(alg, context, feedback):
         pass
@@ -137,30 +138,32 @@ USE_INPUT_TYPE = -1
 # Parameter shift return integer value according to TYPES list
 # If input qgis_type is unknown, it is cast to defaultType
 # If input value is -1, it means 'Use input layer data type' and return value is 0
-def qgsTypeToInt(qgis_type,shift=False,defaultType=Qgis.Float32):
+def qgsTypeToInt(qgis_type,shift=False,typeList=2,defaultType=Qgis.Float32):
     if isinstance(qgis_type,Qgis.DataType):
-        TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
-                 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
-        typeAssoc = { Qgis.UnknownDataType :0,
-                      Qgis.Byte : 1,
-                      Qgis.UInt16 : 2,
-                      Qgis.Int16 : 3,
-                      Qgis.UInt32 : 4,
-                      Qgis.Int32 : 5,
-                      Qgis.Float32 : 6,
-                      Qgis.Float64 : 7,
-                      Qgis.CInt16 : 8,
-                      Qgis.CInt32 : 9,
-                      Qgis.CFloat32 : 10,
-                      Qgis.CFloat64 : 11 }
-        if qgis_type in typeAssoc:
-            int_value = typeAssoc[qgis_type]
+        TYPES1 = [Qgis.Byte, Qgis.Int16, Qgis.UInt16, Qgis.Int32, Qgis.UInt32, Qgis.Float32,
+                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
+        TYPES2 = [Qgis.Byte, Qgis.Int16, Qgis.UInt16, Qgis.UInt32, Qgis.Int32, Qgis.Float32,
+                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
+        TYPES3 = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32, Qgis.Float32,
+                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
+        if typeList == 1:
+            typeList = TYPES1
+        elif typeList == 2:
+            typeList = TYPES2
+        elif typeList == 3:
+            typeList = TYPES3
+        else:
+            utils.internal_error("No type list with id " + str(typeList))
+        if qgis_type in typeList:
+            int_value = typeList.index(qgis_type)
             if int_value == 0:
-                int_value = typeAssoc[defaultType]
-            if shift:
-                int_value -= 1
+                int_value = typeList.index(defaultType)
+            if not shift:
+                int_value += 1
             utils.debug("qgsTypeToInt " + str(qgis_type) + " = " + str(int_value))
             return int_value
+        else:
+            utils.internal_error("No type associated to qgis type " + str(qgis_type))
     elif isinstance(qgis_type,int):
         int_value = 0 if qgis_type == USE_INPUT_TYPE else qgis_type
         return int_value
@@ -616,7 +619,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
                        nodata_val=nodata_val,all_touch=False,overwrite=False,
                        context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
-             'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+             'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
     utils.debug("applyRasterization")
     feedback.setProgressText("Rasterize")
     if overwrite:
@@ -659,7 +662,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
         qgsUtils.removeRaster(out_path)
     # Output type
     TYPES = ['Use input layer data type', 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32',
-             'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+             'Float32', 'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
     # Parameters
     parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type),
                    'INPUT' : in_path,
@@ -735,7 +738,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
     
 def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
-    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
     feedback.setProgressText("Merge raster")
     parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
                    'INPUT' : files,
@@ -776,13 +779,15 @@ def applyRasterCalcLT(input,output,max_val,
                       nodata_val=nodata_val,out_type=Qgis.Float32,
                       context=None,feedback=None):
     expr = "less(A," + str(max_val) + ")*A+less_equal(" + str(max_val) + ",A)*" + str(nodata_val)
-    return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalc(input,output,expr,nodata_val,out_type,
+               context=context,feedback=feedback)
     
 def applyRasterCalcLE(input,output,max_val,
                       nodata_val=nodata_val,out_type=Qgis.Float32,
                       context=None,feedback=None):
     expr = "less_equal(A," + str(max_val) + ")*A+less(" + str(max_val) + ",A)*" + str(nodata_val)
-    return applyRasterCalc(input,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalc(input,output,expr,nodata_val,out_type,
+               context=context,feedback=feedback)
     
 def applyRasterCalcAB(input_a,input_b,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
@@ -796,7 +801,8 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
-    return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+    return applyProcessingAlg("gdal","rastercalculator",parameters,
+               context=context,feedback=feedback)
     
 def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
@@ -810,8 +816,8 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
     nonull_b = QgsProcessingUtils.generateTempFilename("nonull_b.tif")
     nonull_ab = QgsProcessingUtils.generateTempFilename("nonull_ab.tif")
     nonull_reset = QgsProcessingUtils.generateTempFilename("nonull_reset.tif")
-    applyRNull(input_a,tmp_no_data_val,nonull_a)
-    applyRNull(input_b,tmp_no_data_val,nonull_b)
+    applyRNull(input_a,tmp_no_data_val,nonull_a,context=context,feedback=feedback)
+    applyRNull(input_b,tmp_no_data_val,nonull_b,context=context,feedback=feedback)
     # a_nodata = str(input_a.dataProvider().sourceNoDataValue(1))
     # b_nodata = str(input_b.dataProvider().sourceNoDataValue(1))
     expr_wrap = "equal(A," + nd_str + ") * B "
@@ -825,10 +831,11 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : nonull_ab,
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
-    applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
+    applyProcessingAlg("gdal","rastercalculator",parameters,
+        context=context,feedback=feedback)
     reset_nodata_expr = '(A==' + str(tmp_no_data_val) + ')*' + str(nodata_val)
     reset_nodata_expr += '+(A!=' + str(tmp_no_data_val) + ')*A'
-    applyRasterCalc(nonull_ab,output,reset_nodata_expr)
+    applyRasterCalc(nonull_ab,output,reset_nodata_expr,context=context,feedback=feedback)
     return output
     # return applyRSetNull(nonull_reset,nodata_val,output)
                        
@@ -844,15 +851,16 @@ def applyRasterCalcMin(input_a,input_b,output,
                        nodata_val=nodata_val,out_type=Qgis.Float32,
                        context=None,feedback=None):
     min = qgsUtils.getRastersMinMax([input_a,input_b])
-    min
     expr = 'A*less_equal(A,B) + B*less(B,A)'
-    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val=nodata_val,
+                out_type=out_type,context=context,feedback=feedback)
                    
 def applyRasterCalcMax(input_a,input_b,output,
                        nodata_val=nodata_val,out_type=Qgis.Float32,
                        context=None,feedback=None):
     expr = 'B*less_equal(A,B) + A*less(B,A) '
-    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val,out_type,context,feedback)
+    return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val=nodata_val,
+                out_type=out_type,context=context,feedback=feedback)
   
 def applyProximity(input,output,classes='',band=1,units=0,context=None,feedback=None):
     # { 'BAND' : 1, 'DATA_TYPE' : 5, 'EXTRA' : '', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/data/clc_lines_raster.tif', 'MAX_DISTANCE' : 0, 'NODATA' : 0, 'OPTIONS' : '', 'OUTPUT' : 'TEMPORARY_OUTPUT', 'REPLACE' : 0, 'UNITS' : 0, 'VALUES' : '1,2,3,4,5' }
@@ -1178,40 +1186,39 @@ def applyGdalCalcAB_ANull(in_path1,in_path2,out_path,expr,load_flag=False):
         QgsProject.instance().addMapLayer(res_layer)
     
 # Creates raster 'out_path' from 'in_path1', 'in_path2' and 'expr'.
-def applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag=False):
-    utils.debug("qgsTreatments.applyGdalCalcAB")
-    if os.path.isfile(out_path):
-        qgsUtils.removeRaster(out_path)
-    tmp_no_data_val = -1
-    nonull_p1 = utils.mkTmpPath(in_path1,suffix="_nonull")
-    nonull_p2 = utils.mkTmpPath(in_path2,suffix="_nonull")
-    nonull_out = utils.mkTmpPath(out_path,suffix="_nonull")
-    nonull_out_tmp = utils.mkTmpPath(nonull_out,suffix="_tmp")
-    applyRNull(in_path1,tmp_no_data_val,nonull_p1)
-    applyRNull(in_path2,tmp_no_data_val,nonull_p2)
-    cmd_args = [gdal_calc_cmd,
-                '-A', nonull_p1,
-                '-B', nonull_p2,
-                #'--type=Int32',
-                '--NoDataValue='+nodata_val,
-                '--overwrite',
-                '--outfile='+nonull_out]
-    expr_opt = '--calc=' + str(expr)
-    cmd_args.append(expr_opt)
-    utils.executeCmd(cmd_args)
-    reset_nodata_expr = '(A==' + str(tmp_no_data_val) + ')*' + str(nodata_val)
-    reset_nodata_expr += '+(A!=' + str(tmp_no_data_val) + ')*A'
-    applyGdalCalc(nonull_out,nonull_out_tmp,reset_nodata_expr)
-    applyRSetNull(nonull_out_tmp,nodata_val,out_path)
-    remove_tmp_flag = not utils.debug_flag
-    if remove_tmp_flag:
-        qgsUtils.removeRaster(nonull_p1)
-        qgsUtils.removeRaster(nonull_p2)
-        qgsUtils.removeRaster(nonull_out)
-        qgsUtils.removeRaster(nonull_out_tmp)
-    if load_flag:
-        res_layer = qgsUtils.loadRasterLayer(out_path)
-        QgsProject.instance().addMapLayer(res_layer)
+# def applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag=False):
+    # utils.debug("qgsTreatments.applyGdalCalcAB")
+    # if os.path.isfile(out_path):
+        # qgsUtils.removeRaster(out_path)
+    # tmp_no_data_val = -1
+    # nonull_p1 = utils.mkTmpPath(in_path1,suffix="_nonull")
+    # nonull_p2 = utils.mkTmpPath(in_path2,suffix="_nonull")
+    # nonull_out = utils.mkTmpPath(out_path,suffix="_nonull")
+    # nonull_out_tmp = utils.mkTmpPath(nonull_out,suffix="_tmp")
+    # applyRNull(in_path1,tmp_no_data_val,nonull_p1)
+    # applyRNull(in_path2,tmp_no_data_val,nonull_p2)
+    # cmd_args = [gdal_calc_cmd,
+                # '-A', nonull_p1,
+                # '-B', nonull_p2,
+                # '--NoDataValue='+nodata_val,
+                # '--overwrite',
+                # '--outfile='+nonull_out]
+    # expr_opt = '--calc=' + str(expr)
+    # cmd_args.append(expr_opt)
+    # utils.executeCmd(cmd_args)
+    # reset_nodata_expr = '(A==' + str(tmp_no_data_val) + ')*' + str(nodata_val)
+    # reset_nodata_expr += '+(A!=' + str(tmp_no_data_val) + ')*A'
+    # applyGdalCalc(nonull_out,nonull_out_tmp,reset_nodata_expr)
+    # applyRSetNull(nonull_out_tmp,nodata_val,out_path)
+    # remove_tmp_flag = not utils.debug_flag
+    # if remove_tmp_flag:
+        # qgsUtils.removeRaster(nonull_p1)
+        # qgsUtils.removeRaster(nonull_p2)
+        # qgsUtils.removeRaster(nonull_out)
+        # qgsUtils.removeRaster(nonull_out_tmp)
+    # if load_flag:
+        # res_layer = qgsUtils.loadRasterLayer(out_path)
+        # QgsProject.instance().addMapLayer(res_layer)
     
 # Applies ponderation on 'in_path1' according to 'in_path2' values.
 # Result stored in 'out_path'.
@@ -1236,16 +1243,16 @@ def applyPonderationGdal(a_path,b_path,out_path,pos_values=False):
     QgsProject.instance().addMapLayer(res_layer)
     
 # Creates raster 'out_path' keeping maximum value from 'in_path1' and 'in_path2'.
-def applyMaxGdal(in_path1,in_path2,out_path,load_flag=False):
-    utils.debug("qgsTreatments.applyMaxGdal")
-    expr = 'B*less_equal(A,B) + A*less(B,A)'
-    applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag)
+# def applyMaxGdal(in_path1,in_path2,out_path,load_flag=False):
+    # utils.debug("qgsTreatments.applyMaxGdal")
+    # expr = 'B*less_equal(A,B) + A*less(B,A)'
+    # applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag)
     
 # Creates raster 'out_path' keeping maximum value from 'in_path1' and 'in_path2'.
-def applyMinGdal(in_path1,in_path2,out_path,load_flag=False):
-    utils.debug("qgsTreatments.applyMinGdal")
-    expr = 'A*less_equal(A,B) + B*less(B,A)'
-    applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag)
+# def applyMinGdal(in_path1,in_path2,out_path,load_flag=False):
+    # utils.debug("qgsTreatments.applyMinGdal")
+    # expr = 'A*less_equal(A,B) + B*less(B,A)'
+    # applyGdalCalcAB(in_path1,in_path2,out_path,expr,load_flag)
                  
         
 def applyGdalMerge(files,out_path,load_flag=False):
