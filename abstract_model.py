@@ -1122,6 +1122,14 @@ class ExtensiveTableModel(DictModel):
         self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField
+        self.valueSet = []
+        
+    def setValues(self,values):
+        self.valueSet = values
+        
+    # def getNField(self,item,col):
+        # if col > TODO:
+            
         
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
