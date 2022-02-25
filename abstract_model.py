@@ -148,6 +148,16 @@ class DictItem(AbstractGroupItem):
         self.dict = { f:dict[f] for f in dict }
         self.children = []
         self.feedback = feedback
+    
+    # Initialize from values according to fields order
+    @classmethod
+    def fromValues(cls,valueList):
+        d = dict()
+        for cpt, v in enumerate(valueList):
+            d[cls.FIELDS[cpt]] = v
+        utils.debug(str(d))
+        utils.debug(str(d.__class__.__name__))
+        return cls(dict=d)
         
     def __str__(self):
         return str(self.dict)
@@ -1104,8 +1114,8 @@ class AbstractConnector:
 # Conceived for DictItem but might work with other items
 class ExtensiveTableModel(DictModel):
 
-    # ROW_NAME = 'NAME'
-    ROW_DESCR = 'class_descr'
+    ROW_NAME = 'name'
+    ROW_DESCR = 'descr'
     ROW_CODE = 'code'
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
     
@@ -1148,18 +1158,21 @@ class ExtensiveTableModel(DictModel):
     # Creates RowItem from dict
     def createRowFromDict(self,d):
         return DictItem(d,self.fields,feedback=self.feedback)
-    # Adds new FrictionRowItem in model from given baseRowItem.
-    def addRowItem(self,baseRowItem):
-        rowItem = self.createRowFromDict(baseRowItem.dict)
+    def createRowFromBaseRow(self,baseRowItem):
+        return self.createRowFromDict(baseRowItem.dict)
+    # Adds new new rowItem in model.
+    def addRowItem(self,rowItem):
         self.addRowFields(rowItem)
         self.addItem(rowItem)
         self.layoutChanged.emit()
+    # Adds new rowItem in model from given baseRowItem.
+    def addRowItemFromBase(self,baseRowItem):
+        rowItem = self.createRowFromBaseRow(baseRowItem)
+        self.addRowItem(rowItem)
     def addRowFromCode(self,code,descr=""):
         d = { self.ROW_CODE : code, self.ROW_DESCR : descr }
         rowItem = self.createRowFromDict(d)
-        self.addRowFields(rowItem)
-        self.addItem(rowItem)
-        self.layoutChanged.emit()
+        self.addRowItem(rowItem)
         
     # Removes item matching class 'name' from model.
     def removeRowFromName(self,name):
@@ -1270,7 +1283,7 @@ class ExtensiveTableModel(DictModel):
         if rowItem:
             for f in self.fields:
                 if f in row:
-                    rowItem[f] = row[f]
+                    rowItem.dict[f] = row[f]
                 else:
                     self.feedback.pushWarning("No entry for row '" + rowName
                         + "' and col '" + str(f) + "'")
