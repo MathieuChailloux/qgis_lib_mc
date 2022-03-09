@@ -271,8 +271,8 @@ def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
     res = applyProcessingAlg("qgis","joinattributesbylocation",parameters,context=context,feedback=feedback)
     return res
     
-def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames,summaries,
-        predicates=[0],context=None,feedback=None):
+def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames=[],summaries=[],
+        predicates=[0],discard=True,context=None,feedback=None):
     # parameters = { 'DISCARD_NONMATCHING' : False,
         # 'INPUT' : in_layer,
         # 'JOIN' : join_layer,
@@ -280,7 +280,7 @@ def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames,summaries,
         # 'OUTPUT' : 'TEMPORARY_OUTPUT',
         # 'PREDICATE' : [0],
         # 'SUMMARIES' : [0,1,2,3,5,6] }
-    parameters = { 'DISCARD_NONMATCHING' : True,
+    parameters = { 'DISCARD_NONMATCHING' : discard,
         'INPUT' : in_layer,
         'JOIN' : join_layer,
         'JOIN_FIELDS' : fieldnames,
@@ -437,11 +437,14 @@ def clipVectorByExtent(in_layer,extent,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("gdal","clipvectorbyextent",parameters,context,feedback)
     return res
     
-def applyIntersection(in_layer,clip_layer,out_layer,context=None,feedback=None):
+def applyIntersection(in_layer,clip_layer,out_layer,input_fields=[],
+        clip_fields=[],context=None,feedback=None):
     feedback.setProgressText("Intersection")
     parameters = { 'INPUT' : in_layer,
+                   'INPUT_FIELDS' : input_fields,
                    'OUTPUT' : out_layer,
-                   'OVERLAY' : clip_layer }
+                   'OVERLAY' : clip_layer,
+                   'OVERLAY_FIELDS' : clip_fields }
     res = applyProcessingAlg("qgis","intersection",parameters,context,feedback)
     return res
     
@@ -474,6 +477,18 @@ def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
         'OUTPUT' : out_layer,
         'TYPE' : 2 } #Rectangle
     res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
+    return res
+    
+def fieldCalculator(input,field,formula,output,context=None,feedback=None):
+    #{ 'FIELD_LENGTH' : 0, 'FIELD_NAME' : 'test', 'FIELD_PRECISION' : 0, 'FIELD_TYPE' : 0, 'FORMULA' : '$area', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/PluginQualification/test/CLC_BO_single.gpkg', 'OUTPUT' : 'TEMPORARY_OUTPUT' }
+    parameters = { 'FIELD_LENGTH' : 0,
+        'FIELD_NAME' : field,
+        'FIELD_PRECISION' : 0,
+        'FIELD_TYPE' : 0,
+        'FORMULA' : formula,
+        'INPUT' : input,
+        'OUTPUT' : output }
+    res = applyProcessingAlg("native","fieldcalculator",parameters,context,feedback)
     return res
     
 def fixGeometries(input,output,context=None,feedback=None):
