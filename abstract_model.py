@@ -1120,6 +1120,8 @@ class ExtensiveTableModel(DictModel):
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
     
     DEFAULT_VAL = None
+    
+    LEGACY_MATCHING = { 'class' : ROW_NAME , 'class_descr' : ROW_DESCR }
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  baseFields=BASE_FIELDS):
@@ -1187,9 +1189,10 @@ class ExtensiveTableModel(DictModel):
     # Adds subnetwork columns to given FrictionRowItem.
     # Friction values are set to defaultVal (None).
     def addRowFields(self,row):
-        self.feedback.pushDebugInfo("addRowFields")
-        for f in self.extFields:
-            row[f] = self.defaultVal
+        extFields = self.fields[len(self.baseFields):]
+        self.feedback.pushDebugInfo("addRowFields " + str(extFields))
+        for f in extFields:
+            row.dict[f] = self.defaultVal
             
     # Adds new subnetwork entry to all items of model from given STItem.
     def addCol(self,col_name,defaultVal=DEFAULT_VAL):
@@ -1203,12 +1206,14 @@ class ExtensiveTableModel(DictModel):
         self.layoutChanged.emit()
         
     # Reload items of model to match current ClassModel.
-    def reloadModel(self,baseRowItems,colNames):
+    def reloadModel(self,baseRowItems):
         self.feedback.pushDebugInfo("reloadModel")
         currNames = [i.dict[self.idField] for i in self.items]
         rowNames = [bri.dict[self.idField] for bri in baseRowItems]
-        toDeleteNames = currNames - rowNames
-        toAddNames = rowNames - currNames
+        self.feedback.pushDebugInfo("currNames " + str(currNames))
+        self.feedback.pushDebugInfo("rowNames " + str(rowNames))
+        toDeleteNames = set(currNames) - set(rowNames)
+        toAddNames = set(rowNames) - set(currNames)
         self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
         self.items = [i for i in self.items if i.dict[self.idField] in rowNames]
         for bri in baseRowItems:
@@ -1216,12 +1221,16 @@ class ExtensiveTableModel(DictModel):
             if currItem:
                 for f in self.baseFields:
                     if f not in bri.dict:
-                        assert(False)
-                    bri_val = bri.dict[f]
+                        if f in self.LEGACY_MATCHING:
+                            bri_val = bri.dict[self.LEGACY_MATCHING[f]]
+                        else:
+                            utils.internal_error("Unexpected field " + str(f))
+                    else:
+                        bri_val = bri.dict[f]
                     if bri_val:
                         currItem.dict[f] = bri_val
             else:
-                self.addRowItem(bri)
+                self.addRowItemFromBase(bri)
         self.layoutChanged.emit()
                             
     # Returns reclassify matrix (list) for native:reclassifybytable call.
@@ -1314,11 +1323,11 @@ class ExtensiveTableModel(DictModel):
         self.layoutChanged.emit()
         
     # Loads model from XML root (tag 'FrictionModel')    
-    def fromXML(self,root):
-        self.items = []
-        for fr in root:
-                self.fromCSVRow(fr.attrib)
-        self.layoutChanged.emit()
+    # def fromXML(self,root):
+        # self.items = []
+        # for fr in root:
+                # self.fromCSVRow(fr.attrib)
+        # self.layoutChanged.emit()
         
     def flags(self, index):
         if index.column() in [1,2]:
