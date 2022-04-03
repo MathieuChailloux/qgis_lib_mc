@@ -712,6 +712,9 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
         return self.ALG_NAME
     def createInstance(self):
         return type(self)()
+    def addAdvancedParam(self,param):
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
     def mkTmpPath(self,fname):
         return QgsProcessingUtils.generateTempFilename(fname)
     def parameterAsSourceLayer(self,parameters,paramName,context,feedback=None):
