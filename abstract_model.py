@@ -514,7 +514,8 @@ class DictModel(AbstractGroupModel):
 
     def __init__(self,parent,itemClass=None,fields=[],feedback=None,display_fields=None):
         if not itemClass:
-            itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+            # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+            itemClass = DictItem
         AbstractGroupModel.__init__(self,itemClass,fields=fields)
         if not display_fields:
             display_fields = self.fields
