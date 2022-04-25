@@ -136,7 +136,7 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict=dict,fields=None,feedback=None,display_fields=None):
+    def __init__(self,dict,fields=None,feedback=None,display_fields=None):
         # if not fields:
             # fields = list(dict.keys())
         # self.field_to_idx = {f : fields.index(f) for f in fields}
@@ -1125,7 +1125,7 @@ class ExtensiveTableModel(DictModel):
     LEGACY_MATCHING = { 'class' : ROW_NAME , 'class_descr' : ROW_DESCR }
 
     def __init__(self,parentModel,idField=ROW_CODE,
-                 baseFields=BASE_FIELDS):
+                 rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
         super().__init__(self,fields=list(baseFields))
         self.parentModel = parentModel
         self.feedback = parentModel.feedback
@@ -1135,6 +1135,7 @@ class ExtensiveTableModel(DictModel):
         self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField
+        self.rowIdField = rowIdField
         self.valueSet = []
         
     def setValues(self,values):
@@ -1182,7 +1183,7 @@ class ExtensiveTableModel(DictModel):
         self.feedback.pushDebugInfo("removing row " + str(name) + " from table")
         self.rowNames = [rowName for rowName in self.rowNames if rowName != name]
         for i in range(0,len(self.items)):
-            if self.items[i].dict[self.idField] == name:
+            if self.items[i].dict[self.idField] == name or self.items[i].dict[self.ROW_NAME]:
                 del self.items[i]
                 self.layoutChanged.emit()
                 return
@@ -1210,7 +1211,7 @@ class ExtensiveTableModel(DictModel):
     def reloadModel(self,baseRowItems):
         self.feedback.pushDebugInfo("reloadModel")
         currNames = [i.dict[self.idField] for i in self.items]
-        rowNames = [bri.dict[self.idField] for bri in baseRowItems]
+        rowNames = [bri.dict[self.rowIdField] for bri in baseRowItems]
         self.feedback.pushDebugInfo("currNames " + str(currNames))
         self.feedback.pushDebugInfo("rowNames " + str(rowNames))
         toDeleteNames = set(currNames) - set(rowNames)
@@ -1218,7 +1219,7 @@ class ExtensiveTableModel(DictModel):
         self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
         self.items = [i for i in self.items if i.dict[self.idField] in rowNames]
         for bri in baseRowItems:
-            currItem = self.getRowByName(bri.dict[self.idField])
+            currItem = self.getRowByName(bri.dict[self.rowIdField])
             if currItem:
                 for f in self.baseFields:
                     if f not in bri.dict:
@@ -1238,6 +1239,8 @@ class ExtensiveTableModel(DictModel):
     def getReclassifyMatrixes(self,colNames):
         matrixes = { colName : [] for colName in colNames }
         for item in self.items:
+            id = item.dict[self.idField]
+            code = item.dict[self.ROW_CODE]
             for name in colNames:
                 if name not in self.fields:
                     self.feedback.internal_error("Subnetwork '" + str(name)
@@ -1245,7 +1248,7 @@ class ExtensiveTableModel(DictModel):
                 new_val = item.dict[name]
                 if new_val is None:
                     self.feedback.pushWarning("No friction assigned to subnetwork " + str(name)
-                                     + " for class " + str(item.dict[self.idField]))
+                                     + " for class " + str(id))
                     # float(new_val) causes exception is new_val = None
                     new_val = ''
                 if new_val == qgsTreatments.nodata_val:
@@ -1254,15 +1257,16 @@ class ExtensiveTableModel(DictModel):
                 try:
                     float(new_val)
                 except ValueError:
-                    self.feedback.pushWarning("Ignoring non-numeric value " + str(new_val))
+                    self.feedback.pushWarning("Ignoring non-numeric value '" + str(new_val)
+                        + "' for class ")
                     new_val = qgsTreatments.nodata_val
                 # TODO : change self.ROW_CODE to something like self.codeField
-                matrixes[name] += [ item.dict[self.idField], item.dict[self.idField], new_val ]
+                matrixes[name] += [ code, code, new_val ]
         return matrixes
         
     # Returns set of item' code (value in input raster)
     def getCodes(self):
-        codes = set([int(item.dict[self.idField]) for item in self.items])
+        codes = set([int(item.dict[self.ROW_CODE]) for item in self.items])
         return codes
         
     # Raise an error in values of input raster do no match codes of friction items.

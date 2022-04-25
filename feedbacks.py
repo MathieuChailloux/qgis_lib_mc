@@ -158,6 +158,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         diff_time = self.end_time - self.start_time
         self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
         self.sectionText = ""
+        self.setProgress(100)
             
     def setSubText(self,txt):
         self.setProgressText(txt)
