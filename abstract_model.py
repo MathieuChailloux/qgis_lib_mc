@@ -1371,8 +1371,8 @@ class MainDialog(QtWidgets.QDialog):
 
     # Initialize Graphic elements for each tab
     def initGui(self):
-        if self.provider:
-            QgsApplication.processingRegistry().addProvider(self.provider)
+        # if self.provider:
+            # QgsApplication.processingRegistry().addProvider(self.provider)
         for tab in self.connectors:
             tab.initGui()
             
@@ -1440,8 +1440,8 @@ class MainDialog(QtWidgets.QDialog):
             utils.warn("No translation file : " + str(lang_path))
         self.retranslateUi(self)
         # self.paramsConnector.refreshProjectName()
-        # utils.curr_language = lang
-        self.connectors["Tabs"].loadHelpFile()
+        utils.curr_language = lang
+        self.tabConnector.loadHelpFile()
         
     def switchLangEn(self):
         self.switchLang("en")
