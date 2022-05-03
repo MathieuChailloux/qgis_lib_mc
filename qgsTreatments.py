@@ -107,25 +107,32 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,
         
         
 def checkGrass7Installed():
-    grass7 = processing.algs.grass7.Grass7Utils.Grass7Utils
-    if grass7:
-        grass7.checkGrassIsInstalled()
-        if grass7.isGrassInstalled:
+    try:
+        versionInt = Qgis.versionInt()
+        if versionInt >= 3.22:
             return
-        version = grass7.version
-        if version:
-            utils.debug("GRASS version1 = " + str(version))
-            utils.debug("GRASS version1 type = " + str(type(version)))
-            return
-        version = grass7.installedVersion()
-        if version:
-            utils.debug("GRASS version3 = " + str(version))
-            utils.debug("GRASS version3 type = " + str(type(version)))
-            return
-        utils.user_error("GRASS version not found, please launch QGIS with GRASS")
-    else:
-        utils.user_error("GRASS module not found, please launch QGIS with GRASS")
-
+        else:
+            grass7 = processing.algs.grass7.Grass7Utils.Grass7Utils
+            if grass7:
+                grass7.checkGrassIsInstalled()
+                if grass7.isGrassInstalled:
+                    return
+                version = grass7.version
+                if version:
+                    utils.debug("GRASS version1 = " + str(version))
+                    utils.debug("GRASS version1 type = " + str(type(version)))
+                    return
+                version = grass7.installedVersion()
+                if version:
+                    utils.debug("GRASS version3 = " + str(version))
+                    utils.debug("GRASS version3 type = " + str(type(version)))
+                    return
+                utils.user_error("GRASS version not found, please launch QGIS with GRASS")
+            else:
+                utils.user_error("GRASS module not found, please launch QGIS with GRASS")
+    except AttributeError:
+        utils.warn("Could not detect GRASS, please ensure QGIS is launched with GRASS")
+        
 def applyGrassAlg(alg_name,parameters,context,feedback):
     checkGrass7Installed()
     return applyProcessingAlg("grass7",alg_name,parameters,context,feedback)
