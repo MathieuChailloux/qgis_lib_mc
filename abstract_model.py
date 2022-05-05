@@ -36,7 +36,9 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsProcessingFeedback)
 
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication, pyqtSlot
+from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
+                          QCoreApplication, QTranslator, QSettings,
+                          qVersion, pyqtSlot)
 from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
 
 from abc import ABC, abstractmethod
@@ -1425,7 +1427,7 @@ class MainDialog(QtWidgets.QDialog):
         utils.debug("switchLang " + str(lang))
         #loc_lang = locale.getdefaultlocale()
         #utils.info("locale = " + str(loc_lang))
-        plugin_dir = os.path.dirname(__file__)
+        plugin_dir = os.path.dirname(os.path.dirname(__file__))
         lang_path = os.path.join(plugin_dir,'i18n',self.pluginName
             + '_' + lang + '.qm')
         if os.path.exists(lang_path):

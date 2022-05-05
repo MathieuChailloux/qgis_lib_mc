@@ -114,6 +114,8 @@ def isLayerLoaded(fname):
 def normalizeEncoding(layer):
     path = pathOfLayer(layer)
     extension = os.path.splitext(path)[1].lower()
+    utils.debug("extension = " + str(extension))
+    utils.debug("system = " + str(utils.platform_sys))
     if extension == ".shp" and (utils.platform_sys in ["Linux","Darwin"]):
         layer.dataProvider().setEncoding('Latin-1')
     elif extension == ".shp":
