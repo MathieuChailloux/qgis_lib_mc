@@ -450,6 +450,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # layoutChanged signal must be emitted to update view.
     def removeItems(self,indexes):
         self.feedback.pushDebugInfo("[removeItems] nb of items = " + str(len(self.items)))
+        self.feedback.pushDebugInfo("self.clss = " + str(self.__class__.__name__))
         rows = sorted(set([i.row() for i in indexes]))
         self.removeItemsFromRows(rows)
         
@@ -598,6 +599,8 @@ class DictModel(AbstractGroupModel):
         self.feedback.pushDebugInfo("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
+        if fieldname in self.display_fields:
+            self.display_fields.remove(fieldname)
         self.layoutChanged.emit()
         
     # @abstractmethod
@@ -1385,7 +1388,7 @@ class MainDialog(QtWidgets.QDialog):
     # Displays traceback and error message in log tab.
     # Ignores CustomException : exception raised from BioDispersal and already displayed.
     def pluginExcHook(self,excType, excValue, tracebackobj):
-        self.feedback.pushDebugInfo("pluginExcHook")
+        self.feedback.pushDebugInfo("pluginExcHook " + str(excType))
         if excType == utils.CustomException:
             msgStart = self.tr("Ignoring custom exception : ")
             self.feedback.pushDebugInfo(msgStart + str(excValue))
@@ -1470,8 +1473,8 @@ class MainDialog(QtWidgets.QDialog):
     def saveModelAs(self,fname):
         self.recomputeParsers()
         xmlStr = self.toXML()
-        #self.pluginModel.paramsModel.projectFile = fname
-        # self.paramsConnector.setProjectFile(fname)
+        self.pluginModel.paramsModel.projectFile = fname
+        self.paramsConnector.setProjectFile(fname)
         utils.writeFile(fname,xmlStr)
         self.feedback.pushInfo(self.tr("Model saved into file '") + fname + "'")
         
@@ -1493,8 +1496,8 @@ class MainDialog(QtWidgets.QDialog):
         self.feedback.pushDebugInfo("loadModel " + str(fname))
         utils.checkFileExists(fname)
         config_parsing.setConfigParsers(self.pluginModel.models)
-        #self.pluginModel.paramsModel.projectFile = fname
-        # self.paramsConnector.setProjectFile(fname)
+        self.pluginModel.paramsModel.projectFile = fname
+        self.paramsConnector.setProjectFile(fname)
         config_parsing.parseConfig(fname)
         self.feedback.pushInfo("Model loaded from file '" + fname + "'")
         
