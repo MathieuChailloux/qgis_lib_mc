@@ -572,8 +572,8 @@ class DictModel(AbstractGroupModel):
         
     def recompute(self):
         fields = list(self.dict.keys())
-        self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
-        self.nb_fields = len(fields)
+        self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
+        self.nb_fields = len(self.fields)
             
     def addField(self,field,defaultVal=None):
         if field not in self.fields:
@@ -595,12 +595,12 @@ class DictModel(AbstractGroupModel):
                 self.feedback.pushWarning("Could not delete field '" + str(fieldname))
             else:
                 del i.dict[fieldname]
-            i.recompute()
         self.feedback.pushDebugInfo("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
         if fieldname in self.display_fields:
             self.display_fields.remove(fieldname)
+            self.recompute()
         self.layoutChanged.emit()
         
     # @abstractmethod
@@ -1075,7 +1075,7 @@ class AbstractConnector:
             self.model.layoutChanged.emit()
         
     def removeItems(self):
-        if self.model.items:
+        if self.model.getItems():
             indices = self.view.selectedIndexes()
             self.feedback.pushDebugInfo(str([i.row() for i in indices]))
             self.model.removeItems(indices)
@@ -1126,7 +1126,7 @@ class ExtensiveTableModel(DictModel):
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
     
     DEFAULT_VAL = None
-    
+
     LEGACY_MATCHING = { 'class' : ROW_NAME , 'class_descr' : ROW_DESCR }
 
     def __init__(self,parentModel,idField=ROW_CODE,
