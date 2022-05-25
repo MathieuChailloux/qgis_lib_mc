@@ -36,7 +36,9 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsProcessingFeedback)
 
 from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtCore import QVariant, QAbstractTableModel, QModelIndex, Qt, QCoreApplication, pyqtSlot
+from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
+                          QCoreApplication, QTranslator, QSettings,
+                          qVersion, pyqtSlot)
 from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
 
 from abc import ABC, abstractmethod
@@ -136,7 +138,7 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict=dict,fields=None,feedback=None,display_fields=None):
+    def __init__(self,dict,fields=None,feedback=None,display_fields=None):
         # if not fields:
             # fields = list(dict.keys())
         # self.field_to_idx = {f : fields.index(f) for f in fields}
@@ -148,6 +150,16 @@ class DictItem(AbstractGroupItem):
         self.dict = { f:dict[f] for f in dict }
         self.children = []
         self.feedback = feedback
+    
+    # Initialize from values according to fields order
+    @classmethod
+    def fromValues(cls,valueList):
+        d = dict()
+        for cpt, v in enumerate(valueList):
+            d[cls.FIELDS[cpt]] = v
+        utils.debug(str(d))
+        utils.debug(str(d.__class__.__name__))
+        return cls(dict=d)
         
     def __str__(self):
         return str(self.dict)
@@ -440,6 +452,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # layoutChanged signal must be emitted to update view.
     def removeItems(self,indexes):
         self.feedback.pushDebugInfo("[removeItems] nb of items = " + str(len(self.items)))
+        self.feedback.pushDebugInfo("self.clss = " + str(self.__class__.__name__))
         rows = sorted(set([i.row() for i in indexes]))
         self.removeItemsFromRows(rows)
         
@@ -506,7 +519,8 @@ class DictModel(AbstractGroupModel):
 
     def __init__(self,parent,itemClass=None,fields=[],feedback=None,display_fields=None):
         if not itemClass:
-            itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+            # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+            itemClass = DictItem
         AbstractGroupModel.__init__(self,itemClass,fields=fields)
         if not display_fields:
             display_fields = self.fields
@@ -560,8 +574,8 @@ class DictModel(AbstractGroupModel):
         
     def recompute(self):
         fields = list(self.dict.keys())
-        self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
-        self.nb_fields = len(fields)
+        self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
+        self.nb_fields = len(self.fields)
             
     def addField(self,field,defaultVal=None):
         if field not in self.fields:
@@ -583,10 +597,12 @@ class DictModel(AbstractGroupModel):
                 self.feedback.pushWarning("Could not delete field '" + str(fieldname))
             else:
                 del i.dict[fieldname]
-            i.recompute()
         self.feedback.pushDebugInfo("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
+        if fieldname in self.display_fields:
+            self.display_fields.remove(fieldname)
+            self.recompute()
         self.layoutChanged.emit()
         
     # @abstractmethod
@@ -1061,7 +1077,7 @@ class AbstractConnector:
             self.model.layoutChanged.emit()
         
     def removeItems(self):
-        if self.model.items:
+        if self.model.getItems():
             indices = self.view.selectedIndexes()
             self.feedback.pushDebugInfo(str([i.row() for i in indices]))
             self.model.removeItems(indices)
@@ -1106,15 +1122,17 @@ class AbstractConnector:
 # Conceived for DictItem but might work with other items
 class ExtensiveTableModel(DictModel):
 
-    # ROW_NAME = 'NAME'
-    ROW_DESCR = 'class_descr'
+    ROW_NAME = 'name'
+    ROW_DESCR = 'descr'
     ROW_CODE = 'code'
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
     
     DEFAULT_VAL = None
 
+    LEGACY_MATCHING = { 'class' : ROW_NAME , 'class_descr' : ROW_DESCR }
+
     def __init__(self,parentModel,idField=ROW_CODE,
-                 baseFields=BASE_FIELDS):
+                 rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
         super().__init__(self,fields=list(baseFields))
         self.parentModel = parentModel
         self.feedback = parentModel.feedback
@@ -1124,11 +1142,12 @@ class ExtensiveTableModel(DictModel):
         self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField
-        self.values = []
+        self.rowIdField = rowIdField
+        self.valueSet = []
         
     def setValues(self,values):
-        self.values = values
-        
+        self.valueSet = values
+                
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
         for fr in self.items:
@@ -1146,25 +1165,28 @@ class ExtensiveTableModel(DictModel):
     # Creates RowItem from dict
     def createRowFromDict(self,d):
         return DictItem(d,self.fields,feedback=self.feedback)
-    # Adds new FrictionRowItem in model from given baseRowItem.
-    def addRowItem(self,baseRowItem):
-        rowItem = self.createRowFromDict(baseRowItem.dict)
+    def createRowFromBaseRow(self,baseRowItem):
+        return self.createRowFromDict(baseRowItem.dict)
+    # Adds new new rowItem in model.
+    def addRowItem(self,rowItem):
         self.addRowFields(rowItem)
         self.addItem(rowItem)
         self.layoutChanged.emit()
+    # Adds new rowItem in model from given baseRowItem.
+    def addRowItemFromBase(self,baseRowItem):
+        rowItem = self.createRowFromBaseRow(baseRowItem)
+        self.addRowItem(rowItem)
     def addRowFromCode(self,code,descr=""):
         d = { self.ROW_CODE : code, self.ROW_DESCR : descr }
         rowItem = self.createRowFromDict(d)
-        self.addRowFields(rowItem)
-        self.addItem(rowItem)
-        self.layoutChanged.emit()
+        self.addRowItem(rowItem)
         
     # Removes item matching class 'name' from model.
     def removeRowFromName(self,name):
         self.feedback.pushDebugInfo("removing row " + str(name) + " from table")
         self.rowNames = [rowName for rowName in self.rowNames if rowName != name]
         for i in range(0,len(self.items)):
-            if self.items[i].dict[self.idField] == name:
+            if self.items[i].dict[self.idField] == name or self.items[i].dict[self.ROW_NAME]:
                 del self.items[i]
                 self.layoutChanged.emit()
                 return
@@ -1172,9 +1194,10 @@ class ExtensiveTableModel(DictModel):
     # Adds subnetwork columns to given FrictionRowItem.
     # Friction values are set to defaultVal (None).
     def addRowFields(self,row):
-        self.feedback.pushDebugInfo("addRowFields")
-        for f in self.extFields:
-            row[f] = self.defaultVal
+        extFields = self.fields[len(self.baseFields):]
+        self.feedback.pushDebugInfo("addRowFields " + str(extFields))
+        for f in extFields:
+            row.dict[f] = self.defaultVal
             
     # Adds new subnetwork entry to all items of model from given STItem.
     def addCol(self,col_name,defaultVal=DEFAULT_VAL):
@@ -1188,31 +1211,39 @@ class ExtensiveTableModel(DictModel):
         self.layoutChanged.emit()
         
     # Reload items of model to match current ClassModel.
-    def reloadModel(self,baseRowItems,colNames):
+    def reloadModel(self,baseRowItems):
         self.feedback.pushDebugInfo("reloadModel")
         currNames = [i.dict[self.idField] for i in self.items]
-        rowNames = [bri.dict[self.idField] for bri in baseRowItems]
-        toDeleteNames = currNames - rowNames
-        toAddNames = rowNames - currNames
+        rowNames = [bri.dict[self.rowIdField] for bri in baseRowItems]
+        self.feedback.pushDebugInfo("currNames " + str(currNames))
+        self.feedback.pushDebugInfo("rowNames " + str(rowNames))
+        toDeleteNames = set(currNames) - set(rowNames)
+        toAddNames = set(rowNames) - set(currNames)
         self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
         self.items = [i for i in self.items if i.dict[self.idField] in rowNames]
         for bri in baseRowItems:
-            currItem = self.getRowByName(bri.dict[self.idField])
+            currItem = self.getRowByName(bri.dict[self.rowIdField])
             if currItem:
                 for f in self.baseFields:
                     if f not in bri.dict:
-                        assert(False)
-                    bri_val = bri.dict[f]
+                        if f in self.LEGACY_MATCHING:
+                            bri_val = bri.dict[self.LEGACY_MATCHING[f]]
+                        else:
+                            utils.internal_error("Unexpected field " + str(f))
+                    else:
+                        bri_val = bri.dict[f]
                     if bri_val:
                         currItem.dict[f] = bri_val
             else:
-                self.addRowItem(bri)
+                self.addRowItemFromBase(bri)
         self.layoutChanged.emit()
                             
     # Returns reclassify matrix (list) for native:reclassifybytable call.
     def getReclassifyMatrixes(self,colNames):
         matrixes = { colName : [] for colName in colNames }
         for item in self.items:
+            id = item.dict[self.idField]
+            code = item.dict[self.ROW_CODE]
             for name in colNames:
                 if name not in self.fields:
                     self.feedback.internal_error("Subnetwork '" + str(name)
@@ -1220,7 +1251,7 @@ class ExtensiveTableModel(DictModel):
                 new_val = item.dict[name]
                 if new_val is None:
                     self.feedback.pushWarning("No friction assigned to subnetwork " + str(name)
-                                     + " for class " + str(item.dict[self.idField]))
+                                     + " for class " + str(id))
                     # float(new_val) causes exception is new_val = None
                     new_val = ''
                 if new_val == qgsTreatments.nodata_val:
@@ -1229,15 +1260,16 @@ class ExtensiveTableModel(DictModel):
                 try:
                     float(new_val)
                 except ValueError:
-                    self.feedback.pushWarning("Ignoring non-numeric value " + str(new_val))
+                    self.feedback.pushWarning("Ignoring non-numeric value '" + str(new_val)
+                        + "' for class ")
                     new_val = qgsTreatments.nodata_val
                 # TODO : change self.ROW_CODE to something like self.codeField
-                matrixes[name] += [ item.dict[self.idField], item.dict[self.idField], new_val ]
+                matrixes[name] += [ code, code, new_val ]
         return matrixes
         
     # Returns set of item' code (value in input raster)
     def getCodes(self):
-        codes = set([int(item.dict[self.idField]) for item in self.items])
+        codes = set([int(item.dict[self.ROW_CODE]) for item in self.items])
         return codes
         
     # Raise an error in values of input raster do no match codes of friction items.
@@ -1268,7 +1300,7 @@ class ExtensiveTableModel(DictModel):
         if rowItem:
             for f in self.fields:
                 if f in row:
-                    rowItem[f] = row[f]
+                    rowItem.dict[f] = row[f]
                 else:
                     self.feedback.pushWarning("No entry for row '" + rowName
                         + "' and col '" + str(f) + "'")
@@ -1299,11 +1331,11 @@ class ExtensiveTableModel(DictModel):
         self.layoutChanged.emit()
         
     # Loads model from XML root (tag 'FrictionModel')    
-    def fromXML(self,root):
-        self.items = []
-        for fr in root:
-                self.fromCSVRow(fr.attrib)
-        self.layoutChanged.emit()
+    # def fromXML(self,root):
+        # self.items = []
+        # for fr in root:
+                # self.fromCSVRow(fr.attrib)
+        # self.layoutChanged.emit()
         
     def flags(self, index):
         if index.column() in [1,2]:
@@ -1342,8 +1374,8 @@ class MainDialog(QtWidgets.QDialog):
 
     # Initialize Graphic elements for each tab
     def initGui(self):
-        if self.provider:
-            QgsApplication.processingRegistry().addProvider(self.provider)
+        # if self.provider:
+            # QgsApplication.processingRegistry().addProvider(self.provider)
         for tab in self.connectors:
             tab.initGui()
             
@@ -1354,7 +1386,7 @@ class MainDialog(QtWidgets.QDialog):
     # Displays traceback and error message in log tab.
     # Ignores CustomException : exception raised from BioDispersal and already displayed.
     def pluginExcHook(self,excType, excValue, tracebackobj):
-        self.feedback.pushDebugInfo("pluginExcHook")
+        self.feedback.pushDebugInfo("pluginExcHook " + str(excType))
         if excType == utils.CustomException:
             msgStart = self.tr("Ignoring custom exception : ")
             self.feedback.pushDebugInfo(msgStart + str(excValue))
@@ -1396,7 +1428,7 @@ class MainDialog(QtWidgets.QDialog):
         utils.debug("switchLang " + str(lang))
         #loc_lang = locale.getdefaultlocale()
         #utils.info("locale = " + str(loc_lang))
-        plugin_dir = os.path.dirname(__file__)
+        plugin_dir = os.path.dirname(os.path.dirname(__file__))
         lang_path = os.path.join(plugin_dir,'i18n',self.pluginName
             + '_' + lang + '.qm')
         if os.path.exists(lang_path):
@@ -1411,8 +1443,8 @@ class MainDialog(QtWidgets.QDialog):
             utils.warn("No translation file : " + str(lang_path))
         self.retranslateUi(self)
         # self.paramsConnector.refreshProjectName()
-        # utils.curr_language = lang
-        self.connectors["Tabs"].loadHelpFile()
+        utils.curr_language = lang
+        self.tabConnector.loadHelpFile()
         
     def switchLangEn(self):
         self.switchLang("en")
@@ -1439,8 +1471,8 @@ class MainDialog(QtWidgets.QDialog):
     def saveModelAs(self,fname):
         self.recomputeParsers()
         xmlStr = self.toXML()
-        #self.pluginModel.paramsModel.projectFile = fname
-        # self.paramsConnector.setProjectFile(fname)
+        self.pluginModel.paramsModel.projectFile = fname
+        self.paramsConnector.setProjectFile(fname)
         utils.writeFile(fname,xmlStr)
         self.feedback.pushInfo(self.tr("Model saved into file '") + fname + "'")
         
@@ -1462,8 +1494,8 @@ class MainDialog(QtWidgets.QDialog):
         self.feedback.pushDebugInfo("loadModel " + str(fname))
         utils.checkFileExists(fname)
         config_parsing.setConfigParsers(self.pluginModel.models)
-        #self.pluginModel.paramsModel.projectFile = fname
-        # self.paramsConnector.setProjectFile(fname)
+        self.pluginModel.paramsModel.projectFile = fname
+        self.paramsConnector.setProjectFile(fname)
         config_parsing.parseConfig(fname)
         self.feedback.pushInfo("Model loaded from file '" + fname + "'")
         

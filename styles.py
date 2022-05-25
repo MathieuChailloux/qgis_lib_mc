@@ -213,6 +213,11 @@ def setRendererSBPCGnYlRd(layer):
     colorRamp = getGradientColorRampRdYlGn()
     shader = mkQuantileShaderFromColorRamp(layer,colorRamp)
     setSBPCRasterRenderer(layer,shader)
+# SBPC = Single Band Pseudo Color - continuous
+def setRendererSBPCGnYlRdCont(layer):
+    colorRamp = getGradientColorRampRdYlGn()
+    shader = mkRasterShader(layer,colorRamp)
+    setSBPCRasterRenderer(layer,shader)
     
 def mkRendererPalettedGnYlRd(layer):
     pr = layer.dataProvider()

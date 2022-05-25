@@ -114,6 +114,8 @@ def isLayerLoaded(fname):
 def normalizeEncoding(layer):
     path = pathOfLayer(layer)
     extension = os.path.splitext(path)[1].lower()
+    utils.debug("extension = " + str(extension))
+    utils.debug("system = " + str(utils.platform_sys))
     if extension == ".shp" and (utils.platform_sys in ["Linux","Darwin"]):
         layer.dataProvider().setEncoding('Latin-1')
     elif extension == ".shp":
@@ -519,7 +521,27 @@ def getRasterValsAndArray(path,nodata=None):
         return classes, array
     else:
         utils.user_error("Multiband Rasters not implemented yet")
-    
+def getRasterValsArrayND(path,nodata=None):
+    raster = gdal.Open(str(path))
+    if not raster:
+        utils.user_error("Could not open raster path '" + str(path) + "'")
+    if(raster.RasterCount==1):
+        band = raster.GetRasterBand(1)
+        if nodata == None:
+            nodata = band.GetNoDataValue()
+        try:
+            array =  band.ReadAsArray() 
+        except ValueError:
+            utils.internal_error("Raster file is too big for processing. Please crop the file and try again.")
+            return
+        classes = sorted(np.unique(array)) # get classes
+        try:
+            classes.remove(nodata)
+        except ValueError:
+            pass
+        return classes, array, nodata
+    else:
+        utils.user_error("Multiband Rasters not implemented yet")
 # def getHistogram(layer):
     # pr = layer.dataProvider()
     # hist = pr.histogram(1)
@@ -692,6 +714,9 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
         return self.ALG_NAME
     def createInstance(self):
         return type(self)()
+    def addAdvancedParam(self,param):
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
     def mkTmpPath(self,fname):
         return QgsProcessingUtils.generateTempFilename(fname)
     def parameterAsSourceLayer(self,parameters,paramName,context,feedback=None):
