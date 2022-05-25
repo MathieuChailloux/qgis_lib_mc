@@ -169,15 +169,14 @@ class DictItem(AbstractGroupItem):
     def fromDict(cls,dict,feedback=None):
         dict = utils.castDict(dict)
         utils.debug("fromDict " + str(cls.__name__))
-        return cls(dict=dict)
+        return cls(dict)
     @classmethod
     def fromStr(cls,s):
         d = ast.literal_eval(s)
-        return cls(dict=d)
+        return cls.fromDict(dict)
     @classmethod
     def fromXML(cls,root,feedback=None):
-        o = cls.fromDict(dict=root.attrib,feedback=feedback)
-        return o
+        return cls.fromDict(root.attrib,feedback=feedback)
         
     # def recompute(self):
         # fields = list(self.dict.keys())
@@ -247,19 +246,26 @@ class DictItemWithChildren(DictItem):
         return xmlStr
     def addChild(self,childObj):
         self.children.append(childObj)
-    # @classmethod
-    # def fromDict(self,dict):
-        # d = utils.castDict(dict)
-        # return 
+    @classmethod
+    def fromDlgItem(cls,dlgItem):
+        self.toDict(dlgItem)
+        self.dlgItem = dlgItem
+        return cls(dict=self.dict,feedback=feedback,children=[dlgItem])
     @classmethod
     def fromXML(cls,root):
         o = cls.fromDict(root.attrib)
         for child in root:
             childTag = child.tag
             classObj = getattr(sys.modules[__name__], childTag)
+            # classObj = getattr(sys.modules[cls.__name__], childTag)
             childObj = classOb.fromXML(child)
             o.addChild(childObj)
         return o
+    def getDialog(self):
+        if self.children:
+            return self.children[0]
+        else:
+            self.feedback.internal_error("No children for ImportItem")
     # return getattr(sys.modules[__name__], str)
 # print str_to_class("Foobar")
 # print type(Foobar)
