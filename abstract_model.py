@@ -233,6 +233,8 @@ class DictItemWithChildren(DictItem):
             xmlStr += c.toXML()
         xmlStr += "</" + self.__class__.__name__ +">"
         return xmlStr
+    def addChild(self,childObj):
+        self.children.append(childObj)
     # @classmethod
     # def fromDict(self,dict):
         # d = utils.castDict(dict)
@@ -244,7 +246,7 @@ class DictItemWithChildren(DictItem):
             childTag = child.tag
             classObj = getattr(sys.modules[__name__], childTag)
             childObj = classOb.fromXML(child)
-            o.children.append(childObj)
+            o.addChild(childObj)
         return o
     # return getattr(sys.modules[__name__], str)
 # print str_to_class("Foobar")
@@ -1122,6 +1124,10 @@ class ExtensiveTableModel(DictModel):
         self.fields = list(baseFields)
         self.extFields = []
         self.idField = idField
+        self.values = []
+        
+    def setValues(self,values):
+        self.values = values
         
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
