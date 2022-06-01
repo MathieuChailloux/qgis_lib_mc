@@ -252,13 +252,13 @@ class DictItemWithChildren(DictItem):
         self.dlgItem = dlgItem
         return cls(dict=self.dict,feedback=feedback,children=[dlgItem])
     @classmethod
-    def fromXML(cls,root):
+    def fromXML(cls,root,feedback=None):
         o = cls.fromDict(root.attrib)
         for child in root:
             childTag = child.tag
             classObj = getattr(sys.modules[__name__], childTag)
             # classObj = getattr(sys.modules[cls.__name__], childTag)
-            childObj = classOb.fromXML(child)
+            childObj = classOb.fromXML(child,feedback=feedback)
             o.addChild(childObj)
         return o
     def getDialog(self):
@@ -616,7 +616,7 @@ class DictModel(AbstractGroupModel):
         return self.itemClass.fromDict(dict,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")    @abstractmethod
     def mkItemFromXML(self,root,parent=None,feedback=None):
-        return self.itemClass.fromXML(root)
+        return self.itemClass.fromXML(root,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
     # @abstractmethod
     def fromXMLAttribs(self,attribs):
@@ -647,7 +647,7 @@ class DictModel(AbstractGroupModel):
         self.layoutChanged.emit()
         
     def toXML(self,indent=" ",attribs_dict=None):
-        self.feedback.pushDebugInfo("toXML " + self.parser_name)
+        # self.feedback.pushDebugInfo("toXML " + self.parser_name)
         xmlStr = indent + "<" + self.parser_name
         if attribs_dict:
             for k,v in attribs_dict.items():
@@ -660,7 +660,7 @@ class DictModel(AbstractGroupModel):
             xmlStr += i.toXML(indent=indent + " ") + "\n"
         xmlStr += indent + "</" + self.parser_name + ">"
         return xmlStr
-        feedback.endSection()
+        # self.feedback.endSection()
         
     # Saves model to CSV file 'fname'
     def saveCSV(self,fname):
