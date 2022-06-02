@@ -59,7 +59,15 @@ platform_sys = platform.system()
     
 
 class CustomException(Exception):
-
+    def __init__(self, message):
+        super().__init__(message)
+class UserError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+class InternalError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+class TodoError(Exception):
     def __init__(self, message):
         super().__init__(message)
 
@@ -85,16 +93,19 @@ def error_msg(msg,prefix=""):
     printDate(mkBoldRed("[" + prefix + "] " + msg))
     
 def user_error(msg):
-    error_msg(msg,"user error")
-    raise CustomException(msg)
+    raise UserError(msg)
+    # error_msg(msg,"user error")
+    # raise CustomException(msg)
     
 def internal_error(msg):
-    error_msg(msg,"internal error")
-    raise CustomException(msg)
+    raise InternalError(msg)
+    # error_msg(msg,"internal error")
+    # raise CustomException(msg)
     
 def todo_error(msg):
-    error_msg(msg,"Feature not yet implemented")
-    raise CustomException(msg)
+    raise TodoError(msg)
+    # error_msg(msg,"Feature not yet implemented")
+    # raise CustomException(msg)
 
 class Section:
 
