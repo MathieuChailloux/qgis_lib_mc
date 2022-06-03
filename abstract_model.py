@@ -202,24 +202,15 @@ class DictItem(AbstractGroupItem):
     def equals(self,other):
         return (self.dict == other.dict)
         
-    def toXML(self,indent=""):
+        
+    def toXMLItems(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
-        # self.feedback.pushDebugInfo("item = " + str(self))
-        childrenStr = ""
         for k,v in self.dict.items():
-            # self.feedback.pushDebugInfo(str(v))
-            # self.feedback.pushDebugInfo(str(v.__class__.__name__))
-            # self.feedback.pushDebugInfo(str(type(v)))
-            # self.feedback.pushDebugInfo("isclass1 " + str(inspect.isclass(v)))
-            # self.feedback.pushDebugInfo("isclass2 " + str(inspect.isclass(v.__class__)))
-            # self.feedback.pushDebugInfo("isclass3 " + str(inspect.isclass(v.__class__.__name__)))
-            # if hasattr(v.__class__,'toXML') and callable(getattr(v.__class__, 'toXML')):
-                # self.feedback.pushDebugInfo("isclass " + str(v))
-                # childrenStr += v.toXML(indent = indent + "  ")
-            # else:
             xmlStr += indent + " " + k + "=\"" + xmlUtils.xmlEscape(str(v)) + "\""
-            #xmlStr += indent + " " + k + "=\"" + str(v).replace('"','&quot;') + "\""
         xmlStr += ">\n"
+        return xmlStr
+    def toXML(self,indent=""):
+        xmlStr = self.toXMLItems(indent=indent)
         # for c in self.children:
             # xmlStr += c.toXML()
         xmlStr += "</" + self.__class__.__name__ +">"
@@ -228,7 +219,41 @@ class DictItem(AbstractGroupItem):
     def updateFromOther(self,other):
         for k in other.dict:
             self.dict[k] = other.dict[k]
+   
+class DictItemWithChild(DictItem):
     
+    def __init__(self,dict=dict,feedback=None,child=None):
+        super().__init__(dict=dict,feedback=feedback)
+        self.setChild(child)
+    def toXML(self,indent=""):
+        xmlStr = self.toXMLItems(indent=indent)
+        xmlStr += self.child.toXML(indent=indent+" ")
+        xmlStr += "</" + self.__class__.__name__ +">"
+        return xmlStr
+    def setChild(self,child):
+        self.child = child
+    @classmethod
+    def fromChildItem(cls,dlgItem,feedback=None):
+        dict = cls.childToDict(dlgItem)
+        return cls(dict=dict,feedback=feedback,child=dlgItem)
+    @classmethod
+    def fromXML(cls,root,feedback=None):
+        o = cls.fromDict(root.attrib)
+        for child in root:
+            childTag = child.tag
+            classObj = getattr(sys.modules[__name__], childTag)
+            childObj = classOb.fromXML(child,feedback=feedback)
+            o.setChild(childObj)
+        return o
+    def getChild(self):
+        return self.child  
+            
+    def updateFromOther(self,other):
+        self.updateFromChild(other)
+    def updateFromChild(self,child):
+        self.dict = self.childToDict(child)
+        self.setChild(child)
+        
 class DictItemWithChildren(DictItem):
     
     def __init__(self,dict=dict,feedback=None,children=[]):
@@ -248,9 +273,9 @@ class DictItemWithChildren(DictItem):
         self.children.append(childObj)
     @classmethod
     def fromDlgItem(cls,dlgItem):
-        self.toDict(dlgItem)
-        self.dlgItem = dlgItem
-        return cls(dict=self.dict,feedback=feedback,children=[dlgItem])
+        cls.toDict(dlgItem)
+        cls.dlgItem = dlgItem
+        return cls(dict=cls.dict,feedback=feedback,children=[dlgItem])
     @classmethod
     def fromXML(cls,root,feedback=None):
         o = cls.fromDict(root.attrib)
@@ -265,7 +290,14 @@ class DictItemWithChildren(DictItem):
         if self.children:
             return self.children[0]
         else:
-            self.feedback.internal_error("No children for ImportItem")
+            self.feedback.internal_error("No children for ImportItem")    
+            
+    def updateFromOther(self,other):
+        self.updateFromDlgItem(other)
+    def updateFromDlgItem(self,dlgItem):
+        self.dict = self.dlgToDict(dlgItem)
+        self.children = [dlgItem]
+        self.dlgItem = dlgItem
     # return getattr(sys.modules[__name__], str)
 # print str_to_class("Foobar")
 # print type(Foobar)
@@ -338,6 +370,7 @@ class AbstractGroupModel(QAbstractTableModel):
             self.fields = fields
         else:
             self.fields = self.itemClass.FIELDS
+        self.feedback.pushInfo("AGM OK")
 
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
@@ -523,17 +556,20 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,parent,itemClass=None,fields=[],feedback=None,display_fields=None):
+    def __init__(self,parent,itemClass=None,fields=[],
+            feedback=None,display_fields=None):
         if not itemClass:
             # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
             itemClass = DictItem
-        AbstractGroupModel.__init__(self,itemClass,fields=fields)
+        AbstractGroupModel.__init__(self,itemClass,fields=fields,
+            feedback=feedback)
+        self.feedback.pushInfo("DM OK")
         if not display_fields:
             display_fields = self.fields
         self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
         self.display_fields = display_fields
         self.nb_fields = len(self.display_fields)
-        self.feedback = feedback
+        # self.feedback = feedback
         
     def getNField(self,item,n):
         try:
@@ -1139,9 +1175,11 @@ class ExtensiveTableModel(DictModel):
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
-        super().__init__(self,fields=list(baseFields))
+        super().__init__(self,fields=list(baseFields),
+            feedback=parentModel.feedback)
+        self.feedback.pushInfo("EM OK")
         self.parentModel = parentModel
-        self.feedback = parentModel.feedback
+        # self.feedback = parentModel.feedback
         self.defaultVal = self.DEFAULT_VAL
         self.rowNames = []
         self.baseFields = baseFields
