@@ -89,7 +89,8 @@ class ProgressFeedback(QgsProcessingFeedback):
         
     def print_func(self,msg):
         self.dlg.txtLog.append(msg)
-        #print(msg)
+
+>>>>>>> 52cad4c5f02f2d31564cfcd1cd4ec3d98670339f
 
     def printDate(self,msg):
         date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
