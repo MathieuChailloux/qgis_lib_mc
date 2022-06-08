@@ -138,7 +138,7 @@ class ArrayItem(AbstractGroupItem):
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
     
-    def __init__(self,dict,fields=None,feedback=None,display_fields=None):
+    def __init__(self,dict,feedback=None):
         # if not fields:
             # fields = list(dict.keys())
         # self.field_to_idx = {f : fields.index(f) for f in fields}
@@ -148,7 +148,6 @@ class DictItem(AbstractGroupItem):
         # self.display_fields = display_fields
         # self.nb_fields = len(self.display_fields)
         self.dict = { f:dict[f] for f in dict }
-        self.children = []
         self.feedback = feedback
     
     # Initialize from values according to fields order
@@ -163,6 +162,9 @@ class DictItem(AbstractGroupItem):
         
     def __str__(self):
         return str(self.dict)
+    def __copy__(self):
+        return DictItem(self.dict,feedback=self.feedback)
+        
     # def toJSON(self):
         # return json.dumps(self)
     @classmethod
@@ -230,6 +232,8 @@ class DictItemWithChild(DictItem):
         # return getattr(sys.modules[__name__], childTag)
         
     def toXML(self,indent=""):
+        self.feedback.pushDebugInfo("childXML = " +str(self.child))
+        self.feedback.pushDebugInfo("childXML = " +str(self.child.__class__.__name__))
         xmlStr = self.toXMLItems(indent=indent)
         xmlStr += self.child.toXML(indent=indent+" ")
         xmlStr += "</" + self.__class__.__name__ +">"
@@ -376,6 +380,8 @@ class AbstractGroupModel(QAbstractTableModel):
         if fields:
             self.fields = fields
         else:
+            self.feedback.pushInfo("ic " + str(self.itemClass))
+            self.feedback.pushInfo("ic " + str(self.itemClass.__class__.__name__))
             self.fields = self.itemClass.FIELDS
         self.feedback.pushInfo("AGM OK")
 
@@ -587,6 +593,10 @@ class DictModel(AbstractGroupModel):
         self.display_fields = display_fields
         self.nb_fields = len(self.display_fields)
         # self.feedback = feedback
+        
+    def __copy__(self):
+        return DictModel(itemClass=self.itemClass,fields=self.fields,
+            feedback=self.feedback,display_fields=self.display_fields)
         
     def getNField(self,item,n):
         try:

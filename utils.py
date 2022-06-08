@@ -49,7 +49,7 @@ def printLine(msg):
 def doNothing(msg):
     pass
 
-debug_flag=False
+debug_flag=True
 print_func = printLine
 #print_func = doNothing
 curr_language = "fr"

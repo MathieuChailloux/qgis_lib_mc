@@ -666,6 +666,7 @@ class LayerComboDialog:
         self.combo.setFilters(QgsMapLayerProxyModel.All)
         
     def setLayerPath(self,fname):
+        self.combo.setLayer(None)
         self.layer_name = fname
         if self.vector_mode is None:
             self.layer = loadLayer(fname,loadProject=True)
@@ -691,7 +692,8 @@ class LayerComboDialog:
             self.setLayerPath(fname)
             #self.combo.layerChanged.emit(self.layer)
         else:
-            utils.user_error("Could not open file " + str(fname))
+            # utils.user_error("Could not open file " + str(fname))
+            self.parent.feedback.user_error("Could not open file " + str(fname))
         
     def getLayer(self):
         return self.layer
