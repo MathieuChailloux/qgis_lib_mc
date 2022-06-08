@@ -40,21 +40,21 @@ def getParserByName(name):
             return parser
     utils.internal_error("No parser named " + str(name))
 
-def parseConfig(config_file):
-    utils.info("Parsing configuration from file '" + str(config_file) + "'")
+def parseConfig(config_file,feedback=None):
+    feedback.pushInfo("Parsing configuration from file '" + str(config_file) + "'")
     tree = ET.parse(config_file)
     root = tree.getroot()
     for parser in root:
-        parseModel(parser)
-    utils.info("Configuration parsing successful")
+        parseModel(parser,feedback=feedback)
+    feedback.pushInfo("Configuration parsing successful")
 
 # Parse model from XML root.
 # Updates parsers stored in 'config_parsers'.
-def parseModel(parser_root):
+def parseModel(parser_root,feedback=None):
     global config_parsers, mk_item
     parser_tag = parser_root.tag
-    utils.debug("parse " + str(parser_tag))
-    utils.debug("config_parsers " + str(config_parsers))
+    feedback.pushDebugInfo("parse " + str(parser_tag))
+    feedback.pushDebugInfo("config_parsers " + str(config_parsers))
     parser = getParserByName(parser_tag)
-    parser.fromXML(parser_root)
+    parser.updateFromXML(parser_root,feedback=feedback)
         

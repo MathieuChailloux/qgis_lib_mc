@@ -168,12 +168,12 @@ class DictItem(AbstractGroupItem):
     @classmethod
     def fromDict(cls,dict,feedback=None):
         dict = utils.castDict(dict)
-        utils.debug("fromDict " + str(cls.__name__))
-        return cls(dict)
+        feedback.pushDebugInfo("fromDict " + str(cls.__name__))
+        return cls(dict,feedback=feedback)
     @classmethod
-    def fromStr(cls,s):
+    def fromStr(cls,s,feedback=None):
         d = ast.literal_eval(s)
-        return cls.fromDict(dict)
+        return cls.fromDict(dict,feedback=feedback)
     @classmethod
     def fromXML(cls,root,feedback=None):
         return cls.fromDict(root.attrib,feedback=feedback)
@@ -224,7 +224,11 @@ class DictItemWithChild(DictItem):
     
     def __init__(self,dict=dict,feedback=None,child=None):
         super().__init__(dict=dict,feedback=feedback)
-        self.setChild(child)
+        self.setChild(child)      
+        
+    # def getItemClass(self,childTag):
+        # return getattr(sys.modules[__name__], childTag)
+        
     def toXML(self,indent=""):
         xmlStr = self.toXMLItems(indent=indent)
         xmlStr += self.child.toXML(indent=indent+" ")
@@ -238,11 +242,13 @@ class DictItemWithChild(DictItem):
         return cls(dict=dict,feedback=feedback,child=dlgItem)
     @classmethod
     def fromXML(cls,root,feedback=None):
-        o = cls.fromDict(root.attrib)
+        o = cls.fromDict(root.attrib,feedback=feedback)
         for child in root:
             childTag = child.tag
-            classObj = getattr(sys.modules[__name__], childTag)
-            childObj = classOb.fromXML(child,feedback=feedback)
+            # classObj = getattr(sys.modules[__name__], childTag)
+            classObj = cls.getItemClass(childTag)
+            # classObj = cls.itemClass
+            childObj = classObj.fromXML(child,feedback=feedback)
             o.setChild(childObj)
         return o
     def getChild(self):
@@ -259,6 +265,7 @@ class DictItemWithChildren(DictItem):
     def __init__(self,dict=dict,feedback=None,children=[]):
         super().__init__(dict=dict,feedback=feedback)
         self.children = children
+        
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
         childrenStr = ""
@@ -278,7 +285,7 @@ class DictItemWithChildren(DictItem):
         return cls(dict=cls.dict,feedback=feedback,children=[dlgItem])
     @classmethod
     def fromXML(cls,root,feedback=None):
-        o = cls.fromDict(root.attrib)
+        o = cls.fromDict(root.attrib,feedback=feedback)
         for child in root:
             childTag = child.tag
             classObj = getattr(sys.modules[__name__], childTag)
@@ -372,6 +379,10 @@ class AbstractGroupModel(QAbstractTableModel):
             self.fields = self.itemClass.FIELDS
         self.feedback.pushInfo("AGM OK")
 
+    @staticmethod
+    def getItemClass(childTag):
+        return getattr(sys.modules[__name__], childTag)
+
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
         return res
@@ -381,7 +392,7 @@ class AbstractGroupModel(QAbstractTableModel):
         # self.itemClass = itemClass
     @abstractmethod
     def mkItemFromStr(self,s):
-        return self.itemClass.fromStr(s)
+        return self.itemClass.fromStr(s,feedback=self.feedback)
         # return DictItem.fromStr(s)
     def fromStr(self,s):
         assert(len(s)>=4)
@@ -556,13 +567,19 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,parent,itemClass=None,fields=[],
+    def __init__(self,itemClass=None,fields=[],
             feedback=None,display_fields=None):
+        feedback.pushInfo("iC1 " + str(itemClass.__class__.__name__))
         if not itemClass:
             # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
-            itemClass = DictItem
+            itemClass = getattr(sys.modules[__name__], DictItem.__name__)
+            feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
+        feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
+        feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
         AbstractGroupModel.__init__(self,itemClass,fields=fields,
             feedback=feedback)
+        self.feedback.pushInfo("DM1 " + str(self.__class__.__name__))
+        self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("DM OK")
         if not display_fields:
             display_fields = self.fields
@@ -648,15 +665,17 @@ class DictModel(AbstractGroupModel):
         self.layoutChanged.emit()
         
     # @abstractmethod
-    def mkItemFromDict(self,dict,parent=None,feedback=None):
+    def mkItemFromDict(self,dict,feedback=None):
         return self.itemClass.fromDict(dict,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")    @abstractmethod
-    def mkItemFromXML(self,root,parent=None,feedback=None):
+    def mkItemFromXML(self,root,feedback=None):
+        feedback.pushDebugInfo("mkItemFromXML " + self.__class__.__name__)
+        feedback.pushDebugInfo("mkItemFromXML " + self.itemClass.__class__.__name__)
         return self.itemClass.fromXML(root,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
-    # @abstractmethod
-    def fromXMLAttribs(self,attribs):
-        self.dict = {}
+    @staticmethod
+    def dictFromXMLAttribs(attribs):
+        dict = {}
         for k,v in attribs.items():
             if v in ["True","False"]:
                 newVal = bool(v)
@@ -667,20 +686,35 @@ class DictModel(AbstractGroupModel):
                     newVal = float(v)
                 except ValueError:
                     newVal = v
-            self.dict[newVal] = v
-        # self.dict = attribs
-        # self.feedback.todo_error(" [" + self.__class__.__name__ + "] fromXMLAttribs not implemented")
+            # dict[newVal] = v
+            dict[k] = newVal
+    @classmethod
+    def fromXML(cls,root,feedback=None):
+        feedback.pushDebugInfo("fromXML " + str(cls.__name__))
+        model = cls(feedback=feedback)
+        model.dict = cls.dictFromXMLAttribs(root.attrib)
+        for child in root:
+            # childTag = child.tag
+            # classObj = cls.getItemClass(childTag)
+            # childObj = classObj.fromXML(child,feedback=feedback)
+            item = model.mkItemFromXML(child,feedback=feedback)
+            model.addItem(item)
+        return model          
+            
+    # @abstractmethod
+    def updateFromXMLAttribs(self,attribs):
+        self.dict = DictModel.dictFromXMLAttribs(attribs)
         
-    def fromXML(self,root,feedback=None):
-        self.fromXMLAttribs(root.attrib)
+    def updateFromXML(self,root,feedback=None):
+        self.updateFromXMLAttribs(root.attrib)
         self.items = []
         if not feedback:
             feedback = self.feedback
         for parsed_item in root:
-            dict = parsed_item.attrib
             item = self.mkItemFromXML(parsed_item,feedback=feedback)
             self.addItem(item)
         self.layoutChanged.emit()
+              
         
     def toXML(self,indent=" ",attribs_dict=None):
         # self.feedback.pushDebugInfo("toXML " + self.parser_name)
@@ -817,7 +851,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             self.feedback.user_error("Directory '" + norm_path + "' does not exist")
         return norm_path
             
-    def fromXML(self,root,feedback=None):
+    def updateFromXML(self,root,feedback=None):
         dict = root.attrib
         self.feedback.pushDebugInfo("params dict = " + str(dict))
         return self.fromXMLDict(dict)
@@ -1175,8 +1209,10 @@ class ExtensiveTableModel(DictModel):
 
     def __init__(self,parentModel,idField=ROW_CODE,
                  rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
-        super().__init__(self,fields=list(baseFields),
+        super().__init__(fields=list(baseFields),
             feedback=parentModel.feedback)
+        self.feedback.pushInfo("EM1 " + str(self.__class__.__name__))
+        self.feedback.pushInfo("EM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("EM OK")
         self.parentModel = parentModel
         # self.feedback = parentModel.feedback
@@ -1405,13 +1441,21 @@ class MainModel:
                 return model
         return None
         
-    def fromXMLRoot(self,root):
-        for child in root:
-            utils.debug("tag = " + str(child.tag))
-            model = self.getModelFromParserName(child.tag)
-            if model:
-                model.fromXML(child)
-                model.layoutChanged.emit()
+    # def fromXMLRoot(self,root):
+        # for child in root:
+            # self.feedback.pushDebugInfo("tag = " + str(child.tag))
+            # childTag = child.tag
+            # model = self.getModelFromParserName(child.tag)
+            # if model:
+                # model.fromXML(child)
+                # model.layoutChanged.emit()        
+    # def fromXMLRoot(self,root):
+        # for child in root:
+            # utils.debug("tag = " + str(child.tag))
+            # model = self.getModelFromParserName(child.tag)
+            # if model:
+                # model.fromXML(child)
+                # model.layoutChanged.emit()
 
 # Main dialog for multi-tabs plugins            
 class MainDialog(QtWidgets.QDialog):
@@ -1540,7 +1584,7 @@ class MainDialog(QtWidgets.QDialog):
         config_parsing.setConfigParsers(self.pluginModel.models)
         self.pluginModel.paramsModel.projectFile = fname
         self.paramsConnector.setProjectFile(fname)
-        config_parsing.parseConfig(fname)
+        config_parsing.parseConfig(fname,feedback=self.feedback)
         self.feedback.pushInfo("Model loaded from file '" + fname + "'")
         
     def loadModelAction(self):
