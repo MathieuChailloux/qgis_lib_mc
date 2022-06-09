@@ -54,7 +54,7 @@ def parseModel(parser_root,feedback=None):
     global config_parsers, mk_item
     parser_tag = parser_root.tag
     feedback.pushDebugInfo("parse " + str(parser_tag))
-    feedback.pushDebugInfo("config_parsers " + str(config_parsers))
+    feedback.pushDebugInfo("config_parsers " + str([cf.__class__.__name__ for cf in config_parsers]))
     parser = getParserByName(parser_tag)
     parser.updateFromXML(parser_root,feedback=feedback)
         

@@ -169,8 +169,10 @@ class DictItem(AbstractGroupItem):
         # return json.dumps(self)
     @classmethod
     def fromDict(cls,dict,feedback=None):
+        feedback.pushDebugInfo("dict1 " + str(dict))
         dict = utils.castDict(dict)
         feedback.pushDebugInfo("fromDict " + str(cls.__name__))
+        feedback.pushDebugInfo("dict2 " + str(dict))
         return cls(dict,feedback=feedback)
     @classmethod
     def fromStr(cls,s,feedback=None):
@@ -259,8 +261,11 @@ class DictItemWithChild(DictItem):
         return self.child  
             
     def updateFromOther(self,other):
-        self.updateFromChild(other)
+        for k in other.dict:
+            self.dict[k] = other.dict[k]
+        self.setChild(other.child)
     def updateFromChild(self,child):
+        # assert(False)
         self.dict = self.childToDict(child)
         self.setChild(child)
         
@@ -1254,7 +1259,8 @@ class ExtensiveTableModel(DictModel):
         
     # Creates RowItem from dict
     def createRowFromDict(self,d):
-        return DictItem(d,self.fields,feedback=self.feedback)
+        return DictItem(d,feedback=self.feedback)
+        # return DictItem(d,self.fields,feedback=self.feedback)
     def createRowFromBaseRow(self,baseRowItem):
         return self.createRowFromDict(baseRowItem.dict)
     # Adds new new rowItem in model.
@@ -1625,7 +1631,7 @@ class TableToDialogConnector(AbstractConnector):
         item_dlg = self.openDialog(item)
         dlg_item = item_dlg.showDialog()
         if dlg_item:
-            item.updateFromOther(dlg_item)
+            item.updateFromChild(dlg_item)
             self.model.layoutChanged.emit()
             
     def mkItem(self):

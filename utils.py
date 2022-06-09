@@ -249,7 +249,7 @@ def castDict(d):
     res = {}
     for k,v in d.items():
         if v in ["True","False"]:
-            newVal = bool(v)
+            newVal = eval(v)
         elif v.isnumeric():
             newVal = int(v)
         else:
