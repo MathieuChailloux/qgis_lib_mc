@@ -223,6 +223,8 @@ class DictItem(AbstractGroupItem):
     def updateFromOther(self,other):
         for k in other.dict:
             self.dict[k] = other.dict[k]
+    def updateFromDlgItem(self,dlgItem):
+        self.updateFromOther(dlgItem)
    
 class DictItemWithChild(DictItem):
     
@@ -268,6 +270,8 @@ class DictItemWithChild(DictItem):
         # assert(False)
         self.dict = self.childToDict(child)
         self.setChild(child)
+    def updateFromDlgItem(self,dlgItem):
+        self.updateFromChild(dlgItem)
         
 class DictItemWithChildren(DictItem):
     
@@ -587,16 +591,17 @@ class DictModel(AbstractGroupModel):
             feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
         feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
         feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
-        AbstractGroupModel.__init__(self,itemClass,fields=fields,
+        self.all_fields = fields
+        if display_fields is None:
+            display_fields = fields
+        AbstractGroupModel.__init__(self,itemClass,fields=display_fields,
             feedback=feedback)
         self.feedback.pushInfo("DM1 " + str(self.__class__.__name__))
         self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("DM OK")
-        if not display_fields:
-            display_fields = self.fields
-        self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
-        self.display_fields = display_fields
-        self.nb_fields = len(self.display_fields)
+        # self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
+        self.idx_to_fields = self.fields
+        self.nb_fields = len(self.fields)
         # self.feedback = feedback
         
     def __copy__(self):
@@ -605,6 +610,7 @@ class DictModel(AbstractGroupModel):
         
     def getNField(self,item,n):
         try:
+            # return item.dict[self.display_fields.keys()[n]]
             return item.dict[self.idx_to_fields[n]]
         except Exception as e:
             self.feedback.pushDebugInfo("idx_to_fields = " + str(self.idx_to_fields))
@@ -648,14 +654,14 @@ class DictModel(AbstractGroupModel):
         
     def recompute(self):
         fields = list(self.dict.keys())
-        self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
+        # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
         self.nb_fields = len(self.fields)
             
     def addField(self,field,defaultVal=None):
         if field not in self.fields:
             self.fields.append(field)
-            self.display_fields.append(field)
-            self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
+            self.all_fields.append(field)
+            # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
             self.nb_fields = len(self.fields)
             for i in self.items:
                 i.dict[field] = defaultVal
@@ -674,8 +680,8 @@ class DictModel(AbstractGroupModel):
         self.feedback.pushDebugInfo("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
-        if fieldname in self.display_fields:
-            self.display_fields.remove(fieldname)
+        if fieldname in self.all_fields:
+            self.all_fields.remove(fieldname)
             self.recompute()
         self.layoutChanged.emit()
         
@@ -1631,7 +1637,7 @@ class TableToDialogConnector(AbstractConnector):
         item_dlg = self.openDialog(item)
         dlg_item = item_dlg.showDialog()
         if dlg_item:
-            item.updateFromChild(dlg_item)
+            item.updateFromDlgItem(dlg_item)
             self.model.layoutChanged.emit()
             
     def mkItem(self):
