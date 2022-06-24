@@ -1630,27 +1630,51 @@ class TableToDialogConnector(AbstractConnector):
         super().connectComponents()
         self.view.doubleClicked.connect(self.openDialogEdit)
     
+    def openDialogGetResult(self,item):
+        self.preDlg(item)
+        item_dlg = self.openDialog(item)
+        dlg_item = item_dlg.showDialog()
+        self.postDlg(dlg_item)
+        return dlg_item
+    
     def openDialogEdit(self,index):
         row = index.row()
         item = self.model.getNItem(row)
         self.feedback.pushDebugInfo("openDialog item = " +str(item))
-        item_dlg = self.openDialog(item)
-        dlg_item = item_dlg.showDialog()
+        dlg_item = self.openDialogGetResult(item)
         if dlg_item:
             item.updateFromDlgItem(dlg_item)
             self.model.layoutChanged.emit()
             
     def mkItem(self):
-        item_dlg = self.openDialog(None)
-        dlg_item = item_dlg.showDialog()
+        dlg_item = self.openDialogGetResult(None)
         return dlg_item
         # if dlg_item:
             # return self.mkItemFromDlgItem(dlg_item)
         # else:
             # return None
+            
+    def pathFieldToRel(self,dlgItem,fieldname):
+        if dlgItem and dlgItem.dict and fieldname in dlgItem.dict:
+            oldVal = dlgItem.dict[fieldname]
+            if oldVal:
+                newVal = self.model.pluginModel.normalizePath(oldVal)
+                dlgItem.dict[fieldname] = newVal
+            
+    def pathFieldToAbs(self,dlgItem,fieldname):
+        if dlgItem and fieldname in dlgItem.dict:
+            oldVal = dlgItem.dict[fieldname]
+            if oldVal:
+                newVal = self.model.pluginModel.getOrigPath(oldVal)
+                dlgItem.dict[fieldname] = newVal
        
     @abstractmethod
     def openDialog(self,item): 
+        pass
+        
+    def preDlg(self,dlg_item):
+        pass
+    def postDlg(self,dlg_item):
         pass
     
     # @abstractmethod

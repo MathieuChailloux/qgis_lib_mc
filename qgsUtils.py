@@ -491,6 +491,8 @@ def getRasterValsOld(layer):
     return unique_vals
     
 def getRasterValsBis(layer):
+    if layer is None:
+        return []
     rows = layer.height()
     cols = layer.width()
     dpr = layer.dataProvider()
