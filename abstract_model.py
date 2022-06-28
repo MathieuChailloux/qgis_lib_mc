@@ -879,8 +879,10 @@ class NormalizingParamsModel(QAbstractTableModel):
     
     def fromXMLDict(self,dict):
         if self.WORKSPACE in dict:
-           if not self.workspace and os.path.isdir(dict[self.WORKSPACE]):
-               self.setWorkspace(dict[self.WORKSPACE])
+            if not self.workspace and os.path.isdir(dict[self.WORKSPACE]):
+                self.setWorkspace(dict[self.WORKSPACE])
+            elif self.projectFile is not None:
+                self.setWorkspace(os.path.dirname(self.projectFile))
         if self.RESOLUTION in dict:
             try:
                 self.setResolution(float(dict[self.RESOLUTION]))
