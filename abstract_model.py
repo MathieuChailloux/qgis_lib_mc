@@ -1521,11 +1521,12 @@ class MainDialog(QtWidgets.QDialog):
         
     # Connects view and model components for each tab.
     # Connects global elements such as project file and language management.
-    def connectComponents(self):
+    def connectComponents(self,saveAsFlag=True):
         for tab in self.connectors:
             tab.connectComponents()
         # Main tab connectors
-        self.saveProjectAs.clicked.connect(self.saveModelAsAction)
+        if saveAsFlag:
+            self.saveProjectAs.clicked.connect(self.saveModelAsAction)
         self.saveProject.clicked.connect(self.saveModel)
         self.openProject.clicked.connect(self.loadModelAction)
         self.langEn.clicked.connect(self.switchLangEn)
