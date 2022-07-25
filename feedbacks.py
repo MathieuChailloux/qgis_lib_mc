@@ -231,6 +231,9 @@ class ProgressMultiStepFeedback(QgsProcessingMultiStepFeedback):
     def reportError(self,error,fatalError=False):
         super().reportError(error,fatalError)
         
+    def user_error(self,msg):
+        self.feedback.user_error(msg)
+        
 
 class FileFeedback(QgsProcessingFeedback):
     
