@@ -78,6 +78,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,
             context.setFeedback(feedback)
         feedback.pushDebugInfo("complete_name = " + str(complete_name))
         feedback.pushDebugInfo("feedback = " + str(feedback.__class__.__name__))
+        # assert(False)
         res = processing.run(complete_name,parameters,onFinish=no_post_process,context=context,feedback=feedback)
         #res = processing.runAndLoadResults(complete_name,parameters,context=context,feedback=feedback)#,onFinish=no_post_process)
         feedback.pushDebugInfo("res1 = " + str(res))
@@ -734,6 +735,8 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         parameters['SET_RESOLUTION'] = True
         parameters['X_RESOLUTION'] = x_res
         parameters['Y_RESOLUTION'] = y_res
+    # parameters = {'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True, 'DATA_TYPE': 0, 'INPUT': 'D:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Groups/landuse/landuse_raster.tif', 'KEEP_RESOLUTION': True, 'MASK': 'D:\\IRSTEA\\BioDispersal\\Tests\\BousquetOrbExtended\\Source\\ZoneEtude\\EPCIBousquetOrbBuf4000.shp', 'NODATA': None, 'OUTPUT': 'D:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Groups/landuse/landuse.tif', 'SET_RESOLUTION': True, 'X_RESOLUTION': 25.0, 'Y_RESOLUTION': 25.0}
+    # parameters = { 'ALPHA_BAND' : False, 'CROP_TO_CUTLINE' : True, 'DATA_TYPE' : 0, 'EXTRA' : '', 'INPUT' : 'D:/IRSTEA/ERC/tests/BousquetOrbExtended/Source/CorineLandCover/CLC12_BOUSQUET_ORB.tif', 'KEEP_RESOLUTION' : False, 'MASK' : 'D:/IRSTEA/ERC/tests/BousquetOrbExtended/Source/ZoneEtude/EPCIBousquetOrb.shp', 'MULTITHREADING' : False, 'NODATA' : None, 'OPTIONS' : '', 'OUTPUT' : out_path, 'SET_RESOLUTION' : False, 'SOURCE_CRS' : None, 'TARGET_CRS' : None, 'X_RESOLUTION' : 10, 'Y_RESOLUTION' : 10 }
     utils.debug("parameters = " + str(parameters))
     return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
     
