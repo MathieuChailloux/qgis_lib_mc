@@ -634,6 +634,12 @@ class DictModel(AbstractGroupModel):
                 return i
         return None
         
+    def getItemFromName(self,name):
+        for i in self.items:
+            if i.getName() == name:
+                return i
+        return None
+        
     def itemExists(self,item):
         matching_item = self.getMatchingItem(item)
         return (matching_item != None)
@@ -972,7 +978,8 @@ class NormalizingParamsModel(QAbstractTableModel):
         if path is None or path == "":
             self.feedback.user_error("Empty path")
         elif os.path.isabs(path):
-            return path
+            norm_path = os.path.normpath(path)
+            return norm_path
         else:
             join_path = utils.joinPath(self.workspace,path)
             norm_path = os.path.normpath(join_path)
@@ -1464,6 +1471,18 @@ class MainModel:
             if model.parser_name == name:
                 return model
         return None
+        
+    def getOutLayerFromName(self,name,model):
+        self.feedback.pushDebugInfo("getOutLayerFromName " + str(name))
+        item = model.getItemFromName(name)
+        if not item:
+            self.feedback.internal_error("Item '" + str(name) + "' not found in model "
+                + str(model.__class__.__name__))
+        layer = model.getItemOutPath(item)
+        self.feedback.pushDebugInfo("getOutLayerFromName layer " + str(layer))
+        abs_layer = self.getOrigPath(layer)
+        self.feedback.pushDebugInfo("getOutLayerFromName abs_layer " + str(abs_layer))
+        return abs_layer
         
     # def fromXMLRoot(self,root):
         # for child in root:
