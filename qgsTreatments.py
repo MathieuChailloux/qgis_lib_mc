@@ -265,6 +265,19 @@ def parameterAsSourceLayer(obj_alg,parameters,paramName,context,feedback=None):
     return source, layer
    
 # Vector algorithms
+
+def addUniqueValue(layer,fieldname,outField,out_path,assoc_path,
+        context=None,feedback=None):
+    parameters = { 'FIELD' : fieldname,
+        'FIELD_NAME' : outField,
+        'INPUT' : layer,
+        'OUTPUT' : out_path,
+        'SUMMARY_OUTPUT' : assoc_path }
+    res = applyProcessingAlg("native","adduniquevalueindexfield",
+        parameters,context=context,feedback=feedback)
+    return res
+
+
     
 def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
         discard=True,fields=[],method=0,prefix='',context=None,feedback=None):
