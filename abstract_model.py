@@ -1257,6 +1257,10 @@ class ExtensiveTableModel(DictModel):
         
     def setValues(self,values):
         self.valueSet = values
+    def getItemValue(self,item):
+        return item.dict[self.idField]
+    def getCodesStr(self):
+        return [str(i.dict[self.idField]) for i in self.items]
                 
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
