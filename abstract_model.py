@@ -34,8 +34,10 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsCoordinateTransform,
                        QgsProcessingUtils,
                        QgsProcessingFeedback)
+# from qgis.gui import QgsCheckableItemModel
 
 from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtGui import QStandardItemModel#, QgsCheckableItemModel
 from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
                           QCoreApplication, QTranslator, QSettings,
                           qVersion, pyqtSlot)
@@ -1710,7 +1712,38 @@ class TableToDialogConnector(AbstractConnector):
     # def mkItemFromDlgItem(self,dlg_item): 
         # pass
      
-            
+    
+class CheckableComboDelegate(QStandardItemModel):
+
+    def __init__(self,baseModel):
+        super().__init__()
+        self.baseModel = baseModel
+
+    def rowCount(self,parent=QModelIndex()):
+        return len(self.baseModel.items)
+    def columnCount(self,parent=QModelIndex()):
+        return 1
+    def data(self,index,role):
+        if not index.isValid():
+            return QVariant()
+        row = index.row()
+        item = self.baseModel.getNItem(row)
+        itemName = item.getName()
+        if role != Qt.DisplayRole:
+            return QVariant()
+        elif row < self.rowCount():
+            return(QVariant(itemName))
+        else:
+            return QVariant()
+    def setData(self, index, value, role):
+        self.feedback.pushDebugInfo("setData (" + str(index.row()) + ","
+            + str(index.column()) + ") : " + str(value))
+        if role == Qt.EditRole:
+            # row = self.setDataXY(index.row(),index.column(),value)
+            self.dataChanged.emit(index, index)
+            return True
+        return False
+        
 # Code snippet from https://stackoverflow.com/questions/17748546/pyqt-column-of-checkboxes-in-a-qtableview
 class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
     """
