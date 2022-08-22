@@ -1274,7 +1274,7 @@ class ExtensiveTableModel(DictModel):
     # Returns item matching class 'rowName', None if there is no match.
     def getRowByName(self,rowName):
         for i in self.items:
-            if i.dict[self.idField] == rowName:
+            if str(i.dict[self.idField]) == str(rowName):
                 return i
         return None
         
@@ -1414,6 +1414,7 @@ class ExtensiveTableModel(DictModel):
                 + "' in row " + str(row))
         rowName = row[self.idField]
         rowItem = self.getRowByName(rowName)
+        self.feedback.pushDebugInfo("rowName = " + str(rowName))
         if rowItem:
             for f in self.fields:
                 if f in row:
