@@ -164,8 +164,8 @@ def qgsTypeToInt(qgis_type,shift=False,typeList=2,defaultType=Qgis.Float32):
             utils.internal_error("No type list with id " + str(typeList))
         if qgis_type in typeList:
             int_value = typeList.index(qgis_type)
-            if int_value == 0:
-                int_value = typeList.index(defaultType)
+            # if int_value == 0:
+                # int_value = typeList.index(defaultType)
             if not shift:
                 int_value += 1
             utils.debug("qgsTypeToInt " + str(qgis_type) + " = " + str(int_value))
