@@ -23,7 +23,7 @@
     Useful functions to perform base operation on QGIS interface and data types.
 """
 
-import os
+import os, shutil
 from pathlib import Path
 import numpy as np
 
@@ -60,6 +60,9 @@ def isVectorLayer(layer):
     
 def isRasterLayer(layer):
     return layer.type() == QgsMapLayer.RasterLayer
+    
+def removeFolder(path):
+    shutil.rmtree(path)
     
 # Delete raster file and associated xml file
 def removeRaster(path):
@@ -198,6 +201,14 @@ def loadLayer(fname,loadProject=False):
     if loadProject:
         QgsProject.instance().addMapLayer(layer)
     return layer
+    
+# def loadLayerNone(fname,loadProject=False):
+    # utils.debug("loadLayer " + str(fname))
+    # if not fname:
+        # return None
+    # if not os.path.isfile(fname):
+        # return None
+    # return loadLayer(fname,loadProject=loadProject)
             
 #def loadLayerGetTypeOld(fname,loadProject=False):
 #    utils.checkFileExists(fname)
@@ -237,7 +248,20 @@ def getLoadedLayerByName(name):
         utils.user_error("Several layers named '" + name + "' found")
     else:
         return layers[0]
-        
+    
+def removeLayer(layer):
+    inst = QgsProject.instance()
+    inst.removeMapLayers( [layer.id()] )
+def removeLayerFromPath(layerPath):
+    layer = getLayerByFilename(layerPath)
+    if layer:
+        removeLayer(layer)
+    
+def removeGroup(groupName):
+    root = QgsProject.instance().layerTreeRoot()
+    groupNode = root.findGroup(groupName)
+    if groupNode:
+        root.removeChildNode(groupNode)
         
 # LAYER PARAMETERS
 
