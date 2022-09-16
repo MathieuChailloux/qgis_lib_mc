@@ -62,7 +62,8 @@ def isRasterLayer(layer):
     return layer.type() == QgsMapLayer.RasterLayer
     
 def removeFolder(path):
-    shutil.rmtree(path)
+    if os.path.isdir(path):
+        shutil.rmtree(path)
     
 # Delete raster file and associated xml file
 def removeRaster(path):
