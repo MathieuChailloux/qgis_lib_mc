@@ -129,7 +129,7 @@ def normalizeEncoding(layer):
        
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadVectorLayer(fname,loadProject=False):
+def loadVectorLayer(fname,loadProject=False,normalize=False):
     utils.debug("loadVectorLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
@@ -139,7 +139,8 @@ def loadVectorLayer(fname,loadProject=False):
         utils.user_error("Could not load vector layer '" + fname + "'")
     if not layer.isValid():
         utils.user_error("Invalid vector layer '" + fname + "'")
-    normalizeEncoding(layer)
+    if normalize:
+        normalizeEncoding(layer)
     if loadProject:
         QgsProject.instance().addMapLayer(layer)
     return layer
