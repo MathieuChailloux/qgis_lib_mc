@@ -28,6 +28,7 @@ import sys
 import datetime
 
 from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
+from qgis.PyQt.QtCore import  QCoreApplication
 
 from . import utils
 from . import qgsUtils
@@ -61,9 +62,18 @@ from PyQt5.QtWidgets import QMessageBox
     # if progressFeedback:
         # progressFeedback.endJob()
   
-
+def tr(msg):
+    return QCoreApplication.translate(None, msg)
 def launchDialog(origin,title,msg):
     QMessageBox.information(origin,title,msg)
+def paramError(msg,parent=None):
+    title = tr("Wrong parameter value")
+    launchDialog(parent,title,msg)
+def paramNameError(name,parent=None):
+    m = tr("Name '")
+    m += str(name)
+    m += tr("' is not alphanumeric")
+    paramError(m,parent=parent)
     # QMessageBox.information(None,
         # self.translate('osraster_raster', "ERROR : Raster encoding value"),
         # self.translate('osraster_raster', "A code value set isn't valid."))
