@@ -719,9 +719,8 @@ class LayerComboDialog:
         if fname:
             self.setLayerPath(fname)
             #self.combo.layerChanged.emit(self.layer)
-        else:
-            # utils.user_error("Could not open file " + str(fname))
-            self.parent.feedback.user_error("Could not open file " + str(fname))
+        # else:
+            # self.parent.feedback.user_error("Could not open file " + str(fname))
         
     def getLayer(self):
         return self.layer

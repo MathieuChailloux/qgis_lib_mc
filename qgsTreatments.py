@@ -537,6 +537,29 @@ def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
 def convertGeomType(input,type,output,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'TYPE' : type, 'OUTPUT' : output }
 
+def listUniqueValues(input,fieldname,context=None,feedback=None):
+    params = { 'FIELDS' : [fieldname],
+        'INPUT' : input,
+        # 'OUTPUT' : 'TEMPORARY_OUTPUT',
+        # 'OUTPUT_HTML_FILE' : 'TEMPORARY_OUTPUT' }
+        'OUTPUT' : None,
+        'OUTPUT_HTML_FILE' : None }
+    return applyProcessingAlg("qgis","listuniquevalues",
+        parameters,context,feedback,onlyOutput=False)
+def getVectorUniqueVals(input,fieldname,context=None,feedback=None):
+    unique_ret = listUniqueValues(input,fieldname,contexte,feedback)
+    unique_values_str = unique_ret['UNIQUE_VALUES']
+    unique_values = unique_values_str.split(";")
+    # Cast values from str if needed
+    if isinstance(input,str):
+        input = qgsUtils.loadRasterLayer(input)
+    input_type = input.dataProvider().dataType(1)
+    if qgsUtils.qgisTypeIsInteger(input_type):
+        feedback.pushDebugInfo("data_type = " + str(input_type))
+        unique_values = [int(v) for v in unique_values]
+    # Return
+    return unique_values
+
 def fixShapefileFID(input,context=None,feedback=None):
     feedback.pushDebugInfo("input = " + str(input))
     feedback.pushDebugInfo("input type = " + str(type(input)))
