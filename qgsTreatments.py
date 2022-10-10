@@ -545,15 +545,16 @@ def listUniqueValues(input,fieldname,context=None,feedback=None):
         'OUTPUT' : None,
         'OUTPUT_HTML_FILE' : None }
     return applyProcessingAlg("qgis","listuniquevalues",
-        parameters,context,feedback,onlyOutput=False)
+        params,context,feedback,onlyOutput=False)
 def getVectorUniqueVals(input,fieldname,context=None,feedback=None):
-    unique_ret = listUniqueValues(input,fieldname,contexte,feedback)
+    unique_ret = listUniqueValues(input,fieldname,
+        context=context,feedback=feedback)
     unique_values_str = unique_ret['UNIQUE_VALUES']
     unique_values = unique_values_str.split(";")
     # Cast values from str if needed
     if isinstance(input,str):
         input = qgsUtils.loadRasterLayer(input)
-    input_type = input.dataProvider().dataType(1)
+    input_type = input.dataProvider().fields().field(fieldname).type()
     if qgsUtils.qgisTypeIsInteger(input_type):
         feedback.pushDebugInfo("data_type = " + str(input_type))
         unique_values = [int(v) for v in unique_values]
