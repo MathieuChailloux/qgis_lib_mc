@@ -1543,6 +1543,7 @@ class MainDialog(QtWidgets.QDialog):
             self.feedback.pushDebugInfo("traceback : " + str(tbinfo))
             self.feedback.error_msg(errmsg,prefix="Unexpected error")
         self.mTabWidget.setCurrentWidget(self.logTab)
+        self.feedback.focusLogTab()
         # self.feedback.clear()
         
     # Connects view and model components for each tab.
