@@ -628,7 +628,7 @@ def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],contex
     
 def applyReclassifyByTable(input,table,output,
                            nodata_val=nodata_val,out_type=Qgis.Float32,
-                           boundaries_mode=1,nodata_missing=False,
+                           boundaries_mode=1,nodata_missing=True,
                            context=None,feedback=None):
     # Types : 0 = Byte, ...
     parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),

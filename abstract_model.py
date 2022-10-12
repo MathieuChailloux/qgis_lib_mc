@@ -1379,7 +1379,8 @@ class ExtensiveTableModel(DictModel):
                 except ValueError:
                     self.feedback.pushWarning("Ignoring non-numeric value '" + str(new_val)
                         + "' for class ")
-                    new_val = qgsTreatments.nodata_val
+                    # new_val = qgsTreatments.nodata_val
+                    continue
                 # TODO : change self.ROW_CODE to something like self.codeField
                 matrixes[name] += [ code, code, new_val ]
         return matrixes
