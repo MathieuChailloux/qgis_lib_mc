@@ -196,7 +196,7 @@ class ProgressFeedback(QgsProcessingFeedback):
     def focusLogTab(self):
         # self.dlg.mTabWidget.setCurrentWidget(self.dlg.logTab)
         max = self.dlg.txtLog.verticalScrollBar().maximum()
-        self.feedback.pushDebugInfo("focusLogTab " + str(max))
+        self.pushDebugInfo("focusLogTab " + str(max))
         self.dlg.txtLog.verticalScrollBar().setValue(max)
         
     def endJob(self):

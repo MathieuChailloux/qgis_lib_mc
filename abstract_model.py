@@ -719,7 +719,7 @@ class DictModel(AbstractGroupModel):
             dict[k] = newVal
     @classmethod
     def fromXML(cls,root,feedback=None):
-        feedback.pushDebugInfo("fromXML " + str(cls.__name__))
+        feedback.pushDebugInfo("fromXML " + str(cls.__class__.__name__))
         model = cls(feedback=feedback)
         model.dict = cls.dictFromXMLAttribs(root.attrib)
         for child in root:
@@ -1663,8 +1663,11 @@ class TableToDialogConnector(AbstractConnector):
     def openDialogGetResult(self,item):
         self.preDlg(item)
         item_dlg = self.openDialog(item)
-        dlg_item = item_dlg.showDialog()
-        self.postDlg(dlg_item)
+        if item_dlg:
+            dlg_item = item_dlg.showDialog()
+            self.postDlg(dlg_item)
+        else:
+            dlg_item = None
         return dlg_item
     
     def openDialogEdit(self,index):
