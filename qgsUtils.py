@@ -412,6 +412,17 @@ def coordsOfExtentPath(extent_path):
     y_max = extent.yMaximum()
     return [str(x_min),str(y_min),str(x_max),str(y_max)]
     
+def getExtentStrFromPath(extent_path,crs=None):
+    extent_layer = loadLayer(extent_path)
+    extent = extent_layer.extent()
+    crs = extent_layer.crs()
+    res = str(extent.xMinimum())
+    res += ',' + str(extent.xMaximum())
+    res += ',' + str(extent.yMinimum())
+    res += ',' + str(extent.yMaximum())
+    res += '[' + str(crs.authid()) + ']'
+    return res
+    
 def transformBoundingBox(in_rect,in_crs,out_crs):
     transformator = QgsCoordinateTransform(in_crs,out_crs,QgsProject.instance())
     out_rect = transformator.transformBoundingBox(in_rect)
