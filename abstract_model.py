@@ -675,6 +675,12 @@ class DictModel(AbstractGroupModel):
                 i.dict[field] = defaultVal
             self.layoutChanged.emit()
             
+    def renameField(self,oldName,newName):
+        if oldName not in self.fields:
+            self.feedback.internal_error("Could not find field " + str(oldName))
+        self.fields = [ newName if f == oldName else f for f in self.fields]
+        self.all_fields = [ newName if f == oldName else f for f in self.all_fields]
+            
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
     def removeField(self,fieldname):
@@ -1677,7 +1683,7 @@ class TableToDialogConnector(AbstractConnector):
         self.feedback.pushDebugInfo("openDialog item = " +str(item))
         dlg_item = self.openDialogGetResult(item)
         if dlg_item:
-            item.updateFromDlgItem(dlg_item)
+            self.updateFromDlgItem(item,dlg_item)
             self.model.layoutChanged.emit()
             
     def mkItem(self):
@@ -1711,9 +1717,8 @@ class TableToDialogConnector(AbstractConnector):
     def postDlg(self,dlg_item):
         pass
     
-    # @abstractmethod
-    # def updateFromDlgItem(self,item,dlg_item): 
-        # pass
+    def updateFromDlgItem(self,item,dlg_item): 
+        item.updateFromDlgItem(dlg_item)
     # @abstractmethod
     # def mkItemFromDlgItem(self,dlg_item): 
         # pass

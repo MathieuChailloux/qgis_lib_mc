@@ -502,6 +502,8 @@ def exportRaster(array,rasterSource,path,
     
 def getRasterValsFromPath(path):
     gdal_layer = gdal.Open(path)
+    if not gdal_layer:
+        utils.user_error("Could not load raster " + str(path))
     band1 = gdal_layer.GetRasterBand(1)
     data_array = band1.ReadAsArray()
     unique_vals = set(np.unique(data_array))
