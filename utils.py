@@ -252,6 +252,8 @@ def castDict(d):
             newVal = eval(v)
         elif v.isnumeric():
             newVal = int(v)
+        elif v == "None":
+            newVal = None
         else:
             try:
                 newVal = float(v)

@@ -710,19 +710,7 @@ class DictModel(AbstractGroupModel):
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
     @staticmethod
     def dictFromXMLAttribs(attribs):
-        dict = {}
-        for k,v in attribs.items():
-            if v in ["True","False"]:
-                newVal = bool(v)
-            elif v.isnumeric():
-                newVal = int(v)
-            else:
-                try:
-                    newVal = float(v)
-                except ValueError:
-                    newVal = v
-            # dict[newVal] = v
-            dict[k] = newVal
+        dict = utils.castDict(attribs)
     @classmethod
     def fromXML(cls,root,feedback=None):
         feedback.pushDebugInfo("fromXML " + str(cls.__class__.__name__))
