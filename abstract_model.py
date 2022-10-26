@@ -593,7 +593,7 @@ class DictModel(AbstractGroupModel):
             feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
         feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
         feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
-        self.all_fields = fields
+        self.all_fields = fields[:]
         if display_fields is None:
             display_fields = fields
         AbstractGroupModel.__init__(self,itemClass,fields=display_fields,
@@ -666,7 +666,9 @@ class DictModel(AbstractGroupModel):
         self.nb_fields = len(self.fields)
             
     def addField(self,field,defaultVal=None):
+        self.feedback.pushDebugInfo("addField f1 " + str(self.fields))
         if field not in self.fields:
+            self.feedback.pushDebugInfo("addField " + str(field))
             self.fields.append(field)
             self.all_fields.append(field)
             # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
@@ -674,6 +676,7 @@ class DictModel(AbstractGroupModel):
             for i in self.items:
                 i.dict[field] = defaultVal
             self.layoutChanged.emit()
+        self.feedback.pushDebugInfo("addField f2 " + str(self.fields))
             
     def renameField(self,oldName,newName):
         if oldName not in self.fields:
