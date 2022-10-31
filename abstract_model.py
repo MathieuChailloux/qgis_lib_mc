@@ -1663,9 +1663,13 @@ class TableToDialogConnector(AbstractConnector):
         item_dlg = self.openDialog(item)
         if item_dlg:
             dlg_item = item_dlg.showDialog()
-            self.postDlg(dlg_item)
+            if dlg_item:
+                self.postDlg(dlg_item)
+            elif item:
+                self.postDlg(item)
         else:
             dlg_item = None
+            # self.postDlg(item.child)
         return dlg_item
     
     def openDialogEdit(self,index):
