@@ -613,9 +613,12 @@ class DictModel(AbstractGroupModel):
     def getNField(self,item,n):
         try:
             # return item.dict[self.display_fields.keys()[n]]
-            return item.dict[self.idx_to_fields[n]]
+            # return item.dict[self.idx_to_fields[n]]
+            return item.dict[self.fields[n]]
         except Exception as e:
-            self.feedback.pushDebugInfo("idx_to_fields = " + str(self.idx_to_fields))
+            self.feedback.pushDebugInfo("fields = " + str(self.fields))
+            self.feedback.pushDebugInfo("all_fields = " + str(self.all_fields))
+            # self.feedback.pushDebugInfo("idx_to_fields = " + str(self.idx_to_fields))
             self.feedback.pushDebugInfo("dict = " + str(item.dict))
             self.feedback.pushDebugInfo("n = " + str(n))
             raise e
