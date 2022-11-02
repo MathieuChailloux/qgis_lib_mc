@@ -35,7 +35,8 @@ from qgis.core import (Qgis,
                        QgsProcessingContext,
                        QgsVectorLayer,
                        QgsRasterLayer,
-                       QgsExpression)
+                       QgsExpression,
+                       QgsTask)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
 
@@ -105,7 +106,25 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,
     finally:  
         feedback.pushDebugInfo("End run " + alg_name)
         
-        
+# class ProcessingAlgTask(QgsTask):
+
+    # def __init__(self,provider,algName,parameters,context=None,feedback=None,onlyOutput=None):
+        # self.provider = provider
+        # self.algName = algName
+        # self.parameters = parameters
+        # self.context = context
+        # self.feedback = feedback
+        # self.onlyOutput = onlyOutput
+
+    # def run(self):
+        # return applyProcessingAlgFunc(self.provider,algName,parameters,
+            # context=context,feedback=feedback,onlyOutput=onlyOutput)
+ 
+# def applyProcessingAlg(provider,algName,parameters,context=None,
+        # feedback=None,onlyOutput=True,background=True):      
+    # task = ProcessingAlgTask(provider,algName,parameters,context=context,
+        # feedback=feedback,onlyOutput=onlyOutput)
+    
         
 def checkGrass7Installed():
     try:
