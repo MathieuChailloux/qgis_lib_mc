@@ -88,6 +88,7 @@ class ProgressFeedback(QgsProcessingFeedback):
     def __init__(self,dlg):
         self.dlg = dlg
         self.progressBar = dlg.progressBar
+        self.fileFeedback = None
         self.sectionText = ""
         self.sectionHeader = "********"
         self.debug_flag = False
@@ -97,8 +98,19 @@ class ProgressFeedback(QgsProcessingFeedback):
             raise utils.CustomException("No 'lblProgress' widget in dialog")
         super().__init__()
         
+    def setWorkspace(self,workspace):
+        date_str = datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
+        outFile = utils.joinPath(workspace,"log.txt")
+        utils.removeFile(outFile)
+        self.fileFeedback = outFile
+        self.pushInfo("Log file " + str(outFile) + " created")
+        
     def print_func(self,msg):
         self.dlg.txtLog.append(msg)
+        if self.fileFeedback:
+            with open(self.fileFeedback,"a+") as f:
+                f.write(msg + "\n")
+            
 
     def printDate(self,msg):
         date_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
