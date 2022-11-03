@@ -171,10 +171,10 @@ class DictItem(AbstractGroupItem):
         # return json.dumps(self)
     @classmethod
     def fromDict(cls,dict,feedback=None):
-        feedback.pushDebugInfo("dict1 " + str(dict))
-        dict = utils.castDict(dict)
         feedback.pushDebugInfo("fromDict " + str(cls.__name__))
-        feedback.pushDebugInfo("dict2 " + str(dict))
+        feedback.pushDebugInfo("fromDict1 " + str(dict))
+        dict = utils.castDict(dict)
+        feedback.pushDebugInfo("fromDict2 " + str(dict))
         return cls(dict,feedback=feedback)
     @classmethod
     def fromStr(cls,s,feedback=None):
@@ -182,6 +182,7 @@ class DictItem(AbstractGroupItem):
         return cls.fromDict(dict,feedback=feedback)
     @classmethod
     def fromXML(cls,root,feedback=None):
+        feedback.pushDebugInfo("fromXML " + str(cls.__name__))
         return cls.fromDict(root.attrib,feedback=feedback)
         
     # def recompute(self):
@@ -711,7 +712,7 @@ class DictModel(AbstractGroupModel):
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")    @abstractmethod
     def mkItemFromXML(self,root,feedback=None):
         feedback.pushDebugInfo("mkItemFromXML " + self.__class__.__name__)
-        feedback.pushDebugInfo("mkItemFromXML " + self.itemClass.__class__.__name__)
+        feedback.pushDebugInfo("mkItemFromXML " + self.itemClass.__name__)
         return self.itemClass.fromXML(root,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
     @staticmethod
