@@ -259,11 +259,24 @@ def removeLayerFromPath(layerPath):
     if layer:
         removeLayer(layer)
     
-def removeGroup(groupName):
+def removeGroupOld(groupName):
     root = QgsProject.instance().layerTreeRoot()
     groupNode = root.findGroup(groupName)
     if groupNode:
-        root.removeChildNode(groupNode)
+        root.removeChildNode(groupNode)    
+def removeGroupR(root,groupName):
+    print("removeGroupR " + str(root.name()))
+    children = root.children()
+    for c in children:
+        if c.nodeType() ==  QgsLayerTreeNode.NodeGroup:
+            if c.name() == groupName:
+                root.removeChildNode(c)    
+            else:
+                removeGroupR(c,groupName)
+    
+def removeGroups(groupName):
+    root = QgsProject.instance().layerTreeRoot()
+    removeGroupR(root,groupName)
         
 # LAYER PARAMETERS
 
