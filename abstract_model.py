@@ -603,7 +603,7 @@ class DictModel(AbstractGroupModel):
         self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("DM OK")
         # self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
-        self.idx_to_fields = self.fields
+        # self.idx_to_fields = self.fields
         self.nb_fields = len(self.fields)
         # self.feedback = feedback
         
@@ -624,11 +624,16 @@ class DictModel(AbstractGroupModel):
             self.feedback.pushDebugInfo("n = " + str(n))
             raise e
     def setDataXY(self,x,y,value):
+        self.feedback.pushDebugInfo("setDataXY %s %s %s"%(x,y,value))
+        self.feedback.pushDebugInfo("fields %s"%(self.fields))
         item = self.getNItem(x)
-        item.dict[self.idx_to_fields[y]] = value
+        fieldname = self.fields[y]
+        item.dict[fieldname] = value
+        # item.dict[self.idx_to_fields[y]] = value
         
     def sort(self,col,order):
-        sorted_items = sorted(self.items, key=lambda i: i.dict[self.idx_to_fields[col]])
+        # sorted_items = sorted(self.items, key=lambda i: i.dict[self.idx_to_fields[col]])
+        sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
         if order == Qt.DescendingOrder:
             sorted_items.reverse()
         self.items = sorted_items
