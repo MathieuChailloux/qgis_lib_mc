@@ -241,7 +241,8 @@ def loadLayerGetType(fname,loadProject=False):
     
 # Retrieve layer loaded in QGIS project from name
 def getLoadedLayerByName(name):
-    layers = QgsProject.instance().mapLayersByName('name')
+    utils.debug("Layers = " + str([l.name() for l in QgsProject.instance().mapLayers().values()]))
+    layers = QgsProject.instance().mapLayersByName(name)
     nb_layers = len(layers)
     if nb_layers == 0:
         utils.warn("No layer named '" + name + "' found")
