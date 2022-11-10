@@ -248,12 +248,12 @@ def is_integer(s):
 def castDict(d):
     res = {}
     for k,v in d.items():
-        if v in ["True","False"]:
+        if v is None or v == "None":
+            newVal = None
+        elif v in ["True","False"]:
             newVal = eval(v)
         elif v.isnumeric():
             newVal = int(v)
-        elif v == "None":
-            newVal = None
         else:
             try:
                 newVal = float(v)
