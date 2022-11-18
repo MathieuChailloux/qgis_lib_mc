@@ -326,3 +326,18 @@ def getIntValues(nb_values,start=1,exclude_values=[]):
             cpt += 1
         currVal += 1
     return res
+
+# Module utils
+
+def getModuleRelativePath(sourceName,targetName):
+    try:
+        sourceModules = sys.modules[sourceName]
+        try:
+            targetClass = getattr(sourceModules, targetName)
+            return targetClass
+        except KeyError:
+            raise Exception("No module %s in %s modules %s"%(targetName,sourceName,sourceModules))
+    except KeyError:
+        raise Exception("No module %s in sys.modules %s"%(sourceName,sys.modules))
+
+    
