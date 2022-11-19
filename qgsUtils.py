@@ -129,7 +129,7 @@ def normalizeEncoding(layer):
        
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadVectorLayer(fname,loadProject=False,normalize=False):
+def loadVectorLayer(fname,loadProject=False,normalize=True):
     utils.debug("loadVectorLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
@@ -723,6 +723,7 @@ class LayerComboDialog:
     def setLayerPath(self,fname):
         self.combo.setLayer(None)
         self.layer_name = fname
+        print("HEY")
         if self.vector_mode is None:
             self.layer = loadLayer(fname,loadProject=True)
         elif self.vector_mode:
