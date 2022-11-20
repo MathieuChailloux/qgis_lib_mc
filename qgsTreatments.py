@@ -623,7 +623,8 @@ def getRasterUniqueVals(input,feedback):
     report = getRasterUniqueValsReport(input,feedback=feedback)
     if isinstance(input,str):
         input = qgsUtils.loadRasterLayer(input)
-    input_type = input.dataProvider().dataType(1)
+    input_dp = input.dataProvider()
+    input_type = input_dp.dataType(1)
     tmp_table = report['OUTPUT_TABLE']
     tmp_html = report['OUTPUT_HTML_FILE']
     table_lyr = qgsUtils.loadVectorLayer(tmp_table)
@@ -634,6 +635,11 @@ def getRasterUniqueVals(input,feedback):
         feedback.pushDebugInfo("data_type = " + str(input_type))
         unique_vals = [int(v) for v in unique_vals]
     feedback.pushDebugInfo("unique_vals = " + str(unique_vals))
+    if input_dp.sourceHasNoDataValue(1):
+        nodata_val = input_dp.sourceNoDataValue(1)
+        feedback.pushDebugInfo("nodata_val = " + str(nodata_val))
+        if nodata_val in unique_vals:
+            unique_vals.remove(nodata_val)
     return unique_vals
     
 def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],context=None,feedback=None):
