@@ -1349,3 +1349,15 @@ def applyGdalMerge(files,out_path,load_flag=False):
         res_layer = qgsUtils.loadRasterLayer(out_path)
         QgsProject.instance().addMapLayer(res_layer)
         
+def getMajorityValue(inputVector, inputRaster, band, field_stat, context, feedback):
+        zonal_stats = QgsProcessingUtils.generateTempFilename('zonal_stats_band_'+str(band)+'.gpkg')
+        rasterZonalStats(inputVector, inputRaster,zonal_stats,prefix="_",band=band,stats=[9],context=context,feedback=feedback)
+        stats_layer = qgsUtils.loadVectorLayer(zonal_stats)
+        stats_fields = stats_layer.fields()
+        stats_fieldnames = stats_fields.names()
+        majority = 1 # default value
+        if field_stat in stats_fieldnames:
+            for f in stats_layer.getFeatures():
+                majority = f[field_stat]
+                break
+        return majority
