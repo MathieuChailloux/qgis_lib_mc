@@ -326,3 +326,15 @@ def getIntValues(nb_values,start=1,exclude_values=[]):
             cpt += 1
         currVal += 1
     return res
+    
+    
+# Import checks
+
+def scipyIsInstalled():
+    try:
+        import scipy
+        # from scipy import ndimage
+        import_scipy_ok = True
+    except ImportError as e:
+        import_scipy_ok = False
+    return import_scipy_ok
