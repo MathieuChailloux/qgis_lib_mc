@@ -338,3 +338,12 @@ def scipyIsInstalled():
     except ImportError as e:
         import_scipy_ok = False
     return import_scipy_ok
+    
+def numpyIsInstalled():
+    try:
+        import numpy
+        # from scipy import ndimage
+        import_numpy_ok = True
+    except ImportError as e:
+        import_numpy_ok = False
+    return import_numpy_ok

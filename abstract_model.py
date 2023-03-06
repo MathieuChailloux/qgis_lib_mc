@@ -591,14 +591,16 @@ class DictModel(AbstractGroupModel):
         if not itemClass:
             # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
             itemClass = getattr(sys.modules[__name__], DictItem.__name__)
-            feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
-        feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
-        feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
+            # feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
+        # feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
+        # feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
+        # feedback.pushInfo("fields " + str(fields))
+        # feedback.pushInfo("fields class " + str(fields.__class__.__name__))
         self.all_fields = fields[:]
         if display_fields is None:
             display_fields = fields
-        AbstractGroupModel.__init__(self,itemClass,fields=display_fields,
-            feedback=feedback)
+        AbstractGroupModel.__init__(self,itemClass=itemClass,
+            fields=display_fields,feedback=feedback)
         self.feedback.pushInfo("DM1 " + str(self.__class__.__name__))
         self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("DM OK")
