@@ -36,7 +36,11 @@ from qgis.core import (QgsColorRampShader,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
                        QgsGraduatedSymbolRenderer,
-                       QgsStyle)
+                       QgsStyle,
+                       QgsSymbol,
+                       QgsSimpleFillSymbolLayer,
+                       QgsRendererCategory,
+                       QgsCategorizedSymbolRenderer)
                        
 from . import utils, qgsUtils
 
@@ -48,6 +52,9 @@ yellowCol = QColor(yellowHex)
 greenCol = QColor(greenHex)
 
 singleColorRampList = [ 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds' ]
+
+colorsIndPol = ['#1A9641', '#8ACC62', '#DBF09E','#FEDF9A', '#F59053', '#D7191C']
+valuesIndPol = [0,1,2,3,4,5]
 
 def getDefaultStyle():
     return QgsStyle.defaultStyle()
@@ -140,6 +147,22 @@ def setCustomClassesDSFL(layer,fieldname):
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5)
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
+
+def setCustomClassesInd_Pol(layer,fieldname):
+    categories = []
+    for i in range(len(valuesIndPol)):
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        layer_style = {}
+        layer_style['color'] = colorsIndPol[i]
+        symbol_layer = QgsSimpleFillSymbolLayer.create(layer_style)
+        symbol_layer.setStrokeStyle(0) # no border
+        if symbol_layer is not None:
+            symbol.changeSymbolLayer(0, symbol_layer)
+        category = QgsRendererCategory(valuesIndPol[i],symbol,str(valuesIndPol[i]))
+        categories.append(category)
+    renderer = QgsCategorizedSymbolRenderer(fieldname, categories)
+    setRenderer(layer,renderer)
+    
     
 # Raster utilities
     
