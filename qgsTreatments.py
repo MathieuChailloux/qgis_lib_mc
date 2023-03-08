@@ -519,12 +519,13 @@ def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
     return res
     
-def fieldCalculator(input,field,formula,output,context=None,feedback=None):
+def fieldCalculator(input,field,formula,output,
+        length=0,precision=0,type=0,context=None,feedback=None):
     #{ 'FIELD_LENGTH' : 0, 'FIELD_NAME' : 'test', 'FIELD_PRECISION' : 0, 'FIELD_TYPE' : 0, 'FORMULA' : '$area', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/PluginQualification/test/CLC_BO_single.gpkg', 'OUTPUT' : 'TEMPORARY_OUTPUT' }
-    parameters = { 'FIELD_LENGTH' : 0,
+    parameters = { 'FIELD_LENGTH' : length,
         'FIELD_NAME' : field,
-        'FIELD_PRECISION' : 0,
-        'FIELD_TYPE' : 0,
+        'FIELD_PRECISION' : precision,
+        'FIELD_TYPE' : type,
         'FORMULA' : formula,
         'INPUT' : input,
         'OUTPUT' : output }
