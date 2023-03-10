@@ -148,9 +148,9 @@ def setCustomClassesDSFL(layer,fieldname):
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
 
-def setCustomClassesInd_Pol(layer,fieldname):
+def setCustomClassesInd_Pol(layer,fieldname,class_bounds):
     categories = []
-    for i in range(len(valuesIndPol)):
+    for i in range(len(class_bounds)):
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         layer_style = {}
         layer_style['color'] = colorsIndPol[i]
@@ -158,7 +158,7 @@ def setCustomClassesInd_Pol(layer,fieldname):
         symbol_layer.setStrokeStyle(0) # no border
         if symbol_layer is not None:
             symbol.changeSymbolLayer(0, symbol_layer)
-        category = QgsRendererCategory(valuesIndPol[i],symbol,str(valuesIndPol[i]))
+        category = QgsRendererCategory(class_bounds[i],symbol,str(class_bounds[i]))
         categories.append(category)
     renderer = QgsCategorizedSymbolRenderer(fieldname, categories)
     setRenderer(layer,renderer)
