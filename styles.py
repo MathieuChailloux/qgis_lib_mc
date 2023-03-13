@@ -148,7 +148,7 @@ def setCustomClassesDSFL(layer,fieldname):
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
 
-def setCustomClassesInd_Pol(layer,fieldname,class_bounds):
+def setCustomClassesInd_Pol_Category(layer,fieldname,class_bounds):
     categories = []
     for i in range(len(class_bounds)):
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
@@ -162,6 +162,25 @@ def setCustomClassesInd_Pol(layer,fieldname,class_bounds):
         categories.append(category)
     renderer = QgsCategorizedSymbolRenderer(fieldname, categories)
     setRenderer(layer,renderer)
+
+def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
+    categories = []
+    for i in range(len(class_bounds)):
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        layer_style = {}
+        layer_style['color'] = colorsIndPol[i]
+        symbol_layer = QgsSimpleFillSymbolLayer.create(layer_style)
+        symbol_layer.setStrokeStyle(0) # no border
+        if symbol_layer is not None:
+            symbol.changeSymbolLayer(0, symbol_layer)
+        if i == len(class_bounds)-1: # dernier élément
+            maxValue = layer.maximumValue(layer.fields().indexOf(fieldname))
+            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(class_bounds[i]))
+        else:
+            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(class_bounds[i])+" - "+str(class_bounds[i+1]))
+        categories.append(category)
+    renderer = QgsGraduatedSymbolRenderer(fieldname, categories)
+    setRenderer(layer,renderer)    
     
     
 # Raster utilities
