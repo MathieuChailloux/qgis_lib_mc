@@ -506,7 +506,7 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     res = applyProcessingAlg("native","reprojectlayer",parameters,context,feedback)
     return res
     
-def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
+def createGridLayer(extent,crs,size,out_layer, gtype=2, context=None,feedback=None):
     parameters = {
         'CRS' : crs,
         'EXTENT' : extent,
@@ -515,7 +515,7 @@ def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
         'VOVERLAY' : 0,
         'VSPACING' : size,
         'OUTPUT' : out_layer,
-        'TYPE' : 2 } #Rectangle
+        'TYPE' : gtype } #2 - Rectangle
     res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
     return res
     
@@ -817,15 +817,21 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
     
 
     
-def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=Qgis.Float32,
+def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
-    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
-    feedback.setProgressText("Merge raster")
-    parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
-                   'INPUT' : files,
-                   'NODATA_INPUT' : nodata_input,
-                   'NODATA_OUTPUT' : nodata_val,
-                   'OUTPUT' : out_path }
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    feedbacks.setSubText("Merge raster")
+    parameters = {
+            'DATA_TYPE': qgsTypeToInt(out_type,shift=True),
+            'EXTRA': '',
+            'INPUT': files,
+            'NODATA_INPUT': nodata_input,
+            'NODATA_OUTPUT': nodata_val,
+            'OPTIONS': '',
+            'PCT': False,
+            'SEPARATE': True,
+            'OUTPUT': output
+        }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)
     
                    
@@ -884,6 +890,22 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,
                context=context,feedback=feedback)
+
+def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,expr,
+                    nodata_val=None,out_type=Qgis.Float32,
+                    context=None,feedback=None):
+    TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    parameters = { 'BAND_A' : band_a,
+                   'BAND_B' : band_b,
+                   'BAND_C' : band_c,
+                   'FORMULA' : expr,
+                   'INPUT_A' : input_a,
+                   'INPUT_B' : input_b,
+                   'INPUT_C' : input_c,
+                   'NO_DATA' : nodata_val,
+                   'OUTPUT' : output,
+                   'RTYPE' : qgsTypeToInt(out_type,shift=True) }
+    return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     
 def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
@@ -1361,3 +1383,57 @@ def getMajorityValue(inputVector, inputRaster, band, field_stat, context, feedba
             majority = f[field_stat]
             break
     return majority
+
+def applyGetRasterExtent(input_raster, output, context=None,feedback=None):
+    parameters = {
+        'INPUT': input_raster,
+        'ROUND_TO': 0,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
+    
+def applyClipRasterByExtent(input_raster, input_extent, output, context=None,feedback=None):
+    parameters = {
+        'DATA_TYPE': 0,  # Utiliser le type de donnée de la couche en entrée
+        'EXTRA': '',
+        'INPUT': input_raster,
+        'NODATA': None,
+        'OPTIONS': '',
+        'OVERCRS': False,
+        'PROJWIN': input_extent,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","cliprasterbyextent", parameters,context,feedback)
+
+def applyPolygonize(input_layer, field, output, band=1, context=None,feedback=None):
+    parameters = {
+        'BAND': band,
+        'EIGHT_CONNECTEDNESS': False,
+        'EXTRA': '',
+        'FIELD': field,
+        'INPUT': input_layer,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","polygonize", parameters,context,feedback)
+
+def applyExtractByAttribute(input_layer, field, output, operator=0,value='1', context=None,feedback=None):
+    parameters = {
+        'FIELD': field,
+        'INPUT': input_layer,
+        'OPERATOR': operator,  #0 =
+        'VALUE': value,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","extractbyattribute", parameters, context, feedback)
+    
+def applyFieldCalculator(input_layer, field, output, formula, field_length, field_precision, field_type, context=None,feedback=None):
+    parameters = {
+        'FIELD_LENGTH': field_length,
+        'FIELD_NAME': field,
+        'FIELD_PRECISION': field_precision,
+        'FIELD_TYPE': field_type,
+        'FORMULA':  formula,
+        'INPUT': input_layer,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","fieldcalculator", parameters, context, feedback)
