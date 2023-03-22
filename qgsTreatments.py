@@ -1470,3 +1470,12 @@ def applyUnion(input_layer, overlay, output, overlay_fields_prefix='',context=No
         'OUTPUT': output
     }
     return applyProcessingAlg("native","union", parameters,context,feedback)
+
+def applyFillNoData(input_raster, output, band=1, fill_value=1, context=None,feedback=None):
+    parameters = {
+        'BAND': band,
+        'FILL_VALUE': fill_value,
+        'INPUT': input_raster,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","fillnodata", parameters,context,feedback)
