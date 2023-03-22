@@ -726,6 +726,16 @@ def applyRasterization(in_path,out_path,extent,resolution,
     res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
     return res
     
+def applyRasterizeOver(input_layer, input_raster, field, add=True, context=None,feedback=None):
+    parameters = {
+        'ADD': add,
+        'EXTRA': '',
+        'FIELD': field,
+        'INPUT': input_layer,
+        'INPUT_RASTER': input_raster
+    }
+    return applyProcessingAlg("gdal","rasterize_over", parameters,context,feedback)
+    
 def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        src_crs=None,extent=None,extent_crs=None,
                        resolution=None,out_type=USE_INPUT_TYPE,nodata_val=nodata_val,
@@ -1384,7 +1394,7 @@ def getMajorityValue(inputVector, inputRaster, band, field_stat, context, feedba
             break
     return majority
 
-def applyGetRasterExtent(input_raster, output, context=None,feedback=None):
+def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
     parameters = {
         'INPUT': input_raster,
         'ROUND_TO': 0,
@@ -1437,3 +1447,26 @@ def applyFieldCalculator(input_layer, field, output, formula, field_length, fiel
         'OUTPUT': output
     }
     return applyProcessingAlg("native","fieldcalculator", parameters, context, feedback)
+    
+def applyAutoIncrementField(input_layer, field, output, context=None,feedback=None):
+    parameters = {
+        'FIELD_NAME': field,
+        'GROUP_FIELDS': [''],
+        'INPUT': input_layer,
+        'MODULUS': 0,
+        'SORT_ASCENDING': True,
+        'SORT_EXPRESSION': '',
+        'SORT_NULLS_FIRST': False,
+        'START': 0,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","addautoincrementalfield", parameters,context,feedback)
+    
+def applyUnion(input_layer, overlay, output, overlay_fields_prefix='',context=None,feedback=None):
+    parameters = {
+        'INPUT': input_layer,
+        'OVERLAY': overlay,
+        'OVERLAY_FIELDS_PREFIX': overlay_fields_prefix,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","union", parameters,context,feedback)
