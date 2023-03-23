@@ -655,6 +655,14 @@ def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],contex
         'STATISTICS' : stats }
     return applyProcessingAlg("native","zonalstatisticsfb",parameters,context,feedback)
     
+def zonalHisto(vector,raster,output,prefix='HISTO_',band=1,context=None,feedback=None):
+    parameters = { 'COLUMN_PREFIX' : prefix,
+        'INPUT_RASTER' : raster,
+        'INPUT_VECTOR' : vector,
+        'OUTPUT' : output,
+        'RASTER_BAND' : band }
+    return applyProcessingAlg("native","zonalhistogram",parameters,context,feedback)
+    
 def applyReclassifyByTable(input,table,output,
                            nodata_val=nodata_val,out_type=Qgis.Float32,
                            boundaries_mode=1,nodata_missing=True,
