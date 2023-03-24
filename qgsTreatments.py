@@ -984,7 +984,22 @@ def applyProximity(input,output,classes='',band=1,units=0,context=None,feedback=
         'BAND' : band,
         'UNITS' : units }
     return applyProcessingAlg("gdal","proximity",parameters,context,feedback)
-                
+  
+def applyBuildVirtualRaster(list_raster, output, crs=None, context=None,feedback=None):
+    parameters = {
+        'INPUT': list_raster,
+        'RESOLUTION':0,
+        'SEPARATE':False,
+        'PROJ_DIFFERENCE':False,
+        'ADD_ALPHA':False,
+        'ASSIGN_CRS':crs,
+        'RESAMPLING':0,
+        'SRC_NODATA':'',
+        'EXTRA':'',
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","buildvirtualraster",parameters,context,feedback)
+    
 """
     GRASS ALGORITHMS
 """
