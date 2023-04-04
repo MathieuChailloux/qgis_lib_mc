@@ -37,30 +37,30 @@ from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QMessageBox
 
-# progressFeedback = None
+progressFeedback = None
 
-# def beginSection(msg):
-    # if progressFeedback:
-        # progressFeedback.beginSection(msg)
-    # else:
-        # utils.debug("No progress feedback")
+def beginSection(msg):
+    if progressFeedback:
+        progressFeedback.beginSection(msg)
+    else:
+        utils.debug("No progress feedback")
         
-# def endSection():
-    # if progressFeedback:
-        # progressFeedback.endSection()
-        # progressFeedback.setProgress(100)
+def endSection():
+    if progressFeedback:
+        progressFeedback.endSection()
+        progressFeedback.setProgress(100)
         
-# def setProgressText(text):
-    # if progressFeedback:
-        # progressFeedback.setProgressText(text)
+def setProgressText(text):
+    if progressFeedback:
+        progressFeedback.setProgressText(text)
         
-# def setSubText(text):
-    # if progressFeedback:
-        # progressFeedback.setSubText(text)
+def setSubText(text):
+    if progressFeedback:
+        progressFeedback.setSubText(text)
         
-# def endJob():
-    # if progressFeedback:
-        # progressFeedback.endJob()
+def endJob():
+    if progressFeedback:
+        progressFeedback.endJob()
   
 def tr(msg):
     return QCoreApplication.translate(None, msg)
