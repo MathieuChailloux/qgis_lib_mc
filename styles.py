@@ -36,6 +36,8 @@ from qgis.core import (QgsColorRampShader,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
                        QgsGraduatedSymbolRenderer,
+                       QgsRendererRange,
+                       QgsFillSymbol,
                        QgsStyle)
                        
 from . import utils, qgsUtils
@@ -141,6 +143,22 @@ def setCustomClassesDSFL(layer,fieldname):
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
     
+def setRendererUniqueValues(layer,fieldname):
+    idx = layer.fields().indexOf(fieldname)
+    values = list(layer.uniqueValues(idx))
+    ranges = []
+    for cpt, v in enumerate(values):
+        lower = v - 0.5 if cpt == 0 else (v + values[cpt-1]) / 2
+        upper = v + 0.5 if cpt == len(values) - 1 else (values[cpt+1] + v) / 2
+        label = str(v)
+        range = QgsRendererRange(lower,upper,QgsFillSymbol(),label)
+        ranges.append(range)
+    # print("ranges = " +str(ranges))
+    renderer = QgsGraduatedSymbolRenderer (attrName=fieldname,ranges=ranges)
+    color_ramp = getGradientColorRampRdYlGn()
+    renderer.updateColorRamp(color_ramp)
+    setRenderer(layer,renderer)
+     
 # Raster utilities
     
 def getValuesFromLayer3(layer):
