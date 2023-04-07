@@ -175,13 +175,41 @@ def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
             symbol.changeSymbolLayer(0, symbol_layer)
         if i == len(class_bounds)-1: # dernier élément
             maxValue = layer.maximumValue(layer.fields().indexOf(fieldname))
-            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(class_bounds[i]))
+            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(round(class_bounds[i])))
         else:
-            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(class_bounds[i])+" - "+str(class_bounds[i+1]))
+            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(round(class_bounds[i]))+" - "+str(round(class_bounds[i+1])))
         categories.append(category)
     renderer = QgsGraduatedSymbolRenderer(fieldname, categories)
     setRenderer(layer,renderer)    
+
+def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile, SupZero=True, lastBounds=None):
+    if SupZero:
+        layer.setSubsetString(""+fieldname+">0")
+    color_ramp = mkColorRamp('RdYlGn',invert=True)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
+    bounds = []
+    for r in renderer.ranges():
+        bounds.append((r.lowerValue()))#append(round((r.lowerValue())))
     
+    if SupZero:
+        layer.setSubsetString('')
+        bounds.pop(0) # on enlève la première limite basse (index 0), qui sera remplacée par le seuil 0
+        bounds = [0,0]+bounds # on ajoute 0 ,0 comme premières limites pour isoler ces valeurs
+    
+    if lastBounds: # remplacement du dernier seuil
+        bounds.pop() # en enlève le dernier seul
+        bounds.append(lastBounds) # ajoute le dernier seuil en paramètre
+    
+    return bounds
+
+def setRdYlGnGraduatedStyle2(layer,fieldname,nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile):
+    color_ramp = mkColorRamp('RdYlGn',invert=True)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
+    ctx = QgsRenderContext()
+    for symbol in renderer.symbols(ctx): # no border symbol
+        symbol.symbolLayer(0).setStrokeStyle(0)
+    
+    setRenderer(layer,renderer)    
     
 # Raster utilities
     
