@@ -198,7 +198,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         if str(fv) == 'inf':
             self.pushInfo("Unexpected value in progress bar : " + str(value))
         else:
-            self.progressBar.setValue(value)
+            self.progressBar.setValue(int(value))
         
     def setPercentage(self,percentage):
         pass

@@ -764,8 +764,12 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
     OUTPUT = 'OUTPUT'
     def __init__(self):
         super().__init__()
-    def tr(self, string):
-        return QCoreApplication.translate(self.__class__.__name__, string)
+    #def tr(self, string):
+    #    return QCoreApplication.translate(self.__class__.__name__, string)
+    def tr(self, string, context=''):
+        if context == '':
+            context = self.__class__.__name__
+        return QCoreApplication.translate(context, string)
     def name(self):
         return self.ALG_NAME
     def createInstance(self):
