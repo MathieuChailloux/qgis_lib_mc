@@ -295,8 +295,14 @@ def addUniqueValue(layer,fieldname,outField,out_path,assoc_path,
     res = applyProcessingAlg("native","adduniquevalueindexfield",
         parameters,context=context,feedback=feedback)
     return res
-
-
+    
+def addIdxField(layer,outField,out_path,context=None,feedback=None):
+    parameters = { 'INPUT' : layer,
+        'FIELD_NAME' : outField,
+        'OUTPUT' : out_path }
+    res = applyProcessingAlg("native","addautoincrementalfield",
+        parameters,context=context,feedback=feedback)
+    return res
     
 def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
         discard=True,fields=[],method=0,prefix='',context=None,feedback=None):
