@@ -73,7 +73,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,
         feedback.pushInfo("Calling processing algorithm '" + complete_name + "'")
         start_time = time.time()
         context = None
-        utils.debug("context = " + str(context))
+        #utils.debug("context = " + str(context))
         if context is None:
             context = QgsProcessingContext()
             context.setFeedback(feedback)
@@ -101,7 +101,7 @@ def applyProcessingAlg(provider,alg_name,parameters,context=None,
         else:
             return res
     except Exception as e:
-        utils.warn ("Failed to call " + alg_name + " : " + str(e))
+        feedback.pushWarning ("Failed to call " + alg_name + " : " + str(e))
         raise e
     finally:  
         feedback.pushDebugInfo("End run " + alg_name)

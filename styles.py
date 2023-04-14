@@ -72,8 +72,8 @@ def mkColorRamp(color,invert=False):
         colorRamp.invert()
     return colorRamp
     
-def getGradientColorRampRdYlGn():
-    return mkColorRamp('RdYlGn',invert=True)
+def getGradientColorRampRdYlGn(invert=True):
+    return mkColorRamp('RdYlGn',invert=invert)
     
 def getRandomSingleColorRamp():
     rampName = random.choice(singleColorRampList)
@@ -84,7 +84,7 @@ def setRenderer(layer,renderer):
         utils.internal_error("Could not create renderer")
     layer.setRenderer(renderer)
     utils.info("about to repaint")
-    layer.triggerRepaint()
+    layer.triggerRepaint()    
     
 # Vector utilities
 
@@ -99,9 +99,16 @@ def mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5,classif_method=Q
     return renderer
     
 def setGraduatedStyle(layer,fieldname,color_ramp_name,invert_ramp=False,
-        classif_method=QgsGraduatedSymbolRenderer.Jenks):
+        classif_method=QgsGraduatedSymbolRenderer.Jenks,invert_ranges=False):
     color_ramp = mkColorRamp(color_ramp_name,invert=invert_ramp)
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
+    ranges = renderer.ranges()
+    low1, low2 = ranges[0].lowerValue(), ranges[-1].lowerValue()
+    if invert_ranges and low1 < low2:
+        nb_ranges = len(ranges)
+        loop_range = range(0,nb_ranges)
+        for i in loop_range:
+            renderer.moveClass(0,nb_ranges-(i+1))
     setRenderer(layer,renderer)
     
     
@@ -112,8 +119,9 @@ def setGreenGraduatedStyle(layer,fieldname):
     # setRenderer(layer,renderer)
     
 def setRdYlGnGraduatedStyle(layer,fieldname,invert_ramp=False,
-        classif_method=QgsGraduatedSymbolRenderer.Jenks):
-    setGraduatedStyle(layer,fieldname,'RdYlGn',invert_ramp=invert_ramp,classif_method=classif_method)
+        classif_method=QgsGraduatedSymbolRenderer.Jenks,invert_ranges=False):
+    setGraduatedStyle(layer,fieldname,'RdYlGn',invert_ramp=invert_ramp,
+        classif_method=classif_method,invert_ranges=invert_ranges)
     # color_ramp = mkColorRamp('RdYlGn')
     # renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
     # setRenderer(layer,renderer)
@@ -155,7 +163,7 @@ def setRendererUniqueValues(layer,fieldname):
         ranges.append(range)
     # print("ranges = " +str(ranges))
     renderer = QgsGraduatedSymbolRenderer (attrName=fieldname,ranges=ranges)
-    color_ramp = getGradientColorRampRdYlGn()
+    color_ramp = getGradientColorRampRdYlGn(invert=False)
     renderer.updateColorRamp(color_ramp)
     setRenderer(layer,renderer)
      
