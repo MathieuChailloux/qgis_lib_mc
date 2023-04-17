@@ -672,7 +672,8 @@ class DictModel(AbstractGroupModel):
             self.insertRow(0)
         
     def recompute(self):
-        fields = list(self.dict.keys())
+        # if self.dict:
+            # fields = list(self.dict.keys())
         # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
         self.nb_fields = len(self.fields)
             
@@ -1335,6 +1336,11 @@ class ExtensiveTableModel(DictModel):
         self.removeField(col_name)
         self.layoutChanged.emit()
         
+    # def updateFromXML(self,root,feedback=None):
+        # extFields = self.fields[len(self.baseFields):]
+        # for f in extFields:
+            # self.removeColFromName(f)
+        
     # Reload items of model to match current ClassModel.
     def reloadModel(self,baseRowItems):
         self.feedback.pushDebugInfo("reloadModel")
@@ -1361,7 +1367,7 @@ class ExtensiveTableModel(DictModel):
                         currItem.dict[f] = bri_val
             else:
                 self.addRowItemFromBase(bri)
-        self.layoutChanged.emit()
+        self.layoutChanged.emit()        
                             
     # Returns reclassify matrix (list) for native:reclassifybytable call.
     def getReclassifyMatrixes(self,colNames):
