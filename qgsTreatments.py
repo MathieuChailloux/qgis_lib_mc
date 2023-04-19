@@ -828,7 +828,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 
     
 def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
-                     nodata_input=None,context=None,feedback=None):
+                     nodata_input=None,options='',context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     feedbacks.setSubText("Merge raster")
     parameters = {
@@ -837,7 +837,7 @@ def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
             'INPUT': files,
             'NODATA_INPUT': nodata_input,
             'NODATA_OUTPUT': nodata_val,
-            'OPTIONS': '',
+            'OPTIONS': options,
             'PCT': False,
             'SEPARATE': True,
             'OUTPUT': output
@@ -902,7 +902,7 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                context=context,feedback=feedback)
 
 def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,expr,
-                    nodata_val=None,out_type=Qgis.Float32,
+                    nodata_val=None,out_type=Qgis.Float32,options='',
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : band_a,
@@ -913,6 +913,7 @@ def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,e
                    'INPUT_B' : input_b,
                    'INPUT_C' : input_c,
                    'NO_DATA' : nodata_val,
+                   'OPTIONS': options,
                    'OUTPUT' : output,
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
