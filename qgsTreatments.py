@@ -766,13 +766,14 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
 def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
-                   crs=None,context=None,feedback=None):
+                   crs=None,options='',context=None,feedback=None):
     feedback.setProgressText("Tanslate")
     # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
                    'DATA_TYPE' : qgsTypeToInt(data_type),
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
+                   'OPTIONS': options,
                    'OUTPUT' : out_path,
                    'TARGET_CRS' : None }
     return applyProcessingAlg("gdal","translate",parameters,context,feedback)
