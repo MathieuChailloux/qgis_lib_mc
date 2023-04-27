@@ -292,6 +292,12 @@ def checkDescr(item,prefix=None):
 
 # Subprocess utils
         
+def checkCmd(cmd):
+    try:
+        subprocess.call([cmd])
+    except FileNotFoundError:
+        raise UserError("Command " + str(cmd) + " does not exist")
+        
 def executeCmd(cmd_args):
     debug("command = " + str(cmd_args))
     p = subprocess.Popen(cmd_args,

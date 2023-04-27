@@ -141,17 +141,20 @@ class ProgressFeedback(QgsProcessingFeedback):
     def error_msg(self,msg,prefix=""):
         self.printDate(self.mkBoldRed("[" + prefix + "] " + msg))
         
-    def user_error(self,msg):
+    def user_error(self,msg,fatal=True):
         self.error_msg(msg,"user error")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
-    def internal_error(self,msg):
+    def internal_error(self,msg,fatal=True):
         self.error_msg(msg,"internal error")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
-    def todo_error(self,msg):
+    def todo_error(self,msg,fatal=True):
         self.error_msg(msg,"Feature not yet implemented")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
     def reportError(self,error,fatalError=False):
         error_msg = str(error)
