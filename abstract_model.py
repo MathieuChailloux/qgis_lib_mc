@@ -977,7 +977,10 @@ class NormalizingParamsModel(QAbstractTableModel):
             self.feedback.user_error("Empty path")
         norm_path = utils.normPath(path)
         if os.path.isabs(norm_path):
-            rel_path = os.path.relpath(norm_path,self.workspace)
+            try:
+                rel_path = os.path.relpath(norm_path,self.workspace)
+            except ValueError:
+                rel_path = norm_path
         else:
             rel_path = norm_path
         final_path = utils.normPath(rel_path)
