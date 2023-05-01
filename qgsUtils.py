@@ -278,6 +278,17 @@ def removeGroupR(root,groupName):
 def removeGroups(groupName):
     root = QgsProject.instance().layerTreeRoot()
     removeGroupR(root,groupName)
+    
+# Find all groups
+def findGroupsAll(root=None):
+    if root is None:
+        root = QgsProject.instance().layerTreeRoot()
+    groups = root.findGroups()
+    for c in root.children():
+        if c.nodeType() ==  QgsLayerTreeNode.NodeGroup:
+            groups += findGroupsAll(c)
+    return groups
+    
         
 # LAYER PARAMETERS
 
