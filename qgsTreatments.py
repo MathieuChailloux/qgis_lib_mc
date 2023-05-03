@@ -36,7 +36,8 @@ from qgis.core import (Qgis,
                        QgsVectorLayer,
                        QgsRasterLayer,
                        QgsExpression,
-                       QgsTask)
+                       QgsTask,
+                       QgsUnitTypes)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
 
@@ -432,17 +433,21 @@ def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None,cap_s
     #feedback.setProgressText("Buffer (" + str(expr) + ") on " + str(out_layer))
     #if out_layer:
     #    qgsUtils.removeVectorLayer(out_layer)
-    parameters = { 'DISSOLVE' : False,
-                   #'DISTANCE' : QgsProperty.fromExpression(expr),
-                   'DISTANCE' : expr,
-                   'INPUT' : in_layer,
-                   'OUTPUT' : out_layer,
-                   'END_CAP_STYLE' : cap_style,
-                   'JOIN_STYLE' : 0,
-                   'MITER_LIMIT' : 2,
-                   'SEGMENTS' : 5 }
-    res = applyProcessingAlg("native","buffer",parameters,context,feedback)
-    return res
+    if in_layer.crs().mapUnits() == 0: # QgsUnitTypes.encodeUnit(0) == "meters"
+        parameters = { 'DISSOLVE' : False,
+                       #'DISTANCE' : QgsProperty.fromExpression(expr),
+                       'DISTANCE' : expr,
+                       'INPUT' : in_layer,
+                       'OUTPUT' : out_layer,
+                       'END_CAP_STYLE' : cap_style,
+                       'JOIN_STYLE' : 0,
+                       'MITER_LIMIT' : 2,
+                       'SEGMENTS' : 5 }
+        res = applyProcessingAlg("native","buffer",parameters,context,feedback)
+        return res
+    else:
+        utils.internal_error("The layer "+str(in_layer)+" has a projection in "+in_layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(in_layer.crs().mapUnits())+" unit, it must be in meter unit to apply the buffer treatment")
+    
     
 def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
     feedback.setProgressText("Merge vector layers")
@@ -507,17 +512,20 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     return res
     
 def createGridLayer(extent,crs,size,out_layer, gtype=2, context=None,feedback=None):
-    parameters = {
-        'CRS' : crs,
-        'EXTENT' : extent,
-        'HOVERLAY' : 0,
-        'HSPACING' : size,
-        'VOVERLAY' : 0,
-        'VSPACING' : size,
-        'OUTPUT' : out_layer,
-        'TYPE' : gtype } #2 - Rectangle
-    res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
-    return res
+    if crs.mapUnits() == 0: # QgsUnitTypes.encodeUnit(0) == "meters"
+        parameters = {
+            'CRS' : crs,
+            'EXTENT' : extent,
+            'HOVERLAY' : 0,
+            'HSPACING' : size,
+            'VOVERLAY' : 0,
+            'VSPACING' : size,
+            'OUTPUT' : out_layer,
+            'TYPE' : gtype } #2 - Rectangle
+        res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
+        return res
+    else:
+        utils.internal_error("The layer "+str(extent)+" has a projection in "+crs.authid()+", with "+QgsUnitTypes.encodeUnit(crs.mapUnits())+" unit, it must be in meter unit to apply the creategrid treatment")
     
 def fieldCalculator(input,field,formula,output,context=None,feedback=None):
     #{ 'FIELD_LENGTH' : 0, 'FIELD_NAME' : 'test', 'FIELD_PRECISION' : 0, 'FIELD_TYPE' : 0, 'FORMULA' : '$area', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/PluginQualification/test/CLC_BO_single.gpkg', 'OUTPUT' : 'TEMPORARY_OUTPUT' }
