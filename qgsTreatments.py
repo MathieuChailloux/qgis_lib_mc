@@ -52,7 +52,7 @@ from . import utils, qgsUtils
 
 nodata_val = '-9999'
 MEMORY_LAYER_NAME = 'memory:'
-GTIFF_COPT = qgsUtils.DEFAULT_GTIFF_COPT
+GTIFF_COPT = qgsUtils.GTIFF_COPT
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None

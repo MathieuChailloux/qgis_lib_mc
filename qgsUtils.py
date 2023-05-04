@@ -39,7 +39,11 @@ from PyQt5.QtWidgets import QFileDialog
 
 from . import utils
 
-DEFAULT_GTIFF_COPT = ["TILED=YES", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
+
+if os.environ.has_key("GTIFF_COPT"):
+    GTIFF_COPT = os.environ["GTIFF_COPT"].split()
+else:
+    GTIFF_COPT = ["TILED=YES", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
 
 
 def typeIsInteger(t):
@@ -479,7 +483,7 @@ def getLayerAssocs(layer,key_field,val_field):
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
-                 nodata=None,type=None, copt=DEFAULT_GTIFF_COPT):
+                 nodata=None,type=None, copt=GTIFF_COPT):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize
