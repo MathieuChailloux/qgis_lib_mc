@@ -131,7 +131,7 @@ class ArrayItem(AbstractGroupItem):
         if n < self.nb_fields:
             self.arr[n] = value
         else:
-            assert false
+            raise Exception
             
     def equals(self,other):
         self.arr == other.arr
@@ -340,7 +340,7 @@ class FieldsModel(QAbstractTableModel):
     def __init__(self,parent,dict,feedback=None):
         QAbstractTableModel.__init__(self)
         self.dict = dict
-        self.fields = dict.keys()
+        self.fields = list(dict)
         self.feedback = feedback
         
     # Number of rows = numberf of fields
@@ -380,7 +380,7 @@ class FieldsModel(QAbstractTableModel):
 # Items must implement AbstractGroupItem class.
 class AbstractGroupModel(QAbstractTableModel):
 
-    def __init__(self,itemClass=None,fields=[],feedback=None):
+    def __init__(self,itemClass=None,fields=None,feedback=None):
         QAbstractTableModel.__init__(self)
         self.feedback = feedback
         self.items = []
@@ -389,7 +389,7 @@ class AbstractGroupModel(QAbstractTableModel):
         self.itemClass = itemClass
         # print(str(itemClassName))
         # self.itemClass = getattr(sys.modules[__name__], itemClassName)
-        if fields:
+        if fields is not None:
             self.fields = fields
         else:
             self.feedback.pushInfo("ic " + str(self.itemClass))
@@ -585,10 +585,10 @@ class AbstractGroupModel(QAbstractTableModel):
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
-    def __init__(self,itemClass=None,fields=[],
+    def __init__(self,itemClass=None,fields=None,
             feedback=None,display_fields=None):
         feedback.pushInfo("iC1 " + str(itemClass.__class__.__name__))
-        if not itemClass:
+        if itemClass is None:
             # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
             itemClass = getattr(sys.modules[__name__], DictItem.__name__)
             # feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
@@ -596,11 +596,12 @@ class DictModel(AbstractGroupModel):
         # feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
         # feedback.pushInfo("fields " + str(fields))
         # feedback.pushInfo("fields class " + str(fields.__class__.__name__))
+        if fields is None:
+            fields = []
         self.all_fields = fields[:]
         if display_fields is None:
             display_fields = fields
-        AbstractGroupModel.__init__(self,itemClass=itemClass,
-            fields=display_fields,feedback=feedback)
+        super().__init__(itemClass, display_fields, feedback)
         self.feedback.pushInfo("DM1 " + str(self.__class__.__name__))
         self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
         self.feedback.pushInfo("DM OK")
