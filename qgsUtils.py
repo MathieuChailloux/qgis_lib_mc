@@ -39,6 +39,9 @@ from PyQt5.QtWidgets import QFileDialog
 
 from . import utils
 
+DEFAULT_GTIFF_COPT = ["TILED=YES", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
+
+
 def typeIsInteger(t):
     return (t == QVariant.Int
             or t == QVariant.UInt
@@ -425,7 +428,7 @@ def getLayerAssocs(layer,key_field,val_field):
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
-                 nodata=None,type=None):
+                 nodata=None,type=None, copt=DEFAULT_GTIFF_COPT):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize
@@ -436,12 +439,15 @@ def exportRaster(array,rasterSource,path,
         out_nodata = nodata
     if type:
         out_type = type
+    if copt is None:
+        copt = []
+    elif not isinstance(copt, list):
+        utils.internal_error("Could not apply GDAL creation options : " + str(copt))
 
     driver = gdal.GetDriverByName('GTiff')
     # Create File based in path
     try:
-        #outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Byte)
-        outDs = driver.Create(path, cols, rows, 1, out_type)
+        outDs = driver.Create(path, cols, rows, 1, out_type, copt)
     except RuntimeError:
         utils.internal_error("Could not overwrite file. Check permissions!")
     if outDs is None:
