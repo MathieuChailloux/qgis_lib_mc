@@ -43,7 +43,7 @@ from . import utils
 if os.environ.has_key("GTIFF_COPT"):
     GTIFF_COPT = os.environ["GTIFF_COPT"].split()
 else:
-    GTIFF_COPT = ["BIGTIFF=IF_SAFER", "TILED=YES", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
+    GTIFF_COPT = ["BIGTIFF=IF_SAFER", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
 
 
 def typeIsInteger(t):
