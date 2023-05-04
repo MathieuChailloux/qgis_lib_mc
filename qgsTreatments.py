@@ -703,7 +703,7 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=nodata_val,all_touch=False,overwrite=False,
+                       nodata_val=nodata_val,all_touch=False,overwrite=False,options='',
                        context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
@@ -721,7 +721,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
                    'INPUT' : in_path,
                    #'INVERT' : False,
                    'NODATA' : nodata_val,
-                   #'OPTIONS' : '',
+                   'OPTIONS' : options,
                    'OUTPUT' : out_path,
                    'UNITS' : 1, 
                    'WIDTH' : resolution }
@@ -1427,13 +1427,13 @@ def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
     }
     return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
     
-def applyClipRasterByExtent(input_raster, input_extent, output, context=None,feedback=None):
+def applyClipRasterByExtent(input_raster, input_extent, output, options='', context=None,feedback=None):
     parameters = {
         'DATA_TYPE': 0,  # Utiliser le type de donnée de la couche en entrée
         'EXTRA': '',
         'INPUT': input_raster,
         'NODATA': None,
-        'OPTIONS': '',
+        'OPTIONS': options,
         'OVERCRS': False,
         'PROJWIN': input_extent,
         'OUTPUT': output
