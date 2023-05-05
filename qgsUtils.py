@@ -483,7 +483,7 @@ def getLayerAssocs(layer,key_field,val_field):
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
-                 nodata=None,type=None, copt=GTIFF_COPT):
+                 nodata=None,type=None,copt=GTIFF_COPT):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize

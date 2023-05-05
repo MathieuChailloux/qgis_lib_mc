@@ -776,14 +776,13 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
 def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
-                   crs=None,options='',context=None,feedback=None):
+                   crs=None,context=None,feedback=None):
     feedback.setProgressText("Tanslate")
     # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
                    'DATA_TYPE' : qgsTypeToInt(data_type),
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
-                   'OPTIONS': options,
                    'OUTPUT' : out_path,
                    'OPTIONS' : '|'.join(GTIFF_COPT),
                    'TARGET_CRS' : None }
@@ -917,7 +916,7 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                context=context,feedback=feedback)
 
 def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,expr,
-                    nodata_val=None,out_type=Qgis.Float32,options='',
+                    nodata_val=None,out_type=Qgis.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : band_a,
@@ -928,7 +927,7 @@ def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,e
                    'INPUT_B' : input_b,
                    'INPUT_C' : input_c,
                    'NO_DATA' : nodata_val,
-                   'OPTIONS': options,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'OUTPUT' : output,
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
@@ -1446,13 +1445,13 @@ def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
     }
     return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
     
-def applyClipRasterByExtent(input_raster, input_extent, output, options='', context=None,feedback=None):
+def applyClipRasterByExtent(input_raster, input_extent, output, context=None,feedback=None):
     parameters = {
         'DATA_TYPE': 0,  # Utiliser le type de donnée de la couche en entrée
         'EXTRA': '',
         'INPUT': input_raster,
         'NODATA': None,
-        'OPTIONS': options,
+        'OPTIONS' : '|'.join(GTIFF_COPT),
         'OVERCRS': False,
         'PROJWIN': input_extent,
         'OUTPUT': output
