@@ -40,7 +40,7 @@ from PyQt5.QtWidgets import QFileDialog
 from . import utils
 
 
-if os.environ.has_key("GTIFF_COPT"):
+if os.environ.get("GTIFF_COPT") is not None:
     GTIFF_COPT = os.environ["GTIFF_COPT"].split()
 else:
     GTIFF_COPT = ["BIGTIFF=IF_SAFER", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
