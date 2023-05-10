@@ -184,7 +184,7 @@ def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
 
 def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile, SupZero=True, lastBounds=None):
     if SupZero:
-        layer.setSubsetString(""+fieldname+">0")
+        layer.setSubsetString('"'+fieldname+'">0')
     color_ramp = mkColorRamp('RdYlGn',invert=True)
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
     bounds = []
