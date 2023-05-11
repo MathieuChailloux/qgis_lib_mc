@@ -665,6 +665,12 @@ def getVectorVals(layer,field_name):
     idx = layer.dataProvider().fieldNameIndex(field_name)
     return layer.uniqueValues(idx)
 
+
+def checkProjectionUnit(layer):
+    if layer.crs().mapUnits() != 0: # QgsUnitTypes.encodeUnit(0) == "meters"
+        utils.internal_error("The layer "+layer.name()+" has a projection in "+layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(layer.crs().mapUnits())+" unit, it must be in meter unit (like EPSG:2154).")
+
+
 """ GPKG """ 
 
 # Geopackages 'fid'
