@@ -704,7 +704,7 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=nodata_val,all_touch=False,overwrite=False,
+                       nodata_val=nodata_val,all_touch=False,overwrite=False,options='|'.join(GTIFF_COPT),
                        context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
@@ -722,7 +722,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
                    'INPUT' : in_path,
                    #'INVERT' : False,
                    'NODATA' : nodata_val,
-                   'OPTIONS' : '|'.join(GTIFF_COPT),
+                   'OPTIONS' : options,
                    'OUTPUT' : out_path,
                    'UNITS' : 1, 
                    'WIDTH' : resolution }
@@ -776,7 +776,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
 def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
-                   crs=None,context=None,feedback=None):
+                   crs=None,options='|'.join(GTIFF_COPT),context=None,feedback=None):
     feedback.setProgressText("Tanslate")
     # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
@@ -784,7 +784,7 @@ def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_v
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
                    'OUTPUT' : out_path,
-                   'OPTIONS' : '|'.join(GTIFF_COPT),
+                   'OPTIONS' : options,
                    'TARGET_CRS' : None }
     return applyProcessingAlg("gdal","translate",parameters,context,feedback)
 
@@ -842,7 +842,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
-    feedbacks.setSubText("Merge raster")
+    feedback.setProgressText("Merge raster")
     parameters = {
             'DATA_TYPE': qgsTypeToInt(out_type,shift=True),
             'EXTRA': '',
@@ -1445,13 +1445,13 @@ def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
     }
     return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
     
-def applyClipRasterByExtent(input_raster, input_extent, output, context=None,feedback=None):
+def applyClipRasterByExtent(input_raster, input_extent, output, data_type=0, options='|'.join(GTIFF_COPT), context=None,feedback=None):
     parameters = {
-        'DATA_TYPE': 0,  # Utiliser le type de donnée de la couche en entrée
+        'DATA_TYPE': data_type,  # Utiliser le type de donnée de la couche en entrée
         'EXTRA': '',
         'INPUT': input_raster,
         'NODATA': None,
-        'OPTIONS' : '|'.join(GTIFF_COPT),
+        'OPTIONS' : options,
         'OVERCRS': False,
         'PROJWIN': input_extent,
         'OUTPUT': output
