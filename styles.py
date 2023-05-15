@@ -40,7 +40,9 @@ from qgis.core import (QgsColorRampShader,
                        QgsSymbol,
                        QgsSimpleFillSymbolLayer,
                        QgsRendererCategory,
-                       QgsCategorizedSymbolRenderer)
+                       QgsCategorizedSymbolRenderer,
+                       QgsRendererRange,
+                       QgsRenderContext)
                        
 from . import utils, qgsUtils
 
