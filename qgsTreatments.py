@@ -1440,12 +1440,12 @@ def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
     }
     return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
     
-def applyClipRasterByExtent(input_raster, input_extent, output, data_type=0, options='|'.join(GTIFF_COPT), context=None,feedback=None):
+def applyClipRasterByExtent(input_raster, input_extent, output, data_type=0, options='|'.join(GTIFF_COPT), no_data=None, context=None,feedback=None):
     parameters = {
         'DATA_TYPE': data_type,  # Utiliser le type de donnée de la couche en entrée
         'EXTRA': '',
         'INPUT': input_raster,
-        'NODATA': None,
+        'NODATA': no_data,
         'OPTIONS' : options,
         'OVERCRS': False,
         'PROJWIN': input_extent,
