@@ -36,7 +36,8 @@ from qgis.core import (Qgis,
                        QgsVectorLayer,
                        QgsRasterLayer,
                        QgsExpression,
-                       QgsTask)
+                       QgsTask,
+                       QgsUnitTypes)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
 
@@ -51,6 +52,7 @@ from . import utils, qgsUtils
 
 nodata_val = '-9999'
 MEMORY_LAYER_NAME = 'memory:'
+GTIFF_COPT = qgsUtils.GTIFF_COPT
 
 gdal_calc_cmd = None
 gdal_merge_cmd = None
@@ -450,6 +452,7 @@ def applyBufferFromExpr(in_layer,expr,out_layer,context=None,feedback=None,cap_s
     res = applyProcessingAlg("native","buffer",parameters,context,feedback)
     return res
     
+    
 def mergeVectorLayers(in_layers,crs,out_layer,context=None,feedback=None):
     feedback.setProgressText("Merge vector layers")
     parameters = { 'CRS' : crs,
@@ -512,7 +515,7 @@ def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None
     res = applyProcessingAlg("native","reprojectlayer",parameters,context,feedback)
     return res
     
-def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
+def createGridLayer(extent,crs,size,out_layer, gtype=2, context=None,feedback=None):
     parameters = {
         'CRS' : crs,
         'EXTENT' : extent,
@@ -521,12 +524,13 @@ def createGridLayer(extent,crs,size,out_layer,context=None,feedback=None):
         'VOVERLAY' : 0,
         'VSPACING' : size,
         'OUTPUT' : out_layer,
-        'TYPE' : 2 } #Rectangle
+        'TYPE' : gtype } #2 - Rectangle
     res = applyProcessingAlg("native","creategrid",parameters,context,feedback)
     return res
     
 def fieldCalculator(input,field,formula,output,
         length=0,precision=0,type=0,context=None,feedback=None):
+
     #{ 'FIELD_LENGTH' : 0, 'FIELD_NAME' : 'test', 'FIELD_PRECISION' : 0, 'FIELD_TYPE' : 0, 'FORMULA' : '$area', 'INPUT' : 'E:/IRSTEA/IMBE_Verdon/PluginQualification/test/CLC_BO_single.gpkg', 'OUTPUT' : 'TEMPORARY_OUTPUT' }
     parameters = { 'FIELD_LENGTH' : length,
         'FIELD_NAME' : field,
@@ -719,7 +723,7 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=nodata_val,all_touch=False,overwrite=False,
+                       nodata_val=nodata_val,all_touch=False,overwrite=False,options='|'.join(GTIFF_COPT),
                        context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
@@ -737,7 +741,7 @@ def applyRasterization(in_path,out_path,extent,resolution,
                    'INPUT' : in_path,
                    #'INVERT' : False,
                    'NODATA' : nodata_val,
-                   #'OPTIONS' : '',
+                   'OPTIONS' : options,
                    'OUTPUT' : out_path,
                    'UNITS' : 1, 
                    'WIDTH' : resolution }
@@ -749,6 +753,16 @@ def applyRasterization(in_path,out_path,extent,resolution,
             parameters['ALL_TOUCH'] = True
     res = applyProcessingAlg("gdal","rasterize",parameters,context,feedback)
     return res
+    
+def applyRasterizeOver(input_layer, input_raster, field, add=True, context=None,feedback=None):
+    parameters = {
+        'ADD': add,
+        'EXTRA': '',
+        'FIELD': field,
+        'INPUT': input_layer,
+        'INPUT_RASTER': input_raster
+    }
+    return applyProcessingAlg("gdal","rasterize_over", parameters,context,feedback)
     
 def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                        src_crs=None,extent=None,extent_crs=None,
@@ -771,6 +785,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
                    'OUTPUT' : out_path,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'RESAMPLING' : mode_val,
                    'SOURCE_CRS' : src_crs,
                    'TARGET_CRS' : dst_crs,
@@ -780,7 +795,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
 def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_val,
-                   crs=None,context=None,feedback=None):
+                   crs=None,options='|'.join(GTIFF_COPT),context=None,feedback=None):
     feedback.setProgressText("Tanslate")
     # data type 0 = input raster type
     parameters = { 'COPY_SUBDATASETS' : False,
@@ -788,6 +803,7 @@ def applyTranslate(in_path,out_path,data_type=USE_INPUT_TYPE,nodata_val=nodata_v
                    'INPUT' : in_path,
                    'NODATA' : nodata_val,
                    'OUTPUT' : out_path,
+                   'OPTIONS' : options,
                    'TARGET_CRS' : None }
     return applyProcessingAlg("gdal","translate",parameters,context,feedback)
 
@@ -805,7 +821,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                    'KEEP_RESOLUTION' : keep_res,
                    'MASK' : vector_path,
                    'NODATA' : nodata,
-                   #'OPTIONS' : '',
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'OUTPUT' : out_path }
     if resolution:
         parameters['SET_RESOLUTION'] = True
@@ -836,20 +852,27 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
                    'RESAMPLING' : 0,
                    'TARGET_CRS' : dst_crs,
                    'TARGET_RESOLUTION' : resolution,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'EXTRA' : extra_params }
     return applyProcessingAlg("gdal","warpreproject",parameters,context,feedback)
     
 
     
-def applyMergeRaster(files,out_path,nodata_val=nodata_val,out_type=Qgis.Float32,
+def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
                      nodata_input=None,context=None,feedback=None):
-    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     feedback.setProgressText("Merge raster")
-    parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type,shift=True),
-                   'INPUT' : files,
-                   'NODATA_INPUT' : nodata_input,
-                   'NODATA_OUTPUT' : nodata_val,
-                   'OUTPUT' : out_path }
+    parameters = {
+            'DATA_TYPE': qgsTypeToInt(out_type,shift=True),
+            'EXTRA': '',
+            'INPUT': files,
+            'NODATA_INPUT': nodata_input,
+            'NODATA_OUTPUT': nodata_val,
+            'OPTIONS' : '|'.join(GTIFF_COPT),
+            'PCT': False,
+            'SEPARATE': True,
+            'OUTPUT': output
+        }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)
     
                    
@@ -863,6 +886,7 @@ def applyRasterCalcProc(input_a,output,expr,
                    'INPUT_A' : input_a,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     
@@ -905,9 +929,27 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                    'INPUT_B' : input_b,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : output,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     return applyProcessingAlg("gdal","rastercalculator",parameters,
                context=context,feedback=feedback)
+
+def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,expr,
+                    nodata_val=None,out_type=Qgis.Float32,
+                    context=None,feedback=None):
+    TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
+    parameters = { 'BAND_A' : band_a,
+                   'BAND_B' : band_b,
+                   'BAND_C' : band_c,
+                   'FORMULA' : expr,
+                   'INPUT_A' : input_a,
+                   'INPUT_B' : input_b,
+                   'INPUT_C' : input_c,
+                   'NO_DATA' : nodata_val,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
+                   'OUTPUT' : output,
+                   'RTYPE' : qgsTypeToInt(out_type,shift=True) }
+    return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
     
 def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
@@ -935,6 +977,7 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
                    'INPUT_B' : nonull_b,
                    'NO_DATA' : nodata_val,
                    'OUTPUT' : nonull_ab,
+                   'OPTIONS' : '|'.join(GTIFF_COPT),
                    'RTYPE' : qgsTypeToInt(out_type,shift=True) }
     applyProcessingAlg("gdal","rastercalculator",parameters,
         context=context,feedback=feedback)
@@ -974,9 +1017,25 @@ def applyProximity(input,output,classes='',band=1,units=0,context=None,feedback=
         'OUTPUT' : output,
         'VALUES' : classes,
         'BAND' : band,
+        'OPTIONS' : '|'.join(GTIFF_COPT),
         'UNITS' : units }
     return applyProcessingAlg("gdal","proximity",parameters,context,feedback)
-                
+  
+def applyBuildVirtualRaster(list_raster, output, crs=None, context=None,feedback=None):
+    parameters = {
+        'INPUT': list_raster,
+        'RESOLUTION':0,
+        'SEPARATE':False,
+        'PROJ_DIFFERENCE':False,
+        'ADD_ALPHA':False,
+        'ASSIGN_CRS':crs,
+        'RESAMPLING':0,
+        'SRC_NODATA':'',
+        'EXTRA':'',
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","buildvirtualraster",parameters,context,feedback)
+    
 """
     GRASS ALGORITHMS
 """
@@ -994,11 +1053,12 @@ def applyVRandom(vector_layer,nb_points,output,context=None,feedback=None):
 # Output format is Integer32.
 def applyResample(in_path,out_path,context=None,feedback=None):
     parameters = {'input' : in_path,
-                   'output' : out_path,
-                   '--overwrite' : True,
-                   'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
-                   'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
-                   'GRASS_MIN_AREA_PARAMETER' : 0}
+                  'output' : out_path,
+                  '--overwrite' : True,
+                  'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
+                  'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
+                  'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
+                  'GRASS_MIN_AREA_PARAMETER' : 0}
     return applyGrassAlg("r.resample",parameters,context,feedback)
     
 def applyReclassGdal(in_path,out_path,rules_file,title,context=None,feedback=None):
@@ -1006,9 +1066,10 @@ def applyReclassGdal(in_path,out_path,rules_file,title,context=None,feedback=Non
                   'output' : out_path,
                   'rules' : rules_file,
                   'title' : title,
-                   'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
-                   'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
-                   'GRASS_MIN_AREA_PARAMETER' : 0}
+                  'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
+                  'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
+                  'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
+                  'GRASS_MIN_AREA_PARAMETER' : 0}
     return applyGrassAlg("r.reclass",parameters,context,feedback)
     
 def applyRNull(in_path,new_val,out_path,context=None,feedback=None):
@@ -1036,7 +1097,7 @@ def applyRBuffer(in_path,buffer_vals,out_path,context=None,feedback=None):
                     'units' : 0, # 0 = meters ?
                     #'memory' : 5000,
                     'GRASS_RASTER_FORMAT_META' : '',
-                    'GRASS_RASTER_FORMAT_OPT' : '',
+                    'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
                     #'GRASS_REGION_CELLSIZE_PARAMETER' : 25,
                     'GRASS_REGION_PARAMETER' : None,
                     '-z' : False,
@@ -1060,7 +1121,7 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     'memory' : 5000,
                     'GRASS_MIN_AREA_PARAMETER' : 0.0001, 
                     'GRASS_RASTER_FORMAT_META' : '',
-                    'GRASS_RASTER_FORMAT_OPT' : '',
+                    'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
                     #'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
                     'GRASS_REGION_PARAMETER' : None,
                     'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
@@ -1079,7 +1140,7 @@ def applyRSeries(layers,aggr_func,output,range=None,context=None,feedback=None):
                    '-n' : False,
                    '-z' : False,
                    'GRASS_RASTER_FORMAT_META' : '',
-                   'GRASS_RASTER_FORMAT_OPT' : '',
+                   'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
                    'GRASS_REGION_CELLSIZE_PARAMETER' : 0,
                    'GRASS_REGION_PARAMETER' : None,
                    'input' : layers,
@@ -1133,14 +1194,16 @@ def applyRasterizationCmd(in_path,field,out_path,extent_path,
                   '-of','GTiff']
                   #'-a_nodata',nodata_val]
     if to_byte:
-        parameters += ['-ot', 'Int16','-a_nodata',nodata_val]
+        parameters.extend(['-ot', 'Int16','-a_nodata',nodata_val])
     if field == "geom":
-        parameters += ['-burn', '1']
+        parameters.extend(['-burn', '1'])
     else:
-        parameters += ['-a',field]
-    parameters += more_args
-    parameters += [in_path,out_path]
-    utils.debug("rasteization cmd = " + str(parameters))
+        parameters.extend(['-a',field])
+    for opt in GTIFF_COPT:
+        parameters.extend(['-co', opt])
+    parameters.extend(more_args)
+    parameters.extend([in_path,out_path])
+    utils.debug("rasterization cmd = " + str(parameters))
     p = subprocess.Popen(parameters,stderr=subprocess.PIPE)
     out,err = p.communicate()
     utils.debug(str(p.args))
@@ -1189,11 +1252,13 @@ def applyWarpGdal(in_path,out_path,resampling_mode,
                 #'-dstnodata',nodata_val,
                 #'-ot','Int16',
                 '-overwrite']
+    for opt in GTIFF_COPT:
+        cmd_args.extend(['-co', opt])
     if resampling_mode:
-        cmd_args += ['-r',resampling_mode]
+        cmd_args.extend(['-r', resampling_mode])
     if to_byte:
-        cmd_args += ['-dstnodata',nodata_val]
-        cmd_args += ['-ot','Int16']
+        cmd_args.extend(['-dstnodata', nodata_val])
+        cmd_args.extend(['-ot','Int16'])
     #cmd_args += more_args
     cmd_args += [in_path, out_path]
     utils.executeCmd(cmd_args)
@@ -1207,6 +1272,7 @@ def applyReclassProcessing(in_path,out_path,rules_file,title):
                   'output' : out_path,
                   'rules' : rules_file,
                   'title' : title,
+                   'GRASS_RASTER_FORMAT_OPT': ','.join(GTIFF_COPT),
                    'GRASS_REGION_CELLSIZE_PARAMETER' : 50,
                    'GRASS_SNAP_TOLERANCE_PARAMETER' : -1,
                    'GRASS_MIN_AREA_PARAMETER' : 0}
@@ -1236,13 +1302,14 @@ def applyGdalCalc(in_path,out_path,expr,type='Int32',nodata=nodata_val,
         cmd_args = ['gdal_calc.py']
     # gdal_calc_cmd = 'gdal_calc.bat' if utils.platform_sys == 'Windows' else 'gdal_calc.py'
     utils.debug("cmd_args commnad = " + str(cmd_args))
-    cmd_args += [
+    cmd_args.extend([
                 '-A', in_path,
                 '--type=' + str(type),
                 '--outfile=' + out_path,
                 '--NoDataValue=' + str(nodata),
-                '--overwrite']
-    cmd_args += more_args
+                '--overwrite'])
+    cmd_args.extend(['--co', " ".join(GTIFF_COPT)])
+    cmd_args.extend(more_args)
     expr_opt = '--calc=' + expr
     # expr_opt = '--calc="A*2"'
     cmd_args.append(expr_opt)
@@ -1284,6 +1351,7 @@ def applyGdalCalcAB_ANull(in_path1,in_path2,out_path,expr,load_flag=False):
                 '--overwrite',
                 '--outfile='+out_path]
     expr_opt = '--calc=' + str(expr)
+    cmd_args.extend(['--co', " ".join(GTIFF_COPT)])
     cmd_args.append(expr_opt)
     utils.executeCmd(cmd_args)
     if load_flag:
@@ -1342,6 +1410,7 @@ def applyPonderationGdal(a_path,b_path,out_path,pos_values=False):
         expr_opt = '--calc=A*B*less_equal(0,A)*less_equal(0,B)'
     else:
         expr_opt = '--calc=A*B'
+    cmd_args.extend(['--co', " ".join(GTIFF_COPT)])
     cmd_args.append(expr_opt)
     utils.executeCmd(cmd_args)
     res_layer = qgsUtils.loadRasterLayer(out_path)
@@ -1367,9 +1436,108 @@ def applyGdalMerge(files,out_path,load_flag=False):
                 '-ot','Int32',
                 '-n', nodata_val,
                 '-a_nodata', nodata_val]
+    cmd_args.extend(['--co', " ".join(GTIFF_COPT)])
     cmd_args += files
     utils.executeCmd(cmd_args)
     if load_flag:
         res_layer = qgsUtils.loadRasterLayer(out_path)
         QgsProject.instance().addMapLayer(res_layer)
         
+def getMajorityValue(inputVector, inputRaster, band, field_stat, context, feedback):
+    zonal_stats = QgsProcessingUtils.generateTempFilename('zonal_stats_band_'+str(band)+'.gpkg')
+    rasterZonalStats(inputVector, inputRaster,zonal_stats,prefix="_",band=band,stats=[9],context=context,feedback=feedback)
+    stats_layer = qgsUtils.loadVectorLayer(zonal_stats)
+    stats_fields = stats_layer.fields()
+    stats_fieldnames = stats_fields.names()
+    majority = 1 # default value
+    if field_stat in stats_fieldnames:
+        for f in stats_layer.getFeatures():
+            majority = f[field_stat]
+            break
+    return majority
+
+def applyGetLayerExtent(input_raster, output, context=None,feedback=None):
+    parameters = {
+        'INPUT': input_raster,
+        'ROUND_TO': 0,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","polygonfromlayerextent", parameters,context,feedback)
+    
+def applyClipRasterByExtent(input_raster, input_extent, output, data_type=0, options='|'.join(GTIFF_COPT), no_data=None, context=None,feedback=None):
+    parameters = {
+        'DATA_TYPE': data_type,  # Utiliser le type de donnée de la couche en entrée
+        'EXTRA': '',
+        'INPUT': input_raster,
+        'NODATA': no_data,
+        'OPTIONS' : options,
+        'OVERCRS': False,
+        'PROJWIN': input_extent,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","cliprasterbyextent", parameters,context,feedback)
+
+def applyPolygonize(input_layer, field, output, band=1, context=None,feedback=None):
+    parameters = {
+        'BAND': band,
+        'EIGHT_CONNECTEDNESS': False,
+        'EXTRA': '',
+        'FIELD': field,
+        'INPUT': input_layer,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("gdal","polygonize", parameters,context,feedback)
+
+def applyExtractByAttribute(input_layer, field, output, operator=0,value='1', context=None,feedback=None):
+    parameters = {
+        'FIELD': field,
+        'INPUT': input_layer,
+        'OPERATOR': operator,  #0 =
+        'VALUE': value,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","extractbyattribute", parameters, context, feedback)
+    
+def applyFieldCalculator(input_layer, field, output, formula, field_length, field_precision, field_type, context=None,feedback=None):
+    parameters = {
+        'FIELD_LENGTH': field_length,
+        'FIELD_NAME': field,
+        'FIELD_PRECISION': field_precision,
+        'FIELD_TYPE': field_type,
+        'FORMULA':  formula,
+        'INPUT': input_layer,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","fieldcalculator", parameters, context, feedback)
+    
+def applyAutoIncrementField(input_layer, field, output, context=None,feedback=None):
+    parameters = {
+        'FIELD_NAME': field,
+        'GROUP_FIELDS': [''],
+        'INPUT': input_layer,
+        'MODULUS': 0,
+        'SORT_ASCENDING': True,
+        'SORT_EXPRESSION': '',
+        'SORT_NULLS_FIRST': False,
+        'START': 0,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","addautoincrementalfield", parameters,context,feedback)
+    
+def applyUnion(input_layer, overlay, output, overlay_fields_prefix='',context=None,feedback=None):
+    parameters = {
+        'INPUT': input_layer,
+        'OVERLAY': overlay,
+        'OVERLAY_FIELDS_PREFIX': overlay_fields_prefix,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","union", parameters,context,feedback)
+
+def applyFillNoData(input_raster, output, band=1, fill_value=1, context=None,feedback=None):
+    parameters = {
+        'BAND': band,
+        'FILL_VALUE': fill_value,
+        'INPUT': input_raster,
+        'OUTPUT': output
+    }
+    return applyProcessingAlg("native","fillnodata", parameters,context,feedback)

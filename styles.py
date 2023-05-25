@@ -36,9 +36,14 @@ from qgis.core import (QgsColorRampShader,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
                        QgsGraduatedSymbolRenderer,
-                       QgsRendererRange,
                        QgsFillSymbol,
-                       QgsStyle)
+                       QgsStyle,
+                       QgsSymbol,
+                       QgsSimpleFillSymbolLayer,
+                       QgsRendererCategory,
+                       QgsCategorizedSymbolRenderer,
+                       QgsRendererRange,
+                       QgsRenderContext)
                        
 from . import utils, qgsUtils
 
@@ -50,6 +55,9 @@ yellowCol = QColor(yellowHex)
 greenCol = QColor(greenHex)
 
 singleColorRampList = [ 'Blues', 'Greens', 'Oranges', 'Purples', 'Reds' ]
+
+colorsIndPol = ['#1A9641', '#8ACC62', '#DBF09E','#FEDF9A', '#F59053', '#D7191C']
+valuesIndPol = [0,1,2,3,4,5]
 
 def getDefaultStyle():
     return QgsStyle.defaultStyle()
@@ -150,6 +158,69 @@ def setCustomClassesDSFL(layer,fieldname):
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,nb_classes=5)
     setCustomClasses(layer,renderer,class_bounds)
     setRenderer(layer,renderer)
+
+def setCustomClassesInd_Pol_Category(layer,fieldname,class_bounds):
+    categories = []
+    for i in range(len(class_bounds)):
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        layer_style = {}
+        layer_style['color'] = colorsIndPol[i]
+        symbol_layer = QgsSimpleFillSymbolLayer.create(layer_style)
+        symbol_layer.setStrokeStyle(0) # no border
+        if symbol_layer is not None:
+            symbol.changeSymbolLayer(0, symbol_layer)
+        category = QgsRendererCategory(class_bounds[i],symbol,str(class_bounds[i]))
+        categories.append(category)
+    renderer = QgsCategorizedSymbolRenderer(fieldname, categories)
+    setRenderer(layer,renderer)
+
+def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
+    categories = []
+    for i in range(len(class_bounds)):
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        layer_style = {}
+        layer_style['color'] = colorsIndPol[i]
+        symbol_layer = QgsSimpleFillSymbolLayer.create(layer_style)
+        symbol_layer.setStrokeStyle(0) # no border
+        if symbol_layer is not None:
+            symbol.changeSymbolLayer(0, symbol_layer)
+        if i == len(class_bounds)-1: # dernier élément
+            maxValue = layer.maximumValue(layer.fields().indexOf(fieldname))
+            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(round(class_bounds[i])))
+        else:
+            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(round(class_bounds[i]))+" - "+str(round(class_bounds[i+1])))
+        categories.append(category)
+    renderer = QgsGraduatedSymbolRenderer(fieldname, categories)
+    setRenderer(layer,renderer)    
+
+def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile, SupZero=True, lastBounds=None):
+    if SupZero:
+        layer.setSubsetString('"'+fieldname+'">0')
+    color_ramp = mkColorRamp('RdYlGn',invert=True)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
+    bounds = []
+    for r in renderer.ranges():
+        bounds.append((r.lowerValue()))#append(round((r.lowerValue())))
+    
+    if SupZero:
+        layer.setSubsetString('')
+        bounds.pop(0) # on enlève la première limite basse (index 0), qui sera remplacée par le seuil 0
+        bounds = [0,0]+bounds # on ajoute 0 ,0 comme premières limites pour isoler ces valeurs
+    
+    if lastBounds: # remplacement du dernier seuil
+        bounds.pop() # en enlève le dernier seul
+        bounds.append(lastBounds) # ajoute le dernier seuil en paramètre
+    
+    return bounds
+
+def setRdYlGnGraduatedStyle2(layer,fieldname,nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile):
+    color_ramp = mkColorRamp('RdYlGn',invert=True)
+    renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
+    ctx = QgsRenderContext()
+    for symbol in renderer.symbols(ctx): # no border symbol
+        symbol.symbolLayer(0).setStrokeStyle(0)
+    
+    setRenderer(layer,renderer)    
     
 def setRendererUniqueValues(layer,fieldname):
     idx = layer.fields().indexOf(fieldname)

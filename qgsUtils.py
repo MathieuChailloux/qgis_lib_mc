@@ -39,6 +39,13 @@ from PyQt5.QtWidgets import QFileDialog
 
 from . import utils
 
+
+if os.environ.get("GTIFF_COPT") is not None:
+    GTIFF_COPT = os.environ["GTIFF_COPT"].split()
+else:
+    GTIFF_COPT = ["BIGTIFF=IF_SAFER", "COMPRESS=LZW", "NUM_THREADS=ALL_CPUS"]
+
+
 def typeIsInteger(t):
     return (t == QVariant.Int
             or t == QVariant.UInt
@@ -487,7 +494,7 @@ def getLayerAssocs(layer,key_field,val_field):
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
-                 nodata=None,type=None):
+                 nodata=None,type=None,copt=GTIFF_COPT):
     raster = gdal.Open(str(rasterSource))
     rows = raster.RasterYSize
     cols = raster.RasterXSize
@@ -498,12 +505,15 @@ def exportRaster(array,rasterSource,path,
         out_nodata = nodata
     if type:
         out_type = type
+    if copt is None:
+        copt = []
+    elif not isinstance(copt, list):
+        utils.internal_error("Could not apply GDAL creation options : " + str(copt))
 
     driver = gdal.GetDriverByName('GTiff')
     # Create File based in path
     try:
-        #outDs = driver.Create(path, cols, rows, 1, gdal.GDT_Byte)
-        outDs = driver.Create(path, cols, rows, 1, out_type)
+        outDs = driver.Create(path, cols, rows, 1, out_type, copt)
     except RuntimeError:
         utils.internal_error("Could not overwrite file. Check permissions!")
     if outDs is None:
@@ -665,6 +675,12 @@ def getVectorValsOld(layer,field_name):
 def getVectorVals(layer,field_name):
     idx = layer.dataProvider().fieldNameIndex(field_name)
     return layer.uniqueValues(idx)
+
+
+def checkProjectionUnit(layer):
+    if layer.crs().mapUnits() != 0: # QgsUnitTypes.encodeUnit(0) == "meters"
+        utils.internal_error("The layer "+layer.name()+" has a projection in "+layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(layer.crs().mapUnits())+" unit, it must be in meter unit (like EPSG:2154).")
+
 
 """ GPKG """ 
 
