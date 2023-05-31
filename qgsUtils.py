@@ -678,8 +678,9 @@ def getVectorVals(layer,field_name):
 
 
 def checkProjectionUnit(layer):
-    if layer.crs().mapUnits() != 0: # QgsUnitTypes.encodeUnit(0) == "meters"
-        utils.internal_error("The layer "+layer.name()+" has a projection in "+layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(layer.crs().mapUnits())+" unit, it must be in meter unit (like EPSG:2154).")
+    if layer is not None:
+        if layer.crs().mapUnits() != 0: # QgsUnitTypes.encodeUnit(0) == "meters"
+            utils.internal_error("The layer "+layer.name()+" has a projection in "+layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(layer.crs().mapUnits())+" unit, it must be in meter unit (like EPSG:2154).")
 
 
 """ GPKG """ 
