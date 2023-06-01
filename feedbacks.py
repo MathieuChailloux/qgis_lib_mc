@@ -238,8 +238,9 @@ class ProgressFeedback(QgsProcessingFeedback):
     def saveLogAs(self):
         txt = self.dlg.txtLog.toPlainText()
         fname = qgsUtils.saveFileDialog(self.dlg,msg="Enregistrer le journal sous",filter="*.txt")
-        utils.writeFile(fname,txt)
-        self.pushIngo("Log saved to file '" + fname + "'")
+        if fname!="":
+            utils.writeFile(fname,txt)
+            self.pushInfo("Log saved to file '" + fname + "'")
         
     def myClearLog(self):
         self.dlg.txtLog.clear()
