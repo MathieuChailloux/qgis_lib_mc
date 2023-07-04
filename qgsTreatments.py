@@ -723,11 +723,11 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
                        field=None,burn_val=None,out_type=Qgis.Float32,
-                       nodata_val=nodata_val,all_touch=False,overwrite=False,options='|'.join(GTIFF_COPT),
-                       context=None,feedback=None):
+                       nodata_val=nodata_val,all_touch=False,overwrite=False,
+                       context=None,feedback=None,options='|'.join(GTIFF_COPT)):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
              'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
-    utils.debug("applyRasterization")
+    #utils.debug("applyRasterization")
     feedback.setProgressText("Rasterize")
     if overwrite:
         qgsUtils.removeRaster(out_path)
@@ -859,7 +859,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 
     
 def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
-                     nodata_input=None,context=None,feedback=None):
+                     nodata_input=None,pct=True,separate=False,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     feedback.setProgressText("Merge raster")
     parameters = {
@@ -869,8 +869,8 @@ def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
             'NODATA_INPUT': nodata_input,
             'NODATA_OUTPUT': nodata_val,
             'OPTIONS' : '|'.join(GTIFF_COPT),
-            'PCT': False,
-            'SEPARATE': True,
+            'PCT': pct,
+            'SEPARATE': separate,
             'OUTPUT': output
         }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)
