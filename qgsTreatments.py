@@ -36,6 +36,8 @@ from qgis.core import (Qgis,
                        QgsVectorLayer,
                        QgsRasterLayer,
                        QgsExpression,
+                       QgsApplication,
+                       QgsProcessingAlgRunnerTask,
                        QgsTask)
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
@@ -44,6 +46,7 @@ import os.path
 import sys
 import subprocess
 import time
+from functools import partial
 
 import processing
 
@@ -60,7 +63,37 @@ gdal_warp_cmd = None
 # Processing call wrappers      
   
 def applyProcessingAlg(provider,alg_name,parameters,context=None,
-        feedback=None,onlyOutput=True):
+        feedback=None,onlyOutput=True,background=False):
+    if background:
+        params = {'INPUT' : 'D:/IRSTEA/ERC/tests/BO/Source/Reservoirs/RBP_PRAIRIE.shp',
+                   'OUTPUT' : 'D:/tmp/tmp.gpkg' }
+        feedback = QgsProcessingFeedback()
+        context = QgsProcessingContext()
+        alg_name = 'native:dissolve'
+        alg = QgsApplication.processingRegistry().algorithmById(alg_name)
+        task = QgsProcessingAlgRunnerTask(alg, params, context, feedback)
+        def task_finished(context, successful, results):
+            if not successful:
+                raise CustomException("ERROR")
+            if results:
+                if "OUTPUT" in results:
+                    qgsUtils.loadVectorLayer(results["OUTPUT"],loadProject=True)
+                else:
+                    raise CustomException("No OUTPUT in " + str(results))
+            else:
+                raise CustomException("No results")
+            self.feedback.endSection()
+        task.executed.connect(partial(task_finished, context))
+        QgsApplication.taskManager().addTask(task)
+        # if context is None:
+            # context = QgsProcessingContext()
+            # context.setFeedback(feedback)
+        # complete_name = provider + ":" + alg_name
+        # complete_name = "native:dissolve"
+        # alg = QgsApplication.processingRegistry().algorithmById(complete_name)
+        # task = QgsProcessingAlgRunnerTask(alg, parameters, context, feedback)
+        # QgsApplication.taskManager().addTask(task)
+        return
     # Dummy function to enable running an alg inside an alg
     def no_post_process(alg, context, feedback):
         pass
