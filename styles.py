@@ -174,7 +174,7 @@ def setCustomClassesInd_Pol_Category(layer,fieldname,class_bounds):
     renderer = QgsCategorizedSymbolRenderer(fieldname, categories)
     setRenderer(layer,renderer)
 
-def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
+def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds, round_decimal=0):
     categories = []
     for i in range(len(class_bounds)):
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
@@ -186,21 +186,24 @@ def setCustomClassesInd_Pol_Graduate(layer,fieldname,class_bounds):
             symbol.changeSymbolLayer(0, symbol_layer)
         if i == len(class_bounds)-1: # dernier élément
             maxValue = layer.maximumValue(layer.fields().indexOf(fieldname))
-            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(round(class_bounds[i])))
+            category = QgsRendererRange(class_bounds[i],maxValue,symbol,"> "+str(round(class_bounds[i],round_decimal)))
         else:
-            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(round(class_bounds[i]))+" - "+str(round(class_bounds[i+1])))
+            category = QgsRendererRange(class_bounds[i],class_bounds[i+1],symbol,str(round(class_bounds[i],round_decimal))+" - "+str(round(class_bounds[i+1],round_decimal)))
         categories.append(category)
     renderer = QgsGraduatedSymbolRenderer(fieldname, categories)
     setRenderer(layer,renderer)    
 
-def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile, SupZero=True, lastBounds=None):
+def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile, SupZero=True, lastBounds=None, round_decimal=0):
     if SupZero:
         layer.setSubsetString('"'+fieldname+'">0')
     color_ramp = mkColorRamp('RdYlGn',invert=True)
     renderer = mkGraduatedRenderer(layer,fieldname,color_ramp, nb_classes, classif_method)
     bounds = []
     for r in renderer.ranges():
-        bounds.append((r.lowerValue()))#append(round((r.lowerValue())))
+        if round_decimal > 0:
+            bounds.append(round((r.lowerValue()),round_decimal))
+        else: # pour enlever les .0
+            bounds.append(round((r.lowerValue())))
     
     if SupZero:
         layer.setSubsetString('')
@@ -209,8 +212,17 @@ def getQuantileBounds(layer, fieldname, nb_classes=5,classif_method=QgsGraduated
     
     if lastBounds: # remplacement du dernier seuil
         bounds.pop() # en enlève le dernier seul
-        bounds.append(lastBounds) # ajoute le dernier seuil en paramètre
+        
+        bounds_to_remove = [] # on supprime les seuils intermédaires supérieurs au seuil max
+        for b in bounds:
+            if b > lastBounds:
+                bounds_to_remove.append(b)
+        for btr in bounds_to_remove:
+            bounds.remove(btr)
+            
+        bounds.append(round(lastBounds)) # ajoute le dernier seuil en paramètre
     
+        
     return bounds
 
 def setRdYlGnGraduatedStyle2(layer,fieldname,nb_classes=5,classif_method=QgsGraduatedSymbolRenderer.Quantile):
