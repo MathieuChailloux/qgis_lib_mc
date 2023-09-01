@@ -498,18 +498,24 @@ class AbstractGroupModel(QAbstractTableModel):
             
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        
+    def itemExists(item):
+        for i in self.items:
+            if i.equals(item):
+                return True
+        return False
             
     # Add new item in model if not already existing.
     # layoutChanged signal must be emitted to update view.
     def addItem(self,item):
         # self.feedback.pushInfo("json = " + str(item.toJSON()))
-        for i in self.items:
-            if i.equals(item):
-                self.reportError("Item " + str(item) + " already exists")
+        if self.itemExists(item):
+            self.reportError("Item " + str(item) + " already exists")
                 # return
-        self.items.append(item)
-        self.insertRow(0)
-        self.layoutChanged.emit()
+        else:
+            self.items.append(item)
+            self.insertRow(0)
+            self.layoutChanged.emit()
         
     def removeField(self,fieldname):
         self.fields.remove(fieldname)
@@ -1296,11 +1302,14 @@ class ExtensiveTableModel(DictModel):
         # return DictItem(d,self.fields,feedback=self.feedback)
     def createRowFromBaseRow(self,baseRowItem):
         return self.createRowFromDict(baseRowItem.dict)
-    # Adds new new rowItem in model.
+    # Adds new rowItem in model.
     def addRowItem(self,rowItem):
-        self.addRowFields(rowItem)
-        self.addItem(rowItem)
-        self.layoutChanged.emit()
+        if self.rowExists(self.getItemValue(rowItem)):
+            self.feedback.pushWarning("Item " + str(rowItem) + " already exists")
+        else:
+            self.addRowFields(rowItem)
+            self.addItem(rowItem)
+            self.layoutChanged.emit()
     # Adds new rowItem in model from given baseRowItem.
     def addRowItemFromBase(self,baseRowItem):
         rowItem = self.createRowFromBaseRow(baseRowItem)
