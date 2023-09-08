@@ -245,20 +245,23 @@ def is_integer(s):
     except ValueError:
         return False
        
+def castVal(v):
+    if v is None or v == "None":
+        newVal = None
+    elif v in ["True","False"]:
+        newVal = eval(v)
+    elif v.isnumeric():
+        newVal = int(v)
+    else:
+        try:
+            newVal = float(v)
+        except ValueError:
+            newVal = v
+    return newVal
 def castDict(d):
     res = {}
     for k,v in d.items():
-        if v is None or v == "None":
-            newVal = None
-        elif v in ["True","False"]:
-            newVal = eval(v)
-        elif v.isnumeric():
-            newVal = int(v)
-        else:
-            try:
-                newVal = float(v)
-            except ValueError:
-                newVal = v
+        newVal = castVal(v)
         res[k] = newVal
     return res
         

@@ -641,7 +641,10 @@ class DictModel(AbstractGroupModel):
         
     def sort(self,col,order):
         # sorted_items = sorted(self.items, key=lambda i: i.dict[self.idx_to_fields[col]])
-        sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
+        try:
+            sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
+        except TypeError:
+            sorted_items = sorted(self.items, key=lambda i: str(i.dict[self.fields[col]]))
         if order == Qt.DescendingOrder:
             sorted_items.reverse()
         self.items = sorted_items
@@ -1274,6 +1277,17 @@ class ExtensiveTableModel(DictModel):
         self.idField = idField
         self.rowIdField = rowIdField
         self.valueSet = []
+        
+    # Override to force friction column to be string
+    # def mkItemFromXML(self,root,feedback=None):
+        # d = dict(root.attrib)
+        # for f in self.extFields:
+            # oldVal = d[f]
+            # if oldVal is None or oldVal == "None":
+                # d[f] = ""
+            # else:
+                # d[f] = str(oldVla)
+        # return DictItem(d,feedback=feedback)
         
     def setValues(self,values):
         self.valueSet = values
