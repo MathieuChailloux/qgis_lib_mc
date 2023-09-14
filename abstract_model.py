@@ -640,11 +640,24 @@ class DictModel(AbstractGroupModel):
         # item.dict[self.idx_to_fields[y]] = value
         
     def sort(self,col,order):
-        # sorted_items = sorted(self.items, key=lambda i: i.dict[self.idx_to_fields[col]])
-        try:
-            sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
-        except TypeError:
-            sorted_items = sorted(self.items, key=lambda i: str(i.dict[self.fields[col]]))
+        # try:
+            # sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
+        # except TypeError:
+            # sorted_items = sorted(self.items, key=lambda i: str(i.dict[self.fields[col]]))
+        def keyFunc(i):
+            return str(i.dict[self.fields[col]])
+        def keyFuncInt(i):
+            return int(keyFunc(i))
+        def isInt(i):
+            k = keyFunc(i)
+            return isinstance(k,int) or (isinstance(k,str) and k.isdigit())
+            
+        int_items = [i for i in self.items if isInt(i)]
+        not_items = [i for i in self.items if not isInt(i)]
+        sorted_ints = sorted(int_items, key=keyFuncInt)
+        sorted_other = sorted(not_items, key=keyFunc)
+        sorted_items = sorted_ints + sorted_other
+            
         if order == Qt.DescendingOrder:
             sorted_items.reverse()
         self.items = sorted_items
