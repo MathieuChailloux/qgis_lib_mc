@@ -1708,6 +1708,7 @@ class TableToDialogConnector(AbstractConnector):
             dlg_item = item_dlg.showDialog()
             if dlg_item:
                 self.postDlg(dlg_item)
+                self.postDlgNew(dlg_item)
             elif item:
                 self.postDlg(item)
         else:
@@ -1753,6 +1754,8 @@ class TableToDialogConnector(AbstractConnector):
     def preDlg(self,dlg_item):
         pass
     def postDlg(self,dlg_item):
+        pass
+    def postDlgNew(self,dlg_item):
         pass
     
     def updateFromDlgItem(self,item,dlg_item): 
