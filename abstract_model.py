@@ -829,15 +829,18 @@ class NormalizingParamsModel(QAbstractTableModel):
         RESOLUTION,PROJECT,CRS]
     
     def __init__(self,fields=DEFAULT_FIELDS,feedback=None):
+        self.clearModel()
+        self.fields = fields
+        self.feedback = feedback
+        QAbstractTableModel.__init__(self)
+        
+    def clearModel(self):
         self.workspace = None
         self.extentLayer = None
         self.extentType = None
         self.resolution = 0.0
         self.projectFile = ""
         self.crs = self.DEFAULT_CRS
-        self.fields = fields
-        self.feedback = feedback
-        QAbstractTableModel.__init__(self)
         
     def tr(self, msg):
         return QCoreApplication.translate(self.__class__.__name__, msg)
@@ -1687,6 +1690,7 @@ class MainDialog(QtWidgets.QDialog):
     def loadModel(self,fname):
         self.feedback.pushDebugInfo("loadModel " + str(fname))
         utils.checkFileExists(fname)
+        # self.clearModels()
         config_parsing.setConfigParsers(self.pluginModel.models)
         self.pluginModel.paramsModel.projectFile = fname
         self.paramsConnector.setProjectFile(fname)
@@ -1699,6 +1703,12 @@ class MainDialog(QtWidgets.QDialog):
                                         filter="*.xml")
         if fname:
             self.loadModel(fname)
+            
+    def clearModels(self):
+        self.pluginModel.paramsModel.clearModel()
+        for model in self.pluginModel.models:
+            model.items = []
+            model.layoutChanged.emit()
         
 # Table view with dialog to build items
 # Butonn to create new item, double click to edit selected item
