@@ -1729,11 +1729,11 @@ class TableToDialogConnector(AbstractConnector):
         item_dlg = self.openDialog(item)
         if item_dlg:
             dlg_item = item_dlg.showDialog()
-            if dlg_item:
+            if item:
+                self.postDlg(item)
+            elif dlg_item:
                 self.postDlg(dlg_item)
                 self.postDlgNew(dlg_item)
-            elif item:
-                self.postDlg(item)
         else:
             dlg_item = None
             # self.postDlg(item.child)
