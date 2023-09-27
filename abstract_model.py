@@ -1526,6 +1526,9 @@ class ExtensiveTableModel(DictModel):
 # Main model for plugins that can be saved to XML file
 class MainModel:
 
+    def tr(self, message):
+        return QCoreApplication.translate("MainModel", message)
+
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.parser_name + ">"
         new_indent = indent + " "
