@@ -588,6 +588,12 @@ class AbstractGroupModel(QAbstractTableModel):
         self.items[i1], self.items[i2] = self.items[i2], self.items[i1]
         self.layoutChanged.emit()
         
+    # Remove all items
+    def clearModel(self):
+        self.items = []
+        self.layoutChanged.emit()
+        
+        
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
@@ -1294,17 +1300,6 @@ class ExtensiveTableModel(DictModel):
         self.rowIdField = rowIdField
         self.valueSet = []
         
-    # Override to force friction column to be string
-    # def mkItemFromXML(self,root,feedback=None):
-        # d = dict(root.attrib)
-        # for f in self.extFields:
-            # oldVal = d[f]
-            # if oldVal is None or oldVal == "None":
-                # d[f] = ""
-            # else:
-                # d[f] = str(oldVla)
-        # return DictItem(d,feedback=feedback)
-        
     def setValues(self,values):
         self.valueSet = values
     def getItemValue(self,item):
@@ -1518,6 +1513,15 @@ class ExtensiveTableModel(DictModel):
         else:
             flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
         return flags
+        
+    # Remove all items
+    def clearModel(self):
+        # self.feedback.pushDebugInfo("clearModel {}".format(self.extFields))
+        for f in self.fields[4:]:
+            self.removeField(f)
+        self.extFields = []
+        super().clearModel()
+        
 
 # Main model for plugins that can be saved to XML file
 class MainModel:
@@ -1690,7 +1694,7 @@ class MainDialog(QtWidgets.QDialog):
     def loadModel(self,fname):
         self.feedback.pushDebugInfo("loadModel " + str(fname))
         utils.checkFileExists(fname)
-        # self.clearModels()
+        self.clearModels()
         config_parsing.setConfigParsers(self.pluginModel.models)
         self.pluginModel.paramsModel.projectFile = fname
         self.paramsConnector.setProjectFile(fname)
@@ -1705,8 +1709,10 @@ class MainDialog(QtWidgets.QDialog):
             self.loadModel(fname)
             
     def clearModels(self):
-        self.pluginModel.paramsModel.clearModel()
+        self.feedback.pushDebugInfo("clearModels")
+        # self.pluginModel.paramsModel.clearModel()
         for model in self.pluginModel.models:
+            model.clearModel()
             model.items = []
             model.layoutChanged.emit()
         
