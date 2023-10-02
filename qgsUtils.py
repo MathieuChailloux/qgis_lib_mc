@@ -133,10 +133,20 @@ def normalizeEncoding(layer):
         layer.dataProvider().setEncoding('System')
     elif extension == ".gpkg":
         layer.dataProvider().setEncoding('UTF-8')
+        
+def loadLayerInQGIS(layer,groupName=None):
+    if groupName:
+        root = QgsProject.instance().layerTreeRoot()
+        group = root.findGroup(groupName)
+        if not group:
+            group = root.addGroup(groupName)
+        group.addLayer(layer)
+    else:
+        QgsProject.instance().addMapLayer(layer)
        
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadVectorLayer(fname,loadProject=False,normalize=False):
+def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None):
     utils.debug("loadVectorLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
@@ -149,12 +159,12 @@ def loadVectorLayer(fname,loadProject=False,normalize=False):
     if normalize:
         normalizeEncoding(layer)
     if loadProject:
-        QgsProject.instance().addMapLayer(layer)
+        loadLayerInQGIS(layer,groupName=groupName)
     return layer
     
 # Opens raster layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadRasterLayer(fname,loadProject=False):
+def loadRasterLayer(fname,loadProject=False,groupName=None):
     utils.debug("loadRasterLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
@@ -163,7 +173,7 @@ def loadRasterLayer(fname,loadProject=False):
     if not rlayer.isValid():
         utils.user_error("Invalid raster layer '" + fname + "'")
     if loadProject:
-        QgsProject.instance().addMapLayer(rlayer)
+        loadLayerInQGIS(rlayer,groupName=groupName)
     return rlayer
 
 # Opens layer from path.
@@ -198,7 +208,7 @@ def loadRasterLayerNoError(fname):
         return None
     return layer
     
-def loadLayer(fname,loadProject=False):
+def loadLayer(fname,loadProject=False,groupName=None):
     utils.debug("loadLayer " + str(fname))
     if isLayerLoaded(fname):
         return getLayerByFilename(fname)
@@ -208,7 +218,7 @@ def loadLayer(fname,loadProject=False):
     if layer is None:
         utils.user_error("Could not load layer '" + fname + "'")
     if loadProject:
-        QgsProject.instance().addMapLayer(layer)
+        loadLayerInQGIS(layer,groupName=groupName)
     return layer
     
 # def loadLayerNone(fname,loadProject=False):
@@ -233,7 +243,7 @@ def loadLayer(fname,loadProject=False):
 #        except utils.CustomException:
 #            utils.user_error("Could not load layer '" + fname + "'")
     
-def loadLayerGetType(fname,loadProject=False):
+def loadLayerGetType(fname,loadProject=False,groupName=None):
     utils.debug("loadLayerGetType " + str(fname))
     layer = loadVectorLayerNoError(fname)
     type = 'Vector'
@@ -243,7 +253,7 @@ def loadLayerGetType(fname,loadProject=False):
     if layer is None:
         utils.user_error("Could not load layer '" + fname + "'")
     if loadProject:
-        QgsProject.instance().addMapLayer(layer)
+        loadLayerInQGIS(layer,groupName=groupName)
     return (layer, type)
     
 # Retrieve layer loaded in QGIS project from name
