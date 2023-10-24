@@ -1320,6 +1320,10 @@ class ExtensiveTableModel(DictModel):
             if str(i.dict[self.idField]) == str(rowName):
                 return i
         return None
+    # Returns matching item if existing
+    def getMatchingRow(self,row):
+        rowItem = self.createRowFromDict(row)
+        return self.getMatchingItem(rowItem)
         
     # Creates RowItem from dict
     def createRowFromDict(self,d):
@@ -1464,8 +1468,7 @@ class ExtensiveTableModel(DictModel):
         if self.idField not in row:
             self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
-        rowName = row[self.idField]
-        rowItem = self.getRowByName(rowName)
+        rowItem = self.getMatchingRow(row)
         self.feedback.pushDebugInfo("rowName = " + str(rowName))
         if rowItem:
             for f in self.fields:
@@ -1477,15 +1480,41 @@ class ExtensiveTableModel(DictModel):
         else:
             rowItem = self.createRowFromDict(row)
             self.addItem(rowItem)
-            
-    # Loads CSV file 'fname' into model (insertion or update).
-    def fromCSVUpdate(self,fname):
+    # Update matching CSV row
+    def fromCSVRowExisting(self,row):
+        if self.idField not in row:
+            self.feedback.user_error("No field '" + str(self.idField)
+                + "' in row " + str(row))
+        rowItem = self.getMatchingRow(row)
+        rowName = row[self.idField]
+        self.feedback.pushDebugInfo("row = " + str(rowName))
+        fieldsToUpdate = list(self.fields)
+        fieldsToUpdate.remove(self.idField)
+        if rowItem:
+            for f in fieldsToUpdate:
+                if f in row:
+                    rowItem.dict[f] = row[f]
+                else:
+                    self.feedback.pushWarning("No entry for row '" + rowName
+                        + "' and col '" + str(f) + "'")
+        else:
+            msg = self.tr("Ignoring row without matching item: ") + str(rowItem)
+            self.feedback.pushWarning(msg)
+    
+    # Skeleton  to read CSV rows and apply rowFunc on each
+    def iterateCSVRows(self,fname,rowFunc):
         with open(fname,"r") as f:
             reader = csv.DictReader(f,fieldnames=self.fields,delimiter=';')
             first_line = next(reader)
             for row in reader:
-                self.fromCSVRow(row)
+                rowFunc(row)
         self.layoutChanged.emit()
+    # Loads CSV file 'fname' into model (insertion or update).
+    def fromCSVUpdate(self,fname):
+        self.iterateCSVRows(fname,self.fromCSVRow)
+    # Loads CSV file 'fname' into model (update).
+    def fromCSVUpdateExisting(self,fname):
+        self.iterateCSVRows(fname,self.fromCSVRowExisting)
         
     # Loads friction coefficients from CSV file 'fname' into model.
     # Existing items are erased.
