@@ -140,9 +140,11 @@ def loadLayerInQGIS(layer,groupName=None):
         group = root.findGroup(groupName)
         if not group:
             group = root.addGroup(groupName)
+        QgsProject.instance().addMapLayer(layer,False)
         group.addLayer(layer)
+        # group.insertChildNode(0,layer)
     else:
-        QgsProject.instance().addMapLayer(layer)
+        QgsProject.instance().addMapLayer(layer,True)
        
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
