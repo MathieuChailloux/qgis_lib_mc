@@ -1486,8 +1486,7 @@ class ExtensiveTableModel(DictModel):
             self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
         rowItem = self.getMatchingRow(row)
-        rowName = row[self.idField]
-        self.feedback.pushDebugInfo("row = " + str(rowName))
+        self.feedback.pushDebugInfo("row = " + str(row))
         fieldsToUpdate = list(self.fields)
         fieldsToUpdate.remove(self.idField)
         if rowItem:
@@ -1495,17 +1494,23 @@ class ExtensiveTableModel(DictModel):
                 if f in row:
                     rowItem.dict[f] = row[f]
                 else:
-                    self.feedback.pushWarning("No entry for row '" + rowName
+                    self.feedback.pushWarning("No entry for row '" + str(row)
                         + "' and col '" + str(f) + "'")
         else:
-            msg = self.tr("Ignoring row without matching item: ") + str(rowItem)
+            msg = self.tr("Ignoring row without matching item: {}".format(row))
             self.feedback.pushWarning(msg)
     
     # Skeleton  to read CSV rows and apply rowFunc on each
     def iterateCSVRows(self,fname,rowFunc):
+        delimiter = ';'
         with open(fname,"r") as f:
-            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=';')
+            file_string = f.read()
+            if delimiter not in file_string:
+                self.feedback.user_error("Could not find delimiter '{}' in CSV file {}".format(delimiter,fname))
+        with open(fname,"r") as f:
+            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=delimiter)
             first_line = next(reader)
+            nb_elems = len(first_line)
             for row in reader:
                 rowFunc(row)
         self.layoutChanged.emit()
@@ -1519,9 +1524,14 @@ class ExtensiveTableModel(DictModel):
     # Loads friction coefficients from CSV file 'fname' into model.
     # Existing items are erased.
     def fromCSV(self,fname):
+        delimiter = ';'
+        with open(fname,"r") as f:
+            file_string = f.read()
+            if delimiter not in file_string:
+                self.feedback.user_error("Could not find delimiter '{}' in CSV file {}".format(delimiter,fname))
         self.items = []
         with open(fname,"r") as f:
-            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=';')
+            reader = csv.DictReader(f,fieldnames=self.fields,delimiter=delimiter)
             header = reader.fieldnames
             self.fields = header
             first_line = next(reader)
