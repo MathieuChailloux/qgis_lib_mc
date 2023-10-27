@@ -723,6 +723,12 @@ class DictModel(AbstractGroupModel):
             self.feedback.internal_error("Could not find field " + str(oldName))
         self.fields = [ newName if f == oldName else f for f in self.fields]
         self.all_fields = [ newName if f == oldName else f for f in self.all_fields]
+        
+    def renameFieldValue(self,fieldname,oldVal,newVal):
+        for item in self.items:
+            if item.dict[fieldname] == oldVal:
+                item.dict[fieldname] = newVal
+        self.layoutChanged.emit()
             
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
