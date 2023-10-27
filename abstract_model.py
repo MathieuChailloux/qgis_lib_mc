@@ -779,7 +779,7 @@ class DictModel(AbstractGroupModel):
         
     def updateFromXML(self,root,feedback=None):
         self.updateFromXMLAttribs(root.attrib)
-        self.items = []
+        self.clearModel()
         if not feedback:
             feedback = self.feedback
         for parsed_item in root:
