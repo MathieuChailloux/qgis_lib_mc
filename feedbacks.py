@@ -69,6 +69,10 @@ def launchDialog(origin,title,msg):
 def paramError(msg,parent=None):
     title = tr("Wrong parameter value")
     launchDialog(parent,title,msg)
+def launchQuestionDialog(origin,title,msg):
+    reply = QMessageBox.question(origin,title,msg,QMessageBox.Yes,QMessageBox.No)
+    return reply
+    
 def paramNameError(name,parent=None):
     m = tr("Name '")
     m += str(name)

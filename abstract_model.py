@@ -1618,6 +1618,7 @@ class MainModel:
 
 # Main dialog for multi-tabs plugins            
 class MainDialog(QtWidgets.QDialog):
+# class MainDialog(QtWidgets.QMainWindow):
 
     # Initialize Graphic elements for each tab
     def initGui(self):
@@ -1669,6 +1670,14 @@ class MainDialog(QtWidgets.QDialog):
         self.langFr.clicked.connect(self.switchLangFr)
         self.aboutButton.clicked.connect(self.openHelpDialog)
         sys.excepthook = self.pluginExcHook
+            
+    def reject(self):
+        msg = self.tr("Are you sure you want to exit ? Please ensure your project is saved")
+        reply = feedbacks.launchQuestionDialog(self,"",msg)
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.accept()
+        else:
+            return
                 
     def initLog(self):
         utils.print_func = self.txtLog.append
