@@ -723,6 +723,9 @@ class DictModel(AbstractGroupModel):
             self.feedback.internal_error("Could not find field " + str(oldName))
         self.fields = [ newName if f == oldName else f for f in self.fields]
         self.all_fields = [ newName if f == oldName else f for f in self.all_fields]
+        for i in self.items:
+            i.dict[newName] = i.dict.pop(oldName)
+        self.layoutChanged.emit()
         
     def renameFieldValue(self,fieldname,oldVal,newVal):
         for item in self.items:
@@ -779,7 +782,7 @@ class DictModel(AbstractGroupModel):
         
     def updateFromXML(self,root,feedback=None):
         self.updateFromXMLAttribs(root.attrib)
-        self.clearModel()
+        #self.clearModel()
         if not feedback:
             feedback = self.feedback
         for parsed_item in root:
@@ -1673,7 +1676,7 @@ class MainDialog(QtWidgets.QDialog):
             
     def reject(self):
         msg = self.tr("Are you sure you want to exit ? Please ensure your project is saved")
-        reply = feedbacks.launchQuestionDialog(self,"",msg)
+        reply = feedbacks.launchQuestionDialog(self,"MitiConnect",msg)
         if reply == QtWidgets.QMessageBox.Yes:
             self.accept()
         else:
