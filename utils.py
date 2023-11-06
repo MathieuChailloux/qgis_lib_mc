@@ -36,10 +36,17 @@ import html
 import platform
 import glob
 import csv
+import re
 
 file_dir = os.path.dirname(__file__)
 if file_dir not in sys.path:
     sys.path.append(file_dir)
+
+# STRING UTILITIES
+
+def isValidTag(tag):
+    valid = re.match('^[\w_-]+$', tag) is not None
+    return valid
 
 # LOG UTILITIES
 
