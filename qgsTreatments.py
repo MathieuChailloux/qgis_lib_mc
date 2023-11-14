@@ -564,7 +564,7 @@ def applyVoronoi(input,output,buffer=0,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'BUFFER' : buffer, 'OUTPUT' : output }
     return applyProcessingAlg("qgis","voronoipolygons",parameters,context,feedback)
     
-def applyPolygonize(input,output,band=1,eight=False,fieldname='DN',context=None,feedback=None):
+def applyPolygonizeFieldOpt(input,output,band=1,eight=False,fieldname='DN',context=None,feedback=None):
     parameters = { 'BAND' : 1,
         'EIGHT_CONNECTEDNESS' : eight,
         'EXTRA' : '',
