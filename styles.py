@@ -236,7 +236,9 @@ def setRdYlGnGraduatedStyle2(layer,fieldname,nb_classes=5,classif_method=QgsGrad
     
 def setRendererUniqueValues(layer,fieldname):
     idx = layer.fields().indexOf(fieldname)
-    values = list(layer.uniqueValues(idx))
+    # values = list(layer.uniqueValues(idx))
+    values = [int(v) for v in list(layer.uniqueValues(idx))]
+    values.sort()
     ranges = []
     for cpt, v in enumerate(values):
         lower = v - 0.5 if cpt == 0 else (v + values[cpt-1]) / 2
