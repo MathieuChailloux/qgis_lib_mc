@@ -1478,7 +1478,7 @@ class ExtensiveTableModel(DictModel):
             self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
         rowItem = self.getMatchingRow(row)
-        self.feedback.pushDebugInfo("rowName = " + str(rowName))
+        self.feedback.pushDebugInfo("row = " + str(row))
         if rowItem:
             for f in self.fields:
                 if f in row:
