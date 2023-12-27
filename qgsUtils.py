@@ -109,11 +109,13 @@ def getRasterFilters():
            
 def getLayerByFilename(fname):
     map_layers = QgsProject.instance().mapLayers().values()
-    fname_parts = Path(fname).parts
+    fname_parts = Path(fname.lower()).parts
+    utils.debug("fname_parts : " + str(fname_parts))
     for layer in map_layers:
         utils.debug("layer : " + str(layer.name()))
         layer_path = pathOfLayer(layer)
-        path_parts = Path(layer_path).parts
+        path_parts = Path(layer_path.lower()).parts
+        utils.debug("path_parts : " + str(path_parts))
         if fname_parts == path_parts:
             return layer
     else:
@@ -275,7 +277,9 @@ def removeLayer(layer):
     inst = QgsProject.instance()
     inst.removeMapLayers( [layer.id()] )
 def removeLayerFromPath(layerPath):
+    utils.debug("removeLayerFromPath" + str(layerPath))
     layer = getLayerByFilename(layerPath)
+    utils.debug("layer ZZ {}".format(layer))
     if layer:
         removeLayer(layer)
     
@@ -285,7 +289,7 @@ def removeGroupOld(groupName):
     if groupNode:
         root.removeChildNode(groupNode)    
 def removeGroupR(root,groupName):
-    print("removeGroupR " + str(root.name()))
+    #print("removeGroupR " + str(root.name()))
     children = root.children()
     for c in children:
         if c.nodeType() ==  QgsLayerTreeNode.NodeGroup:
