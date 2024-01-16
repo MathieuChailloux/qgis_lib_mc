@@ -1894,8 +1894,9 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
     A delegate that places a fully functioning QCheckBox in every
     cell of the column to which it's applied
     """
-    def __init__(self, parent):
+    def __init__(self, parent,feedback):
         QtWidgets.QItemDelegate.__init__(self, parent)
+        self.feedback = feedback
 
     def createEditor(self, parent, option, index):
         '''
