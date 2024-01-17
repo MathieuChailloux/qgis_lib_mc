@@ -1797,6 +1797,8 @@ class TableToDialogConnector(AbstractConnector):
             dlg_item = item_dlg.showDialog()
             if item:
                 self.postDlg(item)
+                if dlg_item:
+                    self.postDlg(dlg_item)
             elif dlg_item:
                 self.postDlg(dlg_item)
                 self.postDlgNew(dlg_item)
