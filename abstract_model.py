@@ -392,9 +392,12 @@ class AbstractGroupModel(QAbstractTableModel):
         if fields:
             self.fields = fields
         else:
-            self.feedback.pushInfo("ic " + str(self.itemClass))
-            self.feedback.pushInfo("ic " + str(self.itemClass.__class__.__name__))
-            self.fields = self.itemClass.FIELDS
+            try:
+                self.feedback.pushInfo("ic " + str(self.itemClass))
+                self.feedback.pushInfo("ic " + str(self.itemClass.__class__.__name__))
+                self.fields = self.itemClass.FIELDS
+            except AttributeError:
+                self.fields=[]
         self.feedback.pushInfo("AGM OK")
 
     @staticmethod
@@ -609,7 +612,7 @@ class DictModel(AbstractGroupModel):
         # feedback.pushInfo("fields " + str(fields))
         # feedback.pushInfo("fields class " + str(fields.__class__.__name__))
         self.all_fields = fields[:]
-        if display_fields is None:
+        if not display_fields:
             display_fields = fields
         AbstractGroupModel.__init__(self,itemClass=itemClass,
             fields=display_fields,feedback=feedback)
@@ -1893,8 +1896,9 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
     A delegate that places a fully functioning QCheckBox in every
     cell of the column to which it's applied
     """
-    def __init__(self, parent):
+    def __init__(self, parent,feedback):
         QtWidgets.QItemDelegate.__init__(self, parent)
+        self.feedback = feedback
 
     def createEditor(self, parent, option, index):
         '''
