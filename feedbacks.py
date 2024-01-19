@@ -172,9 +172,12 @@ class ProgressFeedback(QgsProcessingFeedback):
             self.internal_error(error_msg)
             #self.pushWarning(error_msg)
         
+    def setProgressText(self,txt):
+        self.dlg.lblProgress.setText(txt)
+        
     def beginSection(self,txt):
         self.sectionText = txt
-        self.dlg.lblProgress.setText(txt)
+        self.setProgressText(txt)
         self.setProgress(0)
         self.start_time = time.time()
         self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
