@@ -1149,20 +1149,22 @@ class NormalizingParamsModel(QAbstractTableModel):
         return res
                 
     # Normalize given raster layer to match global extent and resolution
-    def normalizeRaster(self,path,out_path=None,resampling_mode="near",
+    def normalizeRaster(self,path,extentLayerPath=None,out_path=None,resampling_mode="near",
             context=None,feedback=None):
-        if not self.extentLayer:
-            return input
-        extent_layer, extent_layer_type = self.getExtentLayerAndType()
-        self.feedback.pushDebugInfo("extent_layer_type = " + str(extent_layer_type))
+        if not extentLayerPath:
+            if self.extentLayer:
+                extentLayerPath = self.extentLayer
+            else:
+                return input
+        extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
+        self.feedback.pushDebugInfo("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
-        if extent_layer_type == 'Vector':
-            extent_path = self.getExtentLayer()
+        if extentLayerType == 'Vector':
             clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
-            res = qgsTreatments.clipRasterFromVector(path,extent_path,out_path,
+            res = qgsTreatments.clipRasterFromVector(path,extentLayerPath,out_path,
                 resolution=resolution,context=context,feedback=feedback)
         else:
-            extent = self.getExtentRectangle()
+            extent = qgsUtils.getExtentStrFromPath(extentLayerPath)
             warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
             self.feedback.pushWarning("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
             res = qgsTreatments.applyWarpReproject(path,out_path,resampling_mode,

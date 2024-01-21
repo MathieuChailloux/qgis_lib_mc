@@ -273,7 +273,6 @@ def classifByExpr(in_layer,expr,out_path,out_name):
                 internal_error("addFeature failed")
     out_layer.updateExtents()
     qgsUtils.writeVectorLayer(out_layer,out_path)
-   
 
 # Processing utils
 
