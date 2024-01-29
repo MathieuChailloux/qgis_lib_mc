@@ -1156,20 +1156,22 @@ class NormalizingParamsModel(QAbstractTableModel):
                 extentLayerPath = self.extentLayer
             else:
                 return input
+        nodataVal = qgsTreatments.nodata_val
         extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
         self.feedback.pushDebugInfo("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
         if extentLayerType == 'Vector':
             clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
             res = qgsTreatments.clipRasterFromVector(path,extentLayerPath,out_path,
-                resolution=resolution,context=context,feedback=feedback)
+                resolution=resolution,nodata=nodataVal,
+                context=context,feedback=feedback)
         else:
             extent = qgsUtils.getExtentStrFromPath(extentLayerPath)
             warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
             self.feedback.pushWarning("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
             res = qgsTreatments.applyWarpReproject(path,out_path,resampling_mode,
                 dst_crs=self.crs,resolution=resolution,extent=extent,
-                context=context,feedback=feedback)
+                nodata_val=nodataVal,context=context,feedback=feedback)
         return res
                 
 """ AbstractConnector connects a view and a model """
