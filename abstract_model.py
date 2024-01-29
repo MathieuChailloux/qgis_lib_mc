@@ -1153,7 +1153,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             context=None,feedback=None):
         if not extentLayerPath:
             if self.extentLayer:
-                extentLayerPath = self.extentLayer
+                extentLayerPath = self.getExtentLayer()
             else:
                 return input
         nodataVal = qgsTreatments.nodata_val
