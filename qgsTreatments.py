@@ -653,6 +653,7 @@ def getRasterUniqueVals(input,feedback):
         feedback.pushDebugInfo("data_type = " + str(input_type))
         unique_vals = [int(v) for v in unique_vals]
     feedback.pushDebugInfo("unique_vals = " + str(unique_vals))
+    feedback.setProgress(100)
     return unique_vals
     
 def rasterZonalStats(vector,raster,output,prefix='_',band=1,stats=[0,1,2],context=None,feedback=None):
