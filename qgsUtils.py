@@ -112,10 +112,10 @@ def getLayerByFilename(fname):
     fname_parts = Path(fname.lower()).parts
     utils.debug("fname_parts : " + str(fname_parts))
     for layer in map_layers:
-        utils.debug("layer : " + str(layer.name()))
+        # utils.debug("layer : " + str(layer.name()))
         layer_path = pathOfLayer(layer)
         path_parts = Path(layer_path.lower()).parts
-        utils.debug("path_parts : " + str(path_parts))
+        # utils.debug("path_parts : " + str(path_parts))
         if fname_parts == path_parts:
             return layer
     else:
