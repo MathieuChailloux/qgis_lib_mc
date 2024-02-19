@@ -1453,7 +1453,7 @@ class ExtensiveTableModel(DictModel):
                     # new_val = qgsTreatments.nodata_val
                     continue
                 # TODO : change self.ROW_CODE to something like self.codeField
-                matrixes[name] += [ code, code, new_val ]
+                matrixes[name] += [ code, code, float(new_val) ]
         return matrixes
         
     # Returns set of item' code (value in input raster)
