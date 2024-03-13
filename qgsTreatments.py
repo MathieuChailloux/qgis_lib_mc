@@ -1110,7 +1110,7 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
     utils.checkFileExists(cost_path,"Dispersion Permeability Raster ")
     parameters = { 'input' : cost_path,
                     'start_raster' : start_path,
-                    'maxcost' : int(cost),
+                    'max_cost' : float(cost),
                     'null_cost' : None,
                     'output' : out_path,
                     'start_points' : None,
@@ -1132,6 +1132,13 @@ def applyRCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
                     '-b' : False,
                     '--overwrite' : True}
     return applyGrassAlg("r.cost",parameters,context,feedback)
+    
+def applyRCostFilterMaxCost(start_path,cost_path,cost,out_path,context=None,feedback=None):
+    tmp_path = utils.mkTmpPath(out_path,suffix="_disp_tmp")
+    if os.path.isfile(tmp_path):
+        qgsUtils.removeRaster(tmp_path)
+    applyRCost(start_path,cost_path,cost,tmp_path,context=context,feedback=feedback)
+    applyRasterCalcLE(tmp_path,out_path,cost,context=context,feedback=feedback)
     
     
 def applyRSeries(layers,aggr_func,output,range=None,context=None,feedback=None):
