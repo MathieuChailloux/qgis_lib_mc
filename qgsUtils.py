@@ -335,6 +335,10 @@ def isMultipartLayer(layer):
     is_multi = QgsWkbTypes.isMultiType(wkb_type)
     return is_multi
     
+def hasPolygonGeometry(layer):
+    geomType = layer.geometryType()
+    return geomType == QgsWkbTypes.PolygonGeometry 
+    
 # Returns smallest unisgned type (GDAL type) in which max_val can be represented
 def getGDALUnsignedType(max_val):
     if max_val < 256:
