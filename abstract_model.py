@@ -1150,13 +1150,13 @@ class NormalizingParamsModel(QAbstractTableModel):
                 
     # Normalize given raster layer to match global extent and resolution
     def normalizeRaster(self,path,extentLayerPath=None,out_path=None,resampling_mode="near",
-            context=None,feedback=None):
+            nodata_val=None,context=None,feedback=None):
         if not extentLayerPath:
             if self.extentLayer:
                 extentLayerPath = self.getExtentLayer()
             else:
                 return input
-        nodataVal = qgsTreatments.nodata_val
+        nodataVal = nodata_val if nodata_val else qgsTreatments.nodata_val
         extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
         self.feedback.pushDebugInfo("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
