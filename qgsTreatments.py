@@ -24,6 +24,7 @@
 """
 
 from qgis.core import (Qgis,
+                       QgsProcessing,
                        QgsProcessingFeedback,
                        QgsProcessingAlgorithm,
                        QgsProcessingUtils,
@@ -41,6 +42,7 @@ from qgis.core import (Qgis,
 from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QGuiApplication
 
+import shutil
 import os.path
 import sys
 import subprocess
@@ -859,7 +861,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 
     
 def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
-                     nodata_input=None,pct=True,separate=False,context=None,feedback=None):
+                     nodata_input=None,pct=False,separate=False,context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
     feedback.setProgressText("Merge raster")
     parameters = {
@@ -874,6 +876,26 @@ def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
             'OUTPUT': output
         }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)
+def applyMergeRaster2(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
+                     nodata_input=None,pct=False,separate=False,context=None,feedback=None):
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    feedback.setProgressText("Merge raster")
+    parameters = {
+            'DATA_TYPE': qgsTypeToInt(out_type,shift=True),
+            'EXTRA': '',
+            'INPUT': files,
+            'NODATA_INPUT': nodata_input,
+            'NODATA_OUTPUT': nodata_val,
+            'OPTIONS' : '|'.join(GTIFF_COPT),
+            'PCT': pct,
+            'SEPARATE': separate,
+            # 'OUTPUT': 'memory:'
+            # 'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+            'OUTPUT': 'TEMPORARY_OUTPUT'
+        }
+    mergedPath = applyProcessingAlg("gdal","merge",parameters,context,feedback)
+    shutil.copyfile(mergedPath,output)
+    return mergedPath
     
                    
 def applyRasterCalcProc(input_a,output,expr,
