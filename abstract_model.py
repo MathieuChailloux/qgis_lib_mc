@@ -1983,12 +1983,9 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
     def getCheckBoxRect(self, option):
         check_box_style_option = QtWidgets.QStyleOptionButton()
         check_box_rect = QtWidgets.QApplication.style().subElementRect(QtWidgets.QStyle.SE_CheckBoxIndicator, check_box_style_option, None)
-        check_box_point = QtCore.QPoint (option.rect.x() +
-                            option.rect.width() / 2 -
-                            check_box_rect.width() / 2,
-                            option.rect.y() +
-                            option.rect.height() / 2 -
-                            check_box_rect.height() / 2)
+        x = option.rect.x() + option.rect.width() / 2 - check_box_rect.width() / 2
+        y = option.rect.y() + option.rect.height() / 2 - check_box_rect.height() / 2
+        check_box_point = QtCore.QPoint (int(x),int(y))
         return QtCore.QRect(check_box_point, check_box_rect.size())
 
 # Code snippet from https://stackoverflow.com/questions/28037126/how-to-use-qcombobox-as-delegate-with-qtableview
