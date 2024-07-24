@@ -826,10 +826,12 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
                    'OPTIONS' : '|'.join(GTIFF_COPT),
                    'OUTPUT' : out_path }
     if resolution:
+        parameters['KEEP_RESOLUTION'] = False
         parameters['SET_RESOLUTION'] = True
         parameters['X_RESOLUTION'] = resolution
         parameters['Y_RESOLUTION'] = resolution
     if x_res and y_res:
+        parameters['KEEP_RESOLUTION'] = False
         parameters['SET_RESOLUTION'] = True
         parameters['X_RESOLUTION'] = x_res
         parameters['Y_RESOLUTION'] = y_res
