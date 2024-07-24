@@ -1156,7 +1156,7 @@ class NormalizingParamsModel(QAbstractTableModel):
                 extentLayerPath = self.getExtentLayer()
             else:
                 return input
-        nodataVal = nodata_val if nodata_val else qgsTreatments.nodata_val
+        nodataVal = qgsTreatments.nodata_val if nodata_val is None else nodata_val
         extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
         self.feedback.pushDebugInfo("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
