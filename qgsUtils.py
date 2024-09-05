@@ -444,11 +444,12 @@ def writeShapefile(layer,outfname):
         utils.user_error("Unable to create shapefile '" + outfname + "' : " + str(error_msg))
     
 # Writes file from existing QgsMapLayer
-def writeVectorLayer(layer,outfname):
+def writeVectorLayer(layer,outfname,attributes=[]):
     utils.debug("[writeVectorLayer] " + outfname + " from " + str(layer))
     if os.path.isfile(outfname):
         os.remove(outfname)
-    (error, error_msg) = QgsVectorFileWriter.writeAsVectorFormat(layer,outfname,'utf-8',destCRS=layer.sourceCrs())
+    (error, error_msg) = QgsVectorFileWriter.writeAsVectorFormat(layer,outfname,
+        'utf-8',destCRS=layer.sourceCrs(),attributes=attributes)
     if error == QgsVectorFileWriter.NoError:
         utils.info("File '" + outfname + "' succesfully created")
     else:

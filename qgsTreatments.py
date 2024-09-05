@@ -507,7 +507,16 @@ def selectIntersection(in_layer,overlay_layer,context=None,feedback=None):
     res = applyProcessingAlg("native","selectbylocation",parameters,context,feedback)
     return res
     
-    
+def statsByCategories(inLayer,outLayer,categoryFields=[],valuesField=None,
+        context=None,feedback=None):
+    parameters = { 'INPUT' : inLayer,
+        'OUTPUT' : outLayer,
+        'CATEGORIES_FIELD_NAME' : categoryFields,
+        'VALUES_FIELD_NAME' : valuesField }
+    res = applyProcessingAlg("qgis","statisticsbycategories",parameters,
+        context,feedback)
+    return res
+
 def applyReprojectLayer(in_layer,target_crs,out_layer,context=None,feedback=None):
     feedback.setProgressText("Reproject")
     parameters = { 'INPUT' : in_layer,
