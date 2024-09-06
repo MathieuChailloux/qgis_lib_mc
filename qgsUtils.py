@@ -150,7 +150,8 @@ def loadLayerInQGIS(layer,groupName=None):
        
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
-def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None):
+def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None,
+        checkValidity=True):
     utils.debug("loadVectorLayer " + str(fname))
     utils.checkFileExists(fname)
     if isLayerLoaded(fname):
@@ -158,7 +159,7 @@ def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None):
     layer = QgsVectorLayer(fname, layerNameOfPath(fname), "ogr")
     if not layer:
         utils.user_error("Could not load vector layer '" + fname + "'")
-    if not layer.isValid():
+    if checkValidity and not layer.isValid():
         utils.user_error("Invalid vector layer '" + fname + "'")
     if normalize:
         normalizeEncoding(layer)
