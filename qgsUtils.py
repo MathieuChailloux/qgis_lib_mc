@@ -830,6 +830,7 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
     def mkTmpPath(self,fname):
         return QgsProcessingUtils.generateTempFilename(fname)
     def parameterAsSourceLayer(self,parameters,paramName,context,feedback=None):
+        feedback = feedback if feedback else self.feedback
         source = self.parameterAsSource(parameters,paramName,context)
         if source:
             layer = source.materialize(QgsFeatureRequest(),feedback=feedback)

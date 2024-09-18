@@ -602,7 +602,7 @@ def getVectorUniqueVals(input,fieldname,context=None,feedback=None):
     unique_values = unique_values_str.split(";")
     # Cast values from str if needed
     if isinstance(input,str):
-        input = qgsUtils.loadRasterLayer(input)
+        input = qgsUtils.loadVectorLayer(input)
     input_type = input.dataProvider().fields().field(fieldname).type()
     if qgsUtils.qgisTypeIsInteger(input_type):
         feedback.pushDebugInfo("data_type = " + str(input_type))
