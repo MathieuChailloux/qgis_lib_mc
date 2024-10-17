@@ -837,6 +837,14 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
         else:
             layer = None
         return source, layer
+    def setAndCheckOutputCSV(self,parameters):
+        self.output = self.parameterAsString(parameters,self.OUTPUT,self.context)
+        self.feedback.pushDebugInfo("output = {}".format(self.output))
+        if not self.output or self.output.endswith(".file"):
+            self.output = mkTmpPath('output.csv')
+            self.feedback.pushDebugInfo("output = {}".format(self.output))
+        if utils.fileExists(self.output):
+            utils.removeFile(self.output)
     
 def checkPluginInstalled(pluginName):
     pluginList = QgsProviderRegistry.instance().pluginList()
