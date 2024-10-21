@@ -220,6 +220,10 @@ def fromTmpPath(tmp_path):
     bn, extension = os.path.splitext(path)
     return (bn[:-4] + extension)
     
+def findFilesFromDir(dir,fname):
+    regexp = dir + "/**/" + fname
+    glob_res = glob.glob(regexp,recursive=True)
+    return glob_res
 def findFileFromDir(dir,fname):
     #if dir.endsWith('/'):
     if False:
