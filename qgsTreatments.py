@@ -470,6 +470,13 @@ def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
                    'OVERLAY' : diff_layer }
     res = applyProcessingAlg("native","difference",parameters,context=context,feedback=feedback)
     return res  
+def applySymDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
+    feedback.setProgressText("Symmetrical Difference")
+    parameters = { 'INPUT' : in_layer,
+                   'OUTPUT' : out_layer,
+                   'OVERLAY' : diff_layer }
+    res = applyProcessingAlg("native","symmetricaldifference",parameters,context=context,feedback=feedback)
+    return res  
     
 def applyVectorClip(in_layer,clip_layer,out_layer,context=None,feedback=None):
     feedback.setProgressText("Clip")
