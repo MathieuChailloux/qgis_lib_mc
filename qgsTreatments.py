@@ -470,9 +470,10 @@ def applyDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
                    'OVERLAY' : diff_layer }
     res = applyProcessingAlg("native","difference",parameters,context=context,feedback=feedback)
     return res  
-def applySymDifference(in_layer,diff_layer,out_layer,context=None,feedback=None):
+def applySymDifference(in_layer,diff_layer,out_layer,grid_size=None,context=None,feedback=None):
     feedback.setProgressText("Symmetrical Difference")
     parameters = { 'INPUT' : in_layer,
+                   'GRID_SIZE' : grid_size,
                    'OUTPUT' : out_layer,
                    'OVERLAY' : diff_layer }
     res = applyProcessingAlg("native","symmetricaldifference",parameters,context=context,feedback=feedback)
