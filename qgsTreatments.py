@@ -916,6 +916,18 @@ def applyMergeRaster2(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
     shutil.copyfile(mergedPath,output)
     return mergedPath
     
+def applyRasterCalcNative(layers,expr,output,
+        extent=None,cellSize=None,crs=None,
+        context=None,feedback=None):
+    parameters = {
+        'CELL_SIZE' : cellSize,
+        'CRS' : crs,
+        'EXPRESSION' : expr,
+        'EXTENT' : extent,
+        'LAYERS' : layers,
+        'OUTPUT' : output }
+    return applyProcessingAlg("native","rastercalc",parameters,
+        context,feedback)
                    
 def applyRasterCalcProc(input_a,output,expr,
                     nodata_val=nodata_val,out_type=Qgis.Float32,
