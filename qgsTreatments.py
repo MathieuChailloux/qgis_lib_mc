@@ -341,7 +341,8 @@ def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames=[],summaries=[],
     return res
     
 def joinByAttribute(layer1,field1,layer2,field2,out_layer,
-        copy_fields=None,method=1,prefix='',context=None,feedback=None):
+        copy_fields=None,method=1,discard=False,prefix='',
+        context=None,feedback=None):
     parameters = { 'DISCARD_NONMATCHING' : True,
         'FIELD' : field1,
         'FIELDS_TO_COPY' : copy_fields,
@@ -349,6 +350,7 @@ def joinByAttribute(layer1,field1,layer2,field2,out_layer,
         'INPUT' : layer1,
         'INPUT_2' : layer2,
         'METHOD' : method,
+        'DISCARD_NONMATCHING' : discard,
         'OUTPUT' : out_layer,
         'PREFIX' : prefix }
     res = applyProcessingAlg("qgis","joinattributestable",
@@ -594,13 +596,14 @@ def applyPolygonizeFieldOpt(input,output,band=1,eight=False,fieldname='DN',conte
 def convertGeomType(input,type,output,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'TYPE' : type, 'OUTPUT' : output }
 
-def listUniqueValues(input,fieldname,context=None,feedback=None):
+def listUniqueValues(input,fieldname,output=None,outputHtml=None,
+        context=None,feedback=None):
     params = { 'FIELDS' : [fieldname],
         'INPUT' : input,
         # 'OUTPUT' : 'TEMPORARY_OUTPUT',
         # 'OUTPUT_HTML_FILE' : 'TEMPORARY_OUTPUT' }
-        'OUTPUT' : None,
-        'OUTPUT_HTML_FILE' : None }
+        'OUTPUT' : output,
+        'OUTPUT_HTML_FILE' : outputHtml }
     return applyProcessingAlg("qgis","listuniquevalues",
         params,context,feedback,onlyOutput=False)
 def getVectorUniqueVals(input,fieldname,context=None,feedback=None):
