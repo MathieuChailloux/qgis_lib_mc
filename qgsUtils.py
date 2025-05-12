@@ -32,6 +32,7 @@ try:
 except ImportError:
     import gdal
 
+import qgis
 from qgis.gui import *
 from qgis.core import *
 from PyQt5.QtCore import QCoreApplication, QVariant, pyqtSignal
@@ -845,12 +846,22 @@ class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
             self.feedback.pushDebugInfo("output = {}".format(self.output))
         if utils.fileExists(self.output):
             utils.removeFile(self.output)
-    
+
+# Plugin utils
+
 def checkPluginInstalled(pluginName):
     pluginList = QgsProviderRegistry.instance().pluginList()
     utils.debug("pluginList = " + str(pluginList))
     return (pluginName in pluginList)
     
+def getPluginInstance(pluginName,errorOK=False):
+    if pluginName not in qgis.utils.plugins:
+        if errorOK:
+            return None
+        else:
+            raise QgsProcessingException("Plugin {} not installed".format(pluginName))
+    pluginInstance = qgis.utils.plugins[pluginName]
+    return pluginInstance
     
 def mkProcTmpPath(fname):
     return QgsProcessingUtils.generateTempFilename(fname)
