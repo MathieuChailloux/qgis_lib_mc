@@ -44,44 +44,10 @@ from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
 from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
 
 from abc import ABC, abstractmethod
-#class Abstract(ABC):
-#    @abstractmethod
-#    def foo(self):
-#        pass
 
 """ 
     Abstract and usual classes to implement MVC (Model-View-Controller) design pattern.
 """
-
-# class BaseField:
-
-    # BOOL = 0
-    # INTEGER = 1
-    # FLOAT = 2
-    # STRING = 3
-    # FILE_PATH = 4
-    # LAYER_PATH = 5
-
-    # def __init__(self,name,type,val=None):
-        # self.name = name
-        # self.type = type
-        # self.val = val
-        
-    # def __str__(self):
-        # return str(self.val)
-        
-    # def __eq__(self, other):
-        # return isinstance(other, self.__class__) and self.name = other.name
-
-    # def __ne__(self, other):
-        # return not self.__eq__(other)
-        
-    # def updateFromStr(self,str):
-        # if self.type == self.BOOL
-        
-# class IntField(BaseField):
-
-    # def fromStr
 
 # Abstract class for model items containing multiple information
 # Each method must be implemented
@@ -123,7 +89,7 @@ class ArrayItem(AbstractGroupItem):
         if n < self.nb_fields:
             return self.arr[n]
         else:
-            self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
+            feedbacks.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             return None
             #assert false
             
@@ -158,8 +124,8 @@ class DictItem(AbstractGroupItem):
         d = dict()
         for cpt, v in enumerate(valueList):
             d[cls.FIELDS[cpt]] = v
-        utils.debug(str(d))
-        utils.debug(str(d.__class__.__name__))
+        feedbacks.debug(str(d))
+        feedbacks.debug(str(d.__class__.__name__))
         return cls(dict=d)
         
     def __str__(self):
@@ -171,10 +137,10 @@ class DictItem(AbstractGroupItem):
         # return json.dumps(self)
     @classmethod
     def fromDict(cls,dict,feedback=None):
-        feedback.pushDebugInfo("fromDict " + str(cls.__name__))
-        feedback.pushDebugInfo("fromDict1 " + str(dict))
+        feedbacks.debug("fromDict " + str(cls.__name__))
+        feedbacks.debugo("fromDict1 " + str(dict))
         dict = utils.castDict(dict)
-        feedback.pushDebugInfo("fromDict2 " + str(dict))
+        feedbacks.debug("fromDict2 " + str(dict))
         return cls(dict,feedback=feedback)
     @classmethod
     def fromStr(cls,s,feedback=None):
@@ -182,7 +148,7 @@ class DictItem(AbstractGroupItem):
         return cls.fromDict(dict,feedback=feedback)
     @classmethod
     def fromXML(cls,root,feedback=None):
-        feedback.pushDebugInfo("fromXML " + str(cls.__name__))
+        feedbacks.debug("fromXML " + str(cls.__name__))
         return cls.fromDict(root.attrib,feedback=feedback)
         
     # def recompute(self):
@@ -195,8 +161,8 @@ class DictItem(AbstractGroupItem):
         # if n < self.nb_fields:
             # return self.dict[self.idx_to_fields[n]]
         # else:
-            # self.feedback.pushDebugInfo("getNField " + str(n))
-            # self.feedback.pushWarning("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
+            # feedbacks.debug("getNField " + str(n))
+            # feedbacks.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             # return None
             #utils.internal_error("Accessing " + str(n) + " field >= " + str(self.nb_fields))
             
@@ -239,8 +205,8 @@ class DictItemWithChild(DictItem):
         # return getattr(sys.modules[__name__], childTag)
         
     def toXML(self,indent=""):
-        self.feedback.pushDebugInfo("childXML = " +str(self.child))
-        self.feedback.pushDebugInfo("childXML = " +str(self.child.__class__.__name__))
+        feedbacks.debug("childXML = " +str(self.child))
+        feedbacks.debug("childXML = " +str(self.child.__class__.__name__))
         xmlStr = self.toXMLItems(indent=indent)
         xmlStr += self.child.toXML(indent=indent+" ")
         xmlStr += "</" + self.__class__.__name__ +">"
@@ -393,12 +359,12 @@ class AbstractGroupModel(QAbstractTableModel):
             self.fields = fields
         else:
             try:
-                self.feedback.pushInfo("ic " + str(self.itemClass))
-                self.feedback.pushInfo("ic " + str(self.itemClass.__class__.__name__))
+                feedbacks.debug("ic " + str(self.itemClass))
+                feedbacks.debug("ic " + str(self.itemClass.__class__.__name__))
                 self.fields = self.itemClass.FIELDS
             except AttributeError:
                 self.fields=[]
-        self.feedback.pushInfo("AGM OK")
+        feedbacks.debug("AGM OK")
 
     @staticmethod
     def getItemClass(childTag):
@@ -440,7 +406,7 @@ class AbstractGroupModel(QAbstractTableModel):
         if n < self.rowCount():
             return self.items[n]
         else:
-            self.feedback.pushWarning("[" + self.__class__.__name__
+            feedbacks.warn("[" + self.__class__.__name__
                 + "] Unexpected index " + str(n))
             return None
     def getNField(self,item,n):
@@ -491,7 +457,7 @@ class AbstractGroupModel(QAbstractTableModel):
     
     # This function is called by Qt when the view is modified at 'index' position.
     def setData(self, index, value, role):
-        self.feedback.pushDebugInfo("setData (" + str(index.row()) + ","
+        feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
         if role == Qt.EditRole:
             self.setDataXY(index.row(),index.column(),value)
@@ -511,7 +477,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # Add new item in model if not already existing.
     # layoutChanged signal must be emitted to update view.
     def addItem(self,item):
-        # self.feedback.pushInfo("json = " + str(item.toJSON()))
+        # feedbacks.debug("json = " + str(item.toJSON()))
         if self.itemExists(item):
             self.reportError("Item " + str(item) + " already exists")
                 # return
@@ -528,8 +494,8 @@ class AbstractGroupModel(QAbstractTableModel):
     # so only unique rows are extracted to delete items.
     # layoutChanged signal must be emitted to update view.
     def removeItems(self,indexes):
-        self.feedback.pushDebugInfo("[removeItems] nb of items = " + str(len(self.items)))
-        self.feedback.pushDebugInfo("self.clss = " + str(self.__class__.__name__))
+        feedbacks.debug("[removeItems] nb of items = " + str(len(self.items)))
+        feedbacks.debug("self.clss = " + str(self.__class__.__name__))
         rows = sorted(set([i.row() for i in indexes]))
         self.removeItemsFromRows(rows)
         
@@ -537,7 +503,7 @@ class AbstractGroupModel(QAbstractTableModel):
         n = 0
         for row in rows:
             roww = row - n
-            self.feedback.pushDebugInfo("[removeItems] Deleting row " + str(roww))
+            feedbacks.debug("[removeItems] Deleting row " + str(roww))
             del self.items[roww]
             n += 1
         self.layoutChanged.emit()
@@ -545,7 +511,7 @@ class AbstractGroupModel(QAbstractTableModel):
     # Apply items for 'indexes' (position in item list, not index from Qt selection)
     # If no 'indexes' given, apply each item
     def applyItems(self,indexes=None):
-        self.feedback.pushDebugInfo("[applyItems]")
+        feedbacks.debug("[applyItems]")
         if not indexes:
             indexes = range(0,len(self.items))
         for n in indexes:
@@ -577,12 +543,12 @@ class AbstractGroupModel(QAbstractTableModel):
         # self.layoutChanged.emit()
         
     def upgradeElem(self,row):
-        self.feedback.pushDebugInfo("upgradeElem " + str(row))
+        feedbacks.debug("upgradeElem " + str(row))
         if row > 0:
             self.swapItems(row -1, row)
         
     def downgradeElem(self,row):
-        self.feedback.pushDebugInfo("downgradeElem " + str(row))
+        feedbacks.debug("downgradeElem " + str(row))
         if row < len(self.items) - 1:
             self.swapItems(row, row + 1)
             
@@ -602,23 +568,17 @@ class DictModel(AbstractGroupModel):
 
     def __init__(self,itemClass=None,fields=[],
             feedback=None,display_fields=None):
-        feedback.pushInfo("iC1 " + str(itemClass.__class__.__name__))
+        feedbacks.info("iC1 " + str(itemClass.__class__.__name__))
         if not itemClass:
-            # itemClass = getattr(sys.modules[__name__], DictItem.__name__)
             itemClass = getattr(sys.modules[__name__], DictItem.__name__)
-            # feedback.pushInfo("iC2 " + str(itemClass.__class__.__name__))
-        # feedback.pushInfo("iC3 " + str(itemClass.__class__.__name__))
-        # feedback.pushInfo("DI " + str(DictItem.__class__.__name__))
-        # feedback.pushInfo("fields " + str(fields))
-        # feedback.pushInfo("fields class " + str(fields.__class__.__name__))
         self.all_fields = fields[:]
         if not display_fields:
             display_fields = fields
         AbstractGroupModel.__init__(self,itemClass=itemClass,
             fields=display_fields,feedback=feedback)
-        self.feedback.pushInfo("DM1 " + str(self.__class__.__name__))
-        self.feedback.pushInfo("DM2 " + str(self.itemClass.__class__.__name__))
-        self.feedback.pushInfo("DM OK")
+        feedbacks.debug("DM1 " + str(self.__class__.__name__))
+        feedbacks.debug("DM2 " + str(self.itemClass.__class__.__name__))
+        feedbacks.debug("DM OK")
         # self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
         # self.idx_to_fields = self.fields
         self.nb_fields = len(self.fields)
@@ -634,15 +594,15 @@ class DictModel(AbstractGroupModel):
             # return item.dict[self.idx_to_fields[n]]
             return item.dict[self.fields[n]]
         except Exception as e:
-            self.feedback.pushDebugInfo("fields = " + str(self.fields))
-            self.feedback.pushDebugInfo("all_fields = " + str(self.all_fields))
-            # self.feedback.pushDebugInfo("idx_to_fields = " + str(self.idx_to_fields))
-            self.feedback.pushDebugInfo("dict = " + str(item.dict))
-            self.feedback.pushDebugInfo("n = " + str(n))
+            feedbacks.debug("fields = " + str(self.fields))
+            feedbacks.debug("all_fields = " + str(self.all_fields))
+            # feedbacks.debug("idx_to_fields = " + str(self.idx_to_fields))
+            feedbacks.debug("dict = " + str(item.dict))
+            feedbacks.debug("n = " + str(n))
             raise e
     def setDataXY(self,x,y,value):
-        self.feedback.pushDebugInfo("setDataXY %s %s %s"%(x,y,value))
-        self.feedback.pushDebugInfo("fields %s"%(self.fields))
+        feedbacks.debug("setDataXY %s %s %s"%(x,y,value))
+        feedbacks.debug("fields %s"%(self.fields))
         item = self.getNItem(x)
         fieldname = self.fields[y]
         item.dict[fieldname] = value
@@ -689,16 +649,16 @@ class DictModel(AbstractGroupModel):
         return (matching_item != None)
         
     def addItem(self,item):
-        self.feedback.pushDebugInfo(str(self.__class__.__name__
+        feedbacks.debug(str(self.__class__.__name__
             + " addItem " + str(item)))
-        # self.feedback.pushInfo("json = " + str(item.toJSON()))
+        # feedbacks.debug("json = " + str(item.toJSON()))
         if not item:
             self.feedback.internal_error("Empty item")
         item.checkItem()
         if self.itemExists(item):
-            self.feedback.pushWarning("Item " + str(item) + " already exists")
+            feedbacks.warn("Item " + str(item) + " already exists")
         else:
-            self.feedback.pushDebugInfo("adding item")
+            feedbacks.debug("adding item")
             self.items.append(item)
             self.insertRow(0)
         
@@ -709,9 +669,9 @@ class DictModel(AbstractGroupModel):
         self.nb_fields = len(self.fields)
             
     def addField(self,field,defaultVal=None):
-        self.feedback.pushDebugInfo("addField f1 " + str(self.fields))
+        feedbacks.debug("addField f1 " + str(self.fields))
         if field not in self.fields:
-            self.feedback.pushDebugInfo("addField " + str(field))
+            feedbacks.debug("addField " + str(field))
             self.fields.append(field)
             self.all_fields.append(field)
             # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
@@ -719,7 +679,7 @@ class DictModel(AbstractGroupModel):
             for i in self.items:
                 i.dict[field] = defaultVal
             self.layoutChanged.emit()
-        self.feedback.pushDebugInfo("addField f2 " + str(self.fields))
+        feedbacks.debug("addField f2 " + str(self.fields))
             
     def renameField(self,oldName,newName):
         if oldName not in self.fields:
@@ -739,14 +699,14 @@ class DictModel(AbstractGroupModel):
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
     def removeField(self,fieldname):
-        self.feedback.pushDebugInfo("removeField " + fieldname)
+        feedbacks.debug("removeField " + fieldname)
         for i in self.items:
             utils.debug(str(i.dict.items()))
             if fieldname not in i.dict:
-                self.feedback.pushWarning("Could not delete field '" + str(fieldname))
+                feedbacks.warn("Could not delete field '" + str(fieldname))
             else:
                 del i.dict[fieldname]
-        self.feedback.pushDebugInfo("self = " + str(self))
+        feedbacks.debug("self = " + str(self))
         if fieldname in self.fields:
             self.fields.remove(fieldname)
         if fieldname in self.all_fields:
@@ -759,8 +719,8 @@ class DictModel(AbstractGroupModel):
         return self.itemClass.fromDict(dict,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromDict not implemented")    @abstractmethod
     def mkItemFromXML(self,root,feedback=None):
-        feedback.pushDebugInfo("mkItemFromXML " + self.__class__.__name__)
-        feedback.pushDebugInfo("mkItemFromXML " + self.itemClass.__name__)
+        feedbacks.debug("mkItemFromXML " + self.__class__.__name__)
+        feedbacks.debug("mkItemFromXML " + self.itemClass.__name__)
         return self.itemClass.fromXML(root,feedback=feedback)
         # self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItemFromXML not implemented")
     @staticmethod
@@ -768,7 +728,7 @@ class DictModel(AbstractGroupModel):
         dict = utils.castDict(attribs)
     @classmethod
     def fromXML(cls,root,feedback=None):
-        feedback.pushDebugInfo("fromXML " + str(cls.__class__.__name__))
+        feedbacks.debug("fromXML " + str(cls.__class__.__name__))
         model = cls(feedback=feedback)
         model.dict = cls.dictFromXMLAttribs(root.attrib)
         for child in root:
@@ -795,7 +755,7 @@ class DictModel(AbstractGroupModel):
               
         
     def toXML(self,indent=" ",attribs_dict=None):
-        # self.feedback.pushDebugInfo("toXML " + self.parser_name)
+        # feedbacks.debug("toXML " + self.parser_name)
         xmlStr = indent + "<" + self.parser_name
         if attribs_dict:
             for k,v in attribs_dict.items():
@@ -816,9 +776,9 @@ class DictModel(AbstractGroupModel):
             writer = csv.DictWriter(f,fieldnames=self.fields,delimiter=';')
             writer.writeheader()
             for i in self.items:
-                self.feedback.pushDebugInfo("writing row " + str(i.dict))
+                feedbacks.debug("writing row " + str(i.dict))
                 writer.writerow(i.dict)
-        self.feedback.pushDebugInfo("Model saved to file '" + str(fname) + "'")
+        feedbacks.debug("Model saved to file '" + str(fname) + "'")
         
     def applyItemsWithContext(self,context,feedback,indexes=None):
         if not self.items:
@@ -892,17 +852,17 @@ class NormalizingParamsModel(QAbstractTableModel):
     def setExtentLayer(self,path):
         if path:
             path = self.normalizePath(path)
-        self.feedback.pushInfo("Setting extent layer to " + str(path))
+        feedbacks.debug("Setting extent layer to " + str(path))
         self.extentLayer = path
         self.layoutChanged.emit()
         
     def setResolution(self,resolution):
-        self.feedback.pushInfo("Setting resolution to " + str(resolution))
+        feedbacks.debug("Setting resolution to " + str(resolution))
         self.resolution = resolution
         self.layoutChanged.emit()
         
     def setCrs(self,crs):
-        self.feedback.pushInfo("Setting extent CRS to " + crs.description())
+        feedbacks.debug("Setting extent CRS to " + crs.description())
         self.crs = crs
         self.layoutChanged.emit()
         
@@ -927,14 +887,14 @@ class NormalizingParamsModel(QAbstractTableModel):
     def setWorkspace(self,path):
         norm_path = utils.normPath(path)
         self.workspace = norm_path
-        self.feedback.pushInfo("Workspace directory set to '" + norm_path)
+        feedbacks.debug("Workspace directory set to '" + norm_path)
         if not os.path.isdir(norm_path):
             self.feedback.user_error("Directory '" + norm_path + "' does not exist")
         return norm_path
             
     def updateFromXML(self,root,feedback=None):
         dict = root.attrib
-        self.feedback.pushDebugInfo("params dict = " + str(dict))
+        feedbacks.debug("params dict = " + str(dict))
         return self.fromXMLDict(dict)
     
     def fromXMLDict(self,dict):
@@ -1048,7 +1008,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         if not self.extentLayer:
             self.feedback.user_error("Extent layer parameter not initialized")
         extent_path = self.getOrigPath(self.extentLayer)
-        self.feedback.pushDebugInfo("extent_path = " + str(extent_path))
+        feedbacks.debug("extent_path = " + str(extent_path))
         utils.checkFileExists(extent_path,"Extent layer ")
         if not self.resolution:
             self.feedback.user_error("Resolution parameter not initialized")
@@ -1118,8 +1078,8 @@ class NormalizingParamsModel(QAbstractTableModel):
         extent = self.getExtentRectangle()
         extent_layer_path = extentLayer
         extent_layer, extent_type = self.getExtentLayerAndType()
-        feedback.pushDebugInfo("extent_type " + str(extent_type))
-        feedback.pushDebugInfo("clip_raster " + str(clip_raster))
+        feedbacks.debug("extent_type " + str(extent_type))
+        feedbacks.debug("clip_raster " + str(clip_raster))
         input_layer, input_type = qgsUtils.loadLayerGetType(input)
         if not clip_raster and extent_type == 'Raster':
             return input
@@ -1158,7 +1118,7 @@ class NormalizingParamsModel(QAbstractTableModel):
                 return input
         nodataVal = qgsTreatments.nodata_val if nodata_val is None else nodata_val
         extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
-        self.feedback.pushDebugInfo("extentLayerType = " + str(extentLayerType))
+        feedbacks.debug("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
         if extentLayerType == 'Vector':
             clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
@@ -1168,7 +1128,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         else:
             extent = qgsUtils.getExtentStrFromPath(extentLayerPath)
             warped_path = QgsProcessingUtils.generateTempFilename('warped.tif')
-            self.feedback.pushWarning("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
+            feedbacks.warn("Normalizing raster '" + str(path)+ "' to '" + str(warped_path) + "'")
             res = qgsTreatments.applyWarpReproject(path,out_path,resampling_mode,
                 dst_crs=self.crs,resolution=resolution,extent=extent,
                 nodata_val=nodataVal,context=context,feedback=feedback)
@@ -1215,7 +1175,7 @@ class AbstractConnector:
                 
     def switchOnlySelection(self):
         new_val = not self.onlySelection
-        self.feedback.pushDebugInfo("setting onlySelection to " + str(new_val))
+        feedbacks.debug("setting onlySelection to " + str(new_val))
         self.onlySelection = new_val
         
     # This function build model item from view and is called by addItem
@@ -1232,12 +1192,12 @@ class AbstractConnector:
         
     def applyItems(self):
         indexes = self.getSelectedIndexes()
-        self.feedback.pushDebugInfo("Selected indexes = " + str(indexes))
+        feedbacks.debug("Selected indexes = " + str(indexes))
         self.model.applyItemsWithContext(None,self.dlg.feedback,indexes)
         #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback,indexes)
         
     def addItem(self):
-        self.feedback.pushDebugInfo("AbstractConnector.addItem")
+        feedbacks.debug("AbstractConnector.addItem")
         item = self.mkItem()
         if item:
             self.model.addItem(item)
@@ -1246,14 +1206,14 @@ class AbstractConnector:
     def removeItems(self):
         if self.model.getItems():
             indices = self.view.selectedIndexes()
-            self.feedback.pushDebugInfo(str([i.row() for i in indices]))
+            feedbacks.debug(str([i.row() for i in indices]))
             self.model.removeItems(indices)
         else:
-            self.feedback.pushWarning("Empty model, nothing to remove")
+            feedbacks.warn("Empty model, nothing to remove")
         
     # Upgrade selected item rank (only single selection for now)
     def upgradeItem(self):
-        self.feedback.pushDebugInfo("upgradeItem")
+        feedbacks.debug("upgradeItem")
         indices = self.view.selectedIndexes()
         rows = list(set([i.row() for i in indices]))
         nb_rows = len(rows)
@@ -1265,24 +1225,24 @@ class AbstractConnector:
                 self.model.swapItems(row - 1, row)
                 self.view.selectRow(row - 1)
         else:
-            self.feedback.pushWarning("Several rows selected, please select only one")
+            feedbacks.warn("Several rows selected, please select only one")
             
     # Downgrade selected item rank (only single selection for now)
     def downgradeItem(self):
-        self.feedback.pushDebugInfo("downgradeItem")
+        feedbacks.debug("downgradeItem")
         indices = self.view.selectedIndexes()
         rows = list(set([i.row() for i in indices]))
         #nb_indices = len(indices)
         nb_rows = len(rows)
         if nb_rows == 0:
-            self.feedback.pushDebugInfo("no idx selected")
+            feedbacks.debug("no idx selected")
         elif nb_rows == 1:
             row = rows[0]
             if row < len(self.model.getItems()) - 1:
                 self.model.swapItems(row, row + 1)
                 self.view.selectRow(row + 1)
         else:
-            self.feedback.pushWarning("Several rows selected, please select only one")
+            feedbacks.warn("Several rows selected, please select only one")
 
 
 # Table Model with extensive fields (possibility to add columns)
@@ -1302,9 +1262,9 @@ class ExtensiveTableModel(DictModel):
                  rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
         super().__init__(fields=list(baseFields),
             feedback=parentModel.feedback)
-        self.feedback.pushInfo("EM1 " + str(self.__class__.__name__))
-        self.feedback.pushInfo("EM2 " + str(self.itemClass.__class__.__name__))
-        self.feedback.pushInfo("EM OK")
+        feedbacks.debug("EM1 " + str(self.__class__.__name__))
+        feedbacks.debug("EM2 " + str(self.itemClass.__class__.__name__))
+        feedbacks.debug("EM OK")
         self.parentModel = parentModel
         # self.feedback = parentModel.feedback
         self.defaultVal = self.DEFAULT_VAL
@@ -1350,7 +1310,7 @@ class ExtensiveTableModel(DictModel):
     # Adds new rowItem in model.
     def addRowItem(self,rowItem):
         if self.rowExists(self.getItemValue(rowItem)):
-            self.feedback.pushWarning("Item " + str(rowItem) + " already exists")
+            feedbacks.warn("Item " + str(rowItem) + " already exists")
         else:
             self.addRowFields(rowItem)
             self.addItem(rowItem)
@@ -1366,7 +1326,7 @@ class ExtensiveTableModel(DictModel):
         
     # Removes item matching class 'name' from model.
     def removeRowFromName(self,name):
-        self.feedback.pushDebugInfo("removing row " + str(name) + " from table")
+        feedbacks.debug("removing row " + str(name) + " from table")
         self.rowNames = [rowName for rowName in self.rowNames if rowName != name]
         for i in range(0,len(self.items)):
             if self.items[i].dict[self.idField] == name or self.items[i].dict[self.ROW_NAME]:
@@ -1378,18 +1338,18 @@ class ExtensiveTableModel(DictModel):
     # Friction values are set to defaultVal (None).
     def addRowFields(self,row):
         extFields = self.fields[len(self.baseFields):]
-        self.feedback.pushDebugInfo("addRowFields " + str(extFields))
+        feedbacks.debug("addRowFields " + str(extFields))
         for f in extFields:
             row.dict[f] = self.defaultVal
             
     # Adds new subnetwork entry to all items of model from given STItem.
     def addCol(self,col_name,defaultVal=DEFAULT_VAL):
-        self.feedback.pushDebugInfo("addCol " + str(col_name))
+        feedbacks.debug("addCol " + str(col_name))
         super().addField(col_name,defaultVal = self.defaultVal)
         
     # Removes subnetwork 'st_name' entry for all items of model.
     def removeColFromName(self,col_name):
-        self.feedback.pushDebugInfo("removeColFromName " + str(col_name))
+        feedbacks.debug("removeColFromName " + str(col_name))
         self.removeField(col_name)
         self.layoutChanged.emit()
         
@@ -1400,14 +1360,14 @@ class ExtensiveTableModel(DictModel):
         
     # Reload items of model to match current ClassModel.
     def reloadModel(self,baseRowItems):
-        self.feedback.pushDebugInfo("reloadModel")
+        feedbacks.debug("reloadModel")
         currNames = [i.dict[self.idField] for i in self.items]
         rowNames = [bri.dict[self.rowIdField] for bri in baseRowItems]
-        self.feedback.pushDebugInfo("currNames " + str(currNames))
-        self.feedback.pushDebugInfo("rowNames " + str(rowNames))
+        feedbacks.debug("currNames " + str(currNames))
+        feedbacks.debug("rowNames " + str(rowNames))
         toDeleteNames = set(currNames) - set(rowNames)
         toAddNames = set(rowNames) - set(currNames)
-        self.feedback.pushDebugInfo("Deleting row " + str(toDeleteNames))
+        feedbacks.debug("Deleting row " + str(toDeleteNames))
         self.items = [i for i in self.items if i.dict[self.idField] in rowNames]
         for bri in baseRowItems:
             currItem = self.getRowByName(bri.dict[self.rowIdField])
@@ -1438,7 +1398,7 @@ class ExtensiveTableModel(DictModel):
                         + "' not found in friction model")
                 new_val = item.dict[name]
                 if new_val is None:
-                    self.feedback.pushWarning("No friction assigned to subnetwork " + str(name)
+                    feedbacks.warn("No friction assigned to subnetwork " + str(name)
                                      + " for class " + str(id))
                     # float(new_val) causes exception is new_val = None
                     new_val = ''
@@ -1448,7 +1408,7 @@ class ExtensiveTableModel(DictModel):
                 try:
                     float(new_val)
                 except ValueError:
-                    self.feedback.pushWarning("Ignoring non-numeric value '" + str(new_val)
+                    feedbacks.warn("Ignoring non-numeric value '" + str(new_val)
                         + "' for class ")
                     # new_val = qgsTreatments.nodata_val
                     continue
@@ -1475,9 +1435,9 @@ class ExtensiveTableModel(DictModel):
             writer = csv.DictWriter(f,fieldnames=self.fields,delimiter=';')
             writer.writeheader()
             for i in self.items:
-                self.feedback.pushDebugInfo("writing row " + str(i.dict))
+                feedbacks.debug("writing row " + str(i.dict))
                 writer.writerow(i.dict)
-        self.feedback.pushInfo("Friction saved to file '" + str(fname) + "'")
+        feedbacks.debug("Friction saved to file '" + str(fname) + "'")
                 
     # Imports CSV row as an item
     def fromCSVRow(self,row):
@@ -1485,13 +1445,13 @@ class ExtensiveTableModel(DictModel):
             self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
         rowItem = self.getMatchingRow(row)
-        self.feedback.pushDebugInfo("row = " + str(row))
+        feedbacks.debug("row = " + str(row))
         if rowItem:
             for f in self.fields:
                 if f in row:
                     rowItem.dict[f] = row[f]
                 else:
-                    self.feedback.pushWarning("No entry for row '" + rowName
+                    feedbacks.warn("No entry for row '" + rowName
                         + "' and col '" + str(f) + "'")
         else:
             rowItem = self.createRowFromDict(row)
@@ -1502,7 +1462,7 @@ class ExtensiveTableModel(DictModel):
             self.feedback.user_error("No field '" + str(self.idField)
                 + "' in row " + str(row))
         rowItem = self.getMatchingRow(row)
-        self.feedback.pushDebugInfo("row = " + str(row))
+        feedbacks.debug("row = " + str(row))
         fieldsToUpdate = list(self.fields)
         fieldsToUpdate.remove(self.idField)
         if rowItem:
@@ -1510,11 +1470,11 @@ class ExtensiveTableModel(DictModel):
                 if f in row:
                     rowItem.dict[f] = row[f]
                 else:
-                    self.feedback.pushWarning("No entry for row '" + str(row)
+                    feedbacks.warn("No entry for row '" + str(row)
                         + "' and col '" + str(f) + "'")
         else:
             msg = self.tr("Ignoring row without matching item: {}".format(row))
-            self.feedback.pushWarning(msg)
+            feedbacks.warn(msg)
     
     # Skeleton  to read CSV rows and apply rowFunc on each
     def iterateCSVRows(self,fname,rowFunc):
@@ -1571,7 +1531,7 @@ class ExtensiveTableModel(DictModel):
         
     # Remove all items
     def clearModel(self):
-        # self.feedback.pushDebugInfo("clearModel {}".format(self.extFields))
+        # feedbacks.debug("clearModel {}".format(self.extFields))
         for f in self.fields[4:]:
             self.removeField(f)
         self.extFields = []
@@ -1599,20 +1559,20 @@ class MainModel:
         return None
         
     def getOutLayerFromName(self,name,model):
-        self.feedback.pushDebugInfo("getOutLayerFromName " + str(name))
+        feedbacks.debug("getOutLayerFromName " + str(name))
         item = model.getItemFromName(name)
         if not item:
             self.feedback.internal_error("Item '" + str(name) + "' not found in model "
                 + str(model.__class__.__name__))
         layer = model.getItemOutPath(item)
-        self.feedback.pushDebugInfo("getOutLayerFromName layer " + str(layer))
+        feedbacks.debug("getOutLayerFromName layer " + str(layer))
         abs_layer = self.getOrigPath(layer)
-        self.feedback.pushDebugInfo("getOutLayerFromName abs_layer " + str(abs_layer))
+        feedbacks.debug("getOutLayerFromName abs_layer " + str(abs_layer))
         return abs_layer
         
     # def fromXMLRoot(self,root):
         # for child in root:
-            # self.feedback.pushDebugInfo("tag = " + str(child.tag))
+            # feedbacks.debug("tag = " + str(child.tag))
             # childTag = child.tag
             # model = self.getModelFromParserName(child.tag)
             # if model:
@@ -1644,10 +1604,10 @@ class MainDialog(QtWidgets.QDialog):
     # Displays traceback and error message in log tab.
     # Ignores CustomException : exception raised from BioDispersal and already displayed.
     def pluginExcHook(self,excType, excValue, tracebackobj):
-        self.feedback.pushDebugInfo("pluginExcHook " + str(excType))
+        feedbacks.debug("pluginExcHook " + str(excType))
         if excType == utils.CustomException:
             msgStart = self.tr("Ignoring custom exception : ")
-            self.feedback.pushDebugInfo(msgStart + str(excValue))
+            feedbacks.debug(msgStart + str(excValue))
         else:
             tbinfofile = StringIO()
             traceback.print_tb(tracebackobj, None, tbinfofile)
@@ -1656,11 +1616,11 @@ class MainDialog(QtWidgets.QDialog):
             errmsg = str(excType) + " : " + str(excValue)
             separator = '-' * 80
             sections = [separator, errmsg, separator]
-            self.feedback.pushDebugInfo(str(sections))
+            feedbacks.debug(str(sections))
             msg = '\n'.join(sections)
-            self.feedback.pushDebugInfo(str(msg))
+            feedbacks.debug(str(msg))
             final_msg = tbinfo + "\n" + msg
-            self.feedback.pushDebugInfo("traceback : " + str(tbinfo))
+            feedbacks.debug("traceback : " + str(tbinfo))
             self.feedback.error_msg(errmsg,prefix="Unexpected error")
         self.mTabWidget.setCurrentWidget(self.logTab)
         self.feedback.focusLogTab()
@@ -1742,7 +1702,7 @@ class MainDialog(QtWidgets.QDialog):
         self.pluginModel.paramsModel.projectFile = fname
         self.paramsConnector.setProjectFile(fname)
         utils.writeFile(fname,xmlStr)
-        self.feedback.pushInfo(self.tr("Model saved into file '") + fname + "'")
+        feedbacks.debug(self.tr("Model saved into file '") + fname + "'")
         
     def saveModelAsAction(self):
         fname = qgsUtils.saveFileDialog(parent=self,
@@ -1759,14 +1719,14 @@ class MainDialog(QtWidgets.QDialog):
    
     # Load project from 'fname' if existing
     def loadModel(self,fname):
-        self.feedback.pushDebugInfo("loadModel " + str(fname))
+        feedbacks.debug("loadModel " + str(fname))
         utils.checkFileExists(fname)
         self.clearModels()
         config_parsing.setConfigParsers(self.pluginModel.models)
         self.pluginModel.paramsModel.projectFile = fname
         self.paramsConnector.setProjectFile(fname)
         config_parsing.parseConfig(fname,feedback=self.feedback)
-        self.feedback.pushInfo("Model loaded from file '" + fname + "'")
+        feedbacks.debug("Model loaded from file '" + fname + "'")
         
     def loadModelAction(self):
         fname = qgsUtils.openFileDialog(parent=self,
@@ -1776,7 +1736,7 @@ class MainDialog(QtWidgets.QDialog):
             self.loadModel(fname)
             
     def clearModels(self):
-        self.feedback.pushDebugInfo("clearModels")
+        feedbacks.debug("clearModels")
         # self.pluginModel.paramsModel.clearModel()
         for model in self.pluginModel.models:
             model.clearModel()
@@ -1817,7 +1777,7 @@ class TableToDialogConnector(AbstractConnector):
     def openDialogEdit(self,index):
         row = index.row()
         item = self.model.getNItem(row)
-        self.feedback.pushDebugInfo("openDialog item = " +str(item))
+        feedbacks.debug("openDialog item = " +str(item))
         dlg_item = self.openDialogGetResult(item)
         if dlg_item:
             self.updateFromDlgItem(item,dlg_item)
@@ -1886,7 +1846,7 @@ class CheckableComboDelegate(QStandardItemModel):
         else:
             return QVariant()
     def setData(self, index, value, role):
-        self.feedback.pushDebugInfo("setData (" + str(index.row()) + ","
+        feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
         if role == Qt.EditRole:
             # row = self.setDataXY(index.row(),index.column(),value)
@@ -1915,8 +1875,13 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         '''
         Paint a checkbox without the label.
         '''
-
-        checked = bool(index.data())
+        if index.data() == "True":
+            boolVal = True
+        elif index.data() == "False":
+            boolVal = False
+        else:
+            boolVal = bool(index.data())
+        checked = boolVal
         check_box_style_option = QtWidgets.QStyleOptionButton()
 
         #if (index.flags() & QtCore.Qt.ItemIsEditable) > 0:
@@ -1946,13 +1911,13 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         if the user presses the left mousebutton or presses
         Key_Space or Key_Select and this cell is editable. Otherwise do nothing.
         '''
-        self.feedback.pushDebugInfo('Check Box editor Event detected : ')
-        self.feedback.pushDebugInfo(str(event.type()))
+        feedbacks.debug('Check Box editor Event detected : ')
+        feedbacks.debug(str(event.type()))
         #if not (index.flags() & QtCore.Qt.ItemIsEditable) > 0:
         if not (index.flags() & QtCore.Qt.ItemIsEditable):
             return False
 
-        self.feedback.pushDebugInfo('Check Box editor Event detected : passed first check')
+        feedbacks.debug('Check Box editor Event detected : passed first check')
         # Do not change the checkbox-state
         if event.type() == QtCore.QEvent.MouseButtonPress:
           return False
@@ -1975,9 +1940,9 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         '''
         The user wanted to change the old state in the opposite.
         '''
-        self.feedback.pushDebugInfo('SetModelData')
+        feedbacks.debug('SetModelData')
         newValue = not bool(index.data())
-        self.feedback.pushDebugInfo('New Value : {0}'.format(newValue))
+        feedbacks.debug('New Value : {0}'.format(newValue))
         model.setData(index, newValue, QtCore.Qt.EditRole)
 
     def getCheckBoxRect(self, option):
