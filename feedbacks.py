@@ -27,7 +27,10 @@ import time
 import sys
 import datetime
 
-from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
+from qgis.core import (QgsProcessingFeedback,
+    QgsProcessingMultiStepFeedback,
+    QgsMessageLog,
+    Qgis)
 from qgis.PyQt.QtCore import  QCoreApplication
 
 from . import utils
@@ -38,6 +41,19 @@ from PyQt5.QtGui import QGuiApplication
 from PyQt5.QtWidgets import QMessageBox
 
 progressFeedback = None
+
+### Log GUI-free
+
+pluginName = "qgis_lib_mc"
+
+def debug(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Info)
+def info(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Info)
+def warn(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Warning)
+
+###
 
 def beginSection(msg):
     if progressFeedback:

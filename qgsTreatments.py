@@ -54,7 +54,8 @@ from . import utils, qgsUtils
 
 nodata_val = '-9999'
 MEMORY_LAYER_NAME = 'memory:'
-GTIFF_COPT = qgsUtils.GTIFF_COPT
+# GTIFF_COPT = qgsUtils.GTIFF_COPT
+GTIFF_COPT = []
 gtiff_opts_pipe = '|'.join(GTIFF_COPT)
 gtiff_opts_comma = ','.join(GTIFF_COPT)
 
