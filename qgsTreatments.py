@@ -310,7 +310,8 @@ def addIdxField(layer,outField,out_path,context=None,feedback=None):
     return res
     
 def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
-        discard=True,fields=[],method=0,prefix='',context=None,feedback=None):
+        discard=True,fields=[],method=0,prefix='',non_matching=None,
+        context=None,feedback=None):
     parameters = { 'DISCARD_NONMATCHING' : discard,
         'INPUT' : layer1,
         'JOIN' : layer2,
@@ -319,11 +320,14 @@ def joinByLoc(layer1,layer2,predicates=[0],out_path=MEMORY_LAYER_NAME,
         'OUTPUT' : out_path,
         'PREDICATE' : predicates,
         'PREFIX' : prefix }
+    if not discard and non_matching:
+        parameters['NON_MATCHING'] = non_matching
     res = applyProcessingAlg("qgis","joinattributesbylocation",parameters,context=context,feedback=feedback)
     return res
     
 def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames=[],summaries=[],
-        predicates=[0],discard=True,context=None,feedback=None):
+        predicates=[0],discard=True,non_matching=None,
+        context=None,feedback=None):
     # parameters = { 'DISCARD_NONMATCHING' : False,
         # 'INPUT' : in_layer,
         # 'JOIN' : join_layer,
@@ -338,6 +342,8 @@ def joinByLocSummary(in_layer,join_layer,out_layer,fieldnames=[],summaries=[],
         'OUTPUT' : out_layer,
         'PREDICATE' : predicates,
         'SUMMARIES' : summaries }
+    if not discard and non_matching:
+        parameters['NON_MATCHING'] = non_matching
     res = applyProcessingAlg("qgis","joinbylocationsummary",
         parameters,context=context,feedback=feedback)
     return res
