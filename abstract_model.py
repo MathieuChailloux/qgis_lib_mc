@@ -138,7 +138,7 @@ class DictItem(AbstractGroupItem):
     @classmethod
     def fromDict(cls,dict,feedback=None):
         feedbacks.debug("fromDict " + str(cls.__name__))
-        feedbacks.debugo("fromDict1 " + str(dict))
+        feedbacks.debug("fromDict1 " + str(dict))
         dict = utils.castDict(dict)
         feedbacks.debug("fromDict2 " + str(dict))
         return cls(dict,feedback=feedback)
