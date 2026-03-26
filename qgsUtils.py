@@ -121,6 +121,16 @@ def getLayerByFilename(fname):
             return layer
     else:
         return None
+def getLayerBySource(source):
+    map_layers = QgsProject.instance().mapLayers().values()
+    for layer in map_layers:
+        match = layer.source() == source
+        # self.feedback.pushDebugInfo("match {} {} = {}".format(
+        #     layer.source(),source,match))
+        if match:
+            return layer
+    else:
+        return None
        
 def isLayerLoaded(fname):
     return (getLayerByFilename(fname) != None)
