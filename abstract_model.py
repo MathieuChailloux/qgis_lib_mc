@@ -36,9 +36,9 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsProcessingFeedback)
 # from qgis.gui import QgsCheckableItemModel
 
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtGui import QStandardItemModel#, QgsCheckableItemModel
-from PyQt5.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
+from qgis.PyQt import QtGui, QtCore, QtWidgets
+from qgis.PyQt.QtGui import QStandardItemModel#, QgsCheckableItemModel
+from qgis.PyQt.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
                           QCoreApplication, QTranslator, QSettings,
                           qVersion, pyqtSlot)
 from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
