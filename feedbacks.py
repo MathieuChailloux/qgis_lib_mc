@@ -33,8 +33,10 @@ from qgis.core import (QgsProcessingFeedback,
     Qgis)
 from qgis.PyQt.QtCore import  QCoreApplication
 
-from . import utils
-from . import qgsUtils
+from . import (
+    utils,
+    qgsUtils)
+from .qt_compatibility import *
 
 from qgis.PyQt.QtCore import QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QGuiApplication
@@ -86,7 +88,7 @@ def paramError(msg,parent=None):
     title = tr("Wrong parameter value")
     launchDialog(parent,title,msg)
 def launchQuestionDialog(origin,title,msg):
-    reply = QMessageBox.question(origin,title,msg,QMessageBox.Yes,QMessageBox.No)
+    reply = QMessageBox.question(origin,title,msg,MSG_YES,MSG_NO)
     return reply
     
 def paramNameError(name,parent=None):

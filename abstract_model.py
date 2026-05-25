@@ -28,22 +28,39 @@ import json
 import inspect
 from io import StringIO
 
-from qgis.core import (QgsCoordinateReferenceSystem,
-                       QgsRectangle,
-                       QgsProject,
-                       QgsCoordinateTransform,
-                       QgsProcessingUtils,
-                       QgsProcessingFeedback, NULL)
+from qgis.core import (
+    QgsCoordinateReferenceSystem,
+    QgsRectangle,
+    QgsProject,
+    QgsCoordinateTransform,
+    QgsProcessingUtils,
+    QgsProcessingFeedback,
+    NULL)
 # from qgis.gui import QgsCheckableItemModel
 
 from qgis.PyQt import QtGui, QtCore, QtWidgets
 from qgis.PyQt.QtGui import QStandardItemModel#, QgsCheckableItemModel
-from qgis.PyQt.QtCore import (QVariant, QAbstractTableModel, QModelIndex, Qt,
-                          QCoreApplication, QTranslator, QSettings,
-                          qVersion, pyqtSlot)
-from . import utils, xmlUtils, qgsUtils, qgsTreatments, feedbacks, config_parsing
+from qgis.PyQt.QtCore import (
+    QVariant,
+    QAbstractTableModel,
+    QModelIndex,
+    Qt,
+    QCoreApplication,
+    QTranslator,
+    QSettings,
+    qVersion,
+    pyqtSlot)
+from . import (
+    utils,
+    xmlUtils,
+    qgsUtils,
+    qgsTreatments,
+    feedbacks,
+    config_parsing)
 
 from abc import ABC, abstractmethod
+
+from .qt_compatibility import *
 
 """ 
     Abstract and usual classes to implement MVC (Model-View-Controller) design pattern.
@@ -327,7 +344,7 @@ class FieldsModel(QAbstractTableModel):
             return NULL
         row = index.row()
         item = self.getNItem(row)
-        if role != Qt.DisplayRole:
+        if role != DISPLAY_ROLE:
             return NULL
         elif row < self.rowCount():
             return(QVariant(item))
@@ -336,9 +353,9 @@ class FieldsModel(QAbstractTableModel):
             
     # Row headers = field name, column header = 'value'
     def headerData(self,col,orientation,role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if orientation == HORIZONTAL and role == DISPLAY_ROLE:
             return QVariant("value")
-        elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+        elif orientation == VERTICAL and role == DISPLAY_ROLE:
             return(self.fields[col])
         return NULL
     
@@ -426,7 +443,7 @@ class AbstractGroupModel(QAbstractTableModel):
             pass
             #utils.pushWarning("Header out of bounds : " + self.__class__.__name__
             #            + " " + str(col) + " " + str(self.fields))
-        elif orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        elif orientation == HORIZONTAL and role == DISPLAY_ROLE:
             #return QVariant(self.fields[col])
             headerStr = self.getHeaderString(col)
             headerStr = headerStr if headerStr else self.fields[col]
@@ -444,7 +461,7 @@ class AbstractGroupModel(QAbstractTableModel):
         if not item:
             return NULL
         val = self.getNField(item,index.column())
-        if role not in [Qt.DisplayRole,Qt.EditRole]:
+        if role not in [DISPLAY_ROLE,EDIT_ROLE]:
             return NULL
         elif row < self.rowCount():
             return(QVariant(val))
@@ -459,14 +476,14 @@ class AbstractGroupModel(QAbstractTableModel):
     def setData(self, index, value, role):
         feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
-        if role == Qt.EditRole:
+        if role == EDIT_ROLE:
             self.setDataXY(index.row(),index.column(),value)
             self.dataChanged.emit(index, index)
             return True
         return False
             
     def flags(self, index):
-        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        return ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
         
     def itemExists(item):
         for i in self.items:
@@ -947,7 +964,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             return NULL
         row = index.row()
         item = self.getNItem(row)
-        if role != Qt.DisplayRole:
+        if role != DISPLAY_ROLE:
             return NULL
         elif row < self.rowCount():
             return(QVariant(item))
@@ -955,12 +972,12 @@ class NormalizingParamsModel(QAbstractTableModel):
             return NULL
             
     def flags(self, index):
-        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+        return ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
         
     def headerData(self,col,orientation,role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if orientation == HORIZONTAL and role == DISPLAY_ROLE:
             return QVariant("value")
-        elif orientation == Qt.Vertical and role == Qt.DisplayRole:
+        elif orientation == VERTICAL and role == DISPLAY_ROLE:
             #return QVariant(self.fields[col])
             return QVariant(self.tr(self.fields[col]))
         return NULL
@@ -1524,9 +1541,9 @@ class ExtensiveTableModel(DictModel):
         
     def flags(self, index):
         if index.column() in [1,2]:
-            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            flags = ITEM_IS_SELECTABLE | ITEM_IS_ENABLED
         else:
-            flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+            flags = ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
         return flags
         
     # Remove all items
@@ -1644,7 +1661,7 @@ class MainDialog(QtWidgets.QDialog):
     def reject(self):
         msg = self.tr("Are you sure you want to exit ? Please ensure your project is saved")
         reply = feedbacks.launchQuestionDialog(self,"MitiConnect",msg)
-        if reply == QtWidgets.QMessageBox.Yes:
+        if reply == MSG_YES:
             self.accept()
         else:
             return
@@ -1839,7 +1856,7 @@ class CheckableComboDelegate(QStandardItemModel):
         row = index.row()
         item = self.baseModel.getNItem(row)
         itemName = item.getName()
-        if role != Qt.DisplayRole:
+        if role != DISPLAY_ROLE:
             return NULL
         elif row < self.rowCount():
             return(QVariant(itemName))
@@ -1848,7 +1865,7 @@ class CheckableComboDelegate(QStandardItemModel):
     def setData(self, index, value, role):
         feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
-        if role == Qt.EditRole:
+        if role == EDIT_ROLE:
             # row = self.setDataXY(index.row(),index.column(),value)
             self.dataChanged.emit(index, index)
             return True
@@ -1884,8 +1901,8 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         checked = boolVal
         check_box_style_option = QtWidgets.QStyleOptionButton()
 
-        #if (index.flags() & QtCore.Qt.ItemIsEditable) > 0:
-        if (index.flags() & QtCore.Qt.ItemIsEditable):
+        #if (index.flags() & ITEM_IS_EDITABLE) > 0:
+        if (index.flags() & ITEM_IS_EDITABLE):
             check_box_style_option.state |= QtWidgets.QStyle.State_Enabled
         else:
             check_box_style_option.state |= QtWidgets.QStyle.State_ReadOnly
@@ -1898,7 +1915,7 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         check_box_style_option.rect = self.getCheckBoxRect(option)
 
         # this will not run - hasFlag does not exist
-        #if not index.model().hasFlag(index, QtCore.Qt.ItemIsEditable):
+        #if not index.model().hasFlag(index, ITEM_IS_EDITABLE):
             #check_box_style_option.state |= QtWidgets.QStyle.State_ReadOnly
 
         check_box_style_option.state |= QtWidgets.QStyle.State_Enabled
@@ -1914,7 +1931,7 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         feedbacks.debug('Check Box editor Event detected : ')
         feedbacks.debug(str(event.type()))
         #if not (index.flags() & QtCore.Qt.ItemIsEditable) > 0:
-        if not (index.flags() & QtCore.Qt.ItemIsEditable):
+        if not (index.flags() & ITEM_IS_EDITABLE):
             return False
 
         feedbacks.debug('Check Box editor Event detected : passed first check')
@@ -1943,7 +1960,7 @@ class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
         feedbacks.debug('SetModelData')
         newValue = not bool(index.data())
         feedbacks.debug('New Value : {0}'.format(newValue))
-        model.setData(index, newValue, QtCore.Qt.EditRole)
+        model.setData(index, newValue, EDIT_ROLE)
 
     def getCheckBoxRect(self, option):
         check_box_style_option = QtWidgets.QStyleOptionButton()
@@ -1985,7 +2002,7 @@ class ComboDelegate(QtWidgets.QItemDelegate):
     def setModelData(self, editor, model, index):
         editorIndex=editor.currentIndex()
         text=editor.currentItem().text() 
-        model.setData(index, text,role=Qt.EditRole)
+        model.setData(index, text,role=EDIT_ROLE)
         # print '\t\t\t ...setModelData() 1', text
 
     @pyqtSlot()
