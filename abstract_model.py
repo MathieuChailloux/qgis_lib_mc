@@ -33,7 +33,7 @@ from qgis.core import (QgsCoordinateReferenceSystem,
                        QgsProject,
                        QgsCoordinateTransform,
                        QgsProcessingUtils,
-                       QgsProcessingFeedback)
+                       QgsProcessingFeedback, NULL)
 # from qgis.gui import QgsCheckableItemModel
 
 from qgis.PyQt import QtGui, QtCore, QtWidgets
@@ -324,15 +324,15 @@ class FieldsModel(QAbstractTableModel):
     # Value at 'n' row is retrieved through getNItem.
     def data(self,index,role):
         if not index.isValid():
-            return QVariant()
+            return NULL
         row = index.row()
         item = self.getNItem(row)
         if role != Qt.DisplayRole:
-            return QVariant()
+            return NULL
         elif row < self.rowCount():
             return(QVariant(item))
         else:
-            return QVariant()
+            return NULL
             
     # Row headers = field name, column header = 'value'
     def headerData(self,col,orientation,role):
@@ -340,7 +340,7 @@ class FieldsModel(QAbstractTableModel):
             return QVariant("value")
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             return(self.fields[col])
-        return QVariant()
+        return NULL
     
 # AbstractGroupModel allows multiple group items.
 # Items must implement AbstractGroupItem class.
@@ -431,25 +431,25 @@ class AbstractGroupModel(QAbstractTableModel):
             headerStr = self.getHeaderString(col)
             headerStr = headerStr if headerStr else self.fields[col]
             return QVariant(headerStr)
-        return QVariant()
+        return NULL
             
     # This function is called by Qt to display information at 'index' position.
     # Value at (row,col) position is retrieved through getNItem and getNField.
     # Items values must be strings.
     def data(self,index,role):
         if not index.isValid():
-            return QVariant()
+            return NULL
         row = index.row()
         item = self.getNItem(row)
         if not item:
-            return QVariant()
+            return NULL
         val = self.getNField(item,index.column())
         if role not in [Qt.DisplayRole,Qt.EditRole]:
-            return QVariant()
+            return NULL
         elif row < self.rowCount():
             return(QVariant(val))
         else:
-            return QVariant()
+            return NULL
             
     def setDataXY(self,x,y,value):
         item = self.getNItem(x)
@@ -944,15 +944,15 @@ class NormalizingParamsModel(QAbstractTableModel):
             
     def data(self,index,role):
         if not index.isValid():
-            return QVariant()
+            return NULL
         row = index.row()
         item = self.getNItem(row)
         if role != Qt.DisplayRole:
-            return QVariant()
+            return NULL
         elif row < self.rowCount():
             return(QVariant(item))
         else:
-            return QVariant()
+            return NULL
             
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
@@ -963,7 +963,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         elif orientation == Qt.Vertical and role == Qt.DisplayRole:
             #return QVariant(self.fields[col])
             return QVariant(self.tr(self.fields[col]))
-        return QVariant()
+        return NULL
         
     # Checks that workspace is intialized and is an existing directory.
     def checkWorkspaceInit(self):
@@ -1835,16 +1835,16 @@ class CheckableComboDelegate(QStandardItemModel):
         return 1
     def data(self,index,role):
         if not index.isValid():
-            return QVariant()
+            return NULL
         row = index.row()
         item = self.baseModel.getNItem(row)
         itemName = item.getName()
         if role != Qt.DisplayRole:
-            return QVariant()
+            return NULL
         elif row < self.rowCount():
             return(QVariant(itemName))
         else:
-            return QVariant()
+            return NULL
     def setData(self, index, value, role):
         feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
