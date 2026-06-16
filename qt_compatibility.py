@@ -328,3 +328,57 @@ else:
     MSG_YES = QMessageBox.Yes
     MSG_NO = QMessageBox.No
     MSG_OK = QMessageBox.Ok
+
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAbstractScrollArea, QFrame, QSizePolicy
+
+if IS_QT6:
+    ALIGN_LEADING = Qt.AlignmentFlag.AlignLeading
+    LEFT_TO_RIGHT = Qt.LayoutDirection.LeftToRight
+    SCROLLBAR_AS_NEEDED = Qt.ScrollBarPolicy.ScrollBarAsNeeded
+
+    QICON_NORMAL = QIcon.Mode.Normal
+    QICON_OFF = QIcon.State.Off
+
+    ABSTRACT_ADJUST_IGNORED = QAbstractScrollArea.SizeAdjustPolicy.AdjustIgnored
+    ABSTRACT_ADJUST_TO_CONTENTS = QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents
+
+    ABSTRACT_NO_EDIT_TRIGGERS = QAbstractItemView.EditTrigger.NoEditTriggers
+    ABSTRACT_DOUBLE_CLICKED = QAbstractItemView.EditTrigger.DoubleClicked
+    ABSTRACT_SELECTED_CLICKED = QAbstractItemView.EditTrigger.SelectedClicked
+
+    ABSTRACT_SELECT_ROWS = QAbstractItemView.SelectionBehavior.SelectRows
+
+    FRAME_NO_FRAME = QFrame.Shape.NoFrame
+    FRAME_RAISED = QFrame.Shadow.Raised
+
+    SIZEPOLICY_FIXED = QSizePolicy.Policy.Fixed
+    SIZEPOLICY_MINIMUM = QSizePolicy.Policy.Minimum
+    SIZEPOLICY_PREFERRED = QSizePolicy.Policy.Preferred
+    SIZEPOLICY_EXPANDING = QSizePolicy.Policy.Expanding
+    SIZEPOLICY_MINIMUM_EXPANDING = QSizePolicy.Policy.MinimumExpanding
+else:
+    ALIGN_LEADING = Qt.AlignLeading
+    LEFT_TO_RIGHT = Qt.LeftToRight
+    SCROLLBAR_AS_NEEDED = Qt.ScrollBarAsNeeded
+
+    QICON_NORMAL = QIcon.Normal
+    QICON_OFF = QIcon.Off
+
+    ABSTRACT_ADJUST_IGNORED = QAbstractScrollArea.AdjustIgnored
+    ABSTRACT_ADJUST_TO_CONTENTS = QAbstractScrollArea.AdjustToContents
+
+    ABSTRACT_NO_EDIT_TRIGGERS = QAbstractItemView.NoEditTriggers
+    ABSTRACT_DOUBLE_CLICKED = QAbstractItemView.DoubleClicked
+    ABSTRACT_SELECTED_CLICKED = QAbstractItemView.SelectedClicked
+
+    ABSTRACT_SELECT_ROWS = QAbstractItemView.SelectRows
+
+    FRAME_NO_FRAME = QFrame.NoFrame
+    FRAME_RAISED = QFrame.Raised
+
+    SIZEPOLICY_FIXED = QSizePolicy.Fixed
+    SIZEPOLICY_MINIMUM = QSizePolicy.Minimum
+    SIZEPOLICY_PREFERRED = QSizePolicy.Preferred
+    SIZEPOLICY_EXPANDING = QSizePolicy.Expanding
+    SIZEPOLICY_MINIMUM_EXPANDING = QSizePolicy.MinimumExpanding
