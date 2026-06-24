@@ -341,15 +341,15 @@ class FieldsModel(QAbstractTableModel):
     # Value at 'n' row is retrieved through getNItem.
     def data(self,index,role):
         if not index.isValid():
-            return NULL
+            return None
         row = index.row()
         item = self.getNItem(row)
         if role != DISPLAY_ROLE:
-            return NULL
+            return None
         elif row < self.rowCount():
             return(QVariant(item))
         else:
-            return NULL
+            return None
             
     # Row headers = field name, column header = 'value'
     def headerData(self,col,orientation,role):
@@ -357,7 +357,7 @@ class FieldsModel(QAbstractTableModel):
             return QVariant("value")
         elif orientation == VERTICAL and role == DISPLAY_ROLE:
             return(self.fields[col])
-        return NULL
+        return None
     
 # AbstractGroupModel allows multiple group items.
 # Items must implement AbstractGroupItem class.
@@ -448,25 +448,25 @@ class AbstractGroupModel(QAbstractTableModel):
             headerStr = self.getHeaderString(col)
             headerStr = headerStr if headerStr else self.fields[col]
             return QVariant(headerStr)
-        return NULL
+        return None
             
     # This function is called by Qt to display information at 'index' position.
     # Value at (row,col) position is retrieved through getNItem and getNField.
     # Items values must be strings.
     def data(self,index,role):
         if not index.isValid():
-            return NULL
+            return None
         row = index.row()
         item = self.getNItem(row)
         if not item:
-            return NULL
+            return None
         val = self.getNField(item,index.column())
         if role not in [DISPLAY_ROLE,EDIT_ROLE]:
-            return NULL
+            return None
         elif row < self.rowCount():
             return(QVariant(val))
         else:
-            return NULL
+            return None
             
     def setDataXY(self,x,y,value):
         item = self.getNItem(x)
@@ -593,9 +593,6 @@ class DictModel(AbstractGroupModel):
             display_fields = fields
         AbstractGroupModel.__init__(self,itemClass=itemClass,
             fields=display_fields,feedback=feedback)
-        feedbacks.debug("DM1 " + str(self.__class__.__name__))
-        feedbacks.debug("DM2 " + str(self.itemClass.__class__.__name__))
-        feedbacks.debug("DM OK")
         # self.idx_to_fields = {self.fields.index(f) : f for f in display_fields}
         # self.idx_to_fields = self.fields
         self.nb_fields = len(self.fields)
@@ -961,15 +958,15 @@ class NormalizingParamsModel(QAbstractTableModel):
             
     def data(self,index,role):
         if not index.isValid():
-            return NULL
+            return None
         row = index.row()
         item = self.getNItem(row)
         if role != DISPLAY_ROLE:
-            return NULL
+            return None
         elif row < self.rowCount():
             return(QVariant(item))
         else:
-            return NULL
+            return None
             
     def flags(self, index):
         return ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
@@ -980,7 +977,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         elif orientation == VERTICAL and role == DISPLAY_ROLE:
             #return QVariant(self.fields[col])
             return QVariant(self.tr(self.fields[col]))
-        return NULL
+        return None
         
     # Checks that workspace is intialized and is an existing directory.
     def checkWorkspaceInit(self):
@@ -1852,16 +1849,16 @@ class CheckableComboDelegate(QStandardItemModel):
         return 1
     def data(self,index,role):
         if not index.isValid():
-            return NULL
+            return None
         row = index.row()
         item = self.baseModel.getNItem(row)
         itemName = item.getName()
         if role != DISPLAY_ROLE:
-            return NULL
+            return None
         elif row < self.rowCount():
             return(QVariant(itemName))
         else:
-            return NULL
+            return None
     def setData(self, index, value, role):
         feedbacks.debug("setData (" + str(index.row()) + ","
             + str(index.column()) + ") : " + str(value))
