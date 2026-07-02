@@ -641,7 +641,7 @@ class DictModel(AbstractGroupModel):
         sorted_other = sorted(not_items, key=keyFunc)
         sorted_items = sorted_ints + sorted_other
             
-        if order == Qt.DescendingOrder:
+        if order == DESCENDING_ORDER:
             sorted_items.reverse()
         self.items = sorted_items
         self.layoutChanged.emit()

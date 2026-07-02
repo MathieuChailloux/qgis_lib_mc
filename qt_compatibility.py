@@ -16,12 +16,16 @@
 #     ...
 #
 
-from qgis.gui import QgsFileWidget
+from qgis.gui import (
+    QgsFileWidget)
+from qgis.core import (
+    QgsMapLayerProxyModel)
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
-    QMessageBox)
+    QMessageBox,
+    QDialogButtonBox)
 
 
 # =============================================
@@ -29,6 +33,32 @@ from qgis.PyQt.QtWidgets import (
 # =============================================
 
 IS_QT6 = hasattr(Qt, "CheckState")
+
+# =============================================
+# Orders
+# =============================================
+if IS_QT6:
+    DESCENDING_ORDER = Qt.SortOrder.DescendingOrder
+else:
+    DESCENDING_ORDER  = Qt.DescendingOrder
+
+# =============================================
+# Map layer proxy model filter
+# =============================================
+if IS_QT6:
+    RASTER_LAYER = QgsMapLayerProxyModel.Filter.RasterLayer
+else:
+    RASTER_LAYER  = QgsMapLayerProxyModel.RasterLayer
+
+# =============================================
+# Dialog button box
+# =============================================
+if IS_QT6:
+    OK = QDialogButtonBox.StandardButton.Ok
+    CANCEL = QDialogButtonBox.StandardButton.Cancel
+else:
+    OK  = QDialogButtonBox.OK
+    CANCEL = QDialogButtonBox.Cancel
 
 # =============================================
 # QgsFileWidget.StorageMode
