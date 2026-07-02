@@ -36,10 +36,17 @@ import html
 import platform
 import glob
 import csv
+import re
 
 file_dir = os.path.dirname(__file__)
 if file_dir not in sys.path:
     sys.path.append(file_dir)
+
+# STRING UTILITIES
+
+def isValidTag(tag):
+    valid = re.match('^[\w_-]+$', tag) is not None
+    return valid
 
 # LOG UTILITIES
 
@@ -213,6 +220,10 @@ def fromTmpPath(tmp_path):
     bn, extension = os.path.splitext(path)
     return (bn[:-4] + extension)
     
+def findFilesFromDir(dir,fname):
+    regexp = dir + "/**/" + fname
+    glob_res = glob.glob(regexp,recursive=True)
+    return glob_res
 def findFileFromDir(dir,fname):
     #if dir.endsWith('/'):
     if False:
@@ -245,20 +256,23 @@ def is_integer(s):
     except ValueError:
         return False
        
+def castVal(v):
+    if v is None or v == "None":
+        newVal = None
+    elif v in ["True","False"]:
+        newVal = eval(v)
+    elif v.isnumeric():
+        newVal = int(v)
+    else:
+        try:
+            newVal = float(v)
+        except ValueError:
+            newVal = v
+    return newVal
 def castDict(d):
     res = {}
     for k,v in d.items():
-        if v is None or v == "None":
-            newVal = None
-        elif v in ["True","False"]:
-            newVal = eval(v)
-        elif v.isnumeric():
-            newVal = int(v)
-        else:
-            try:
-                newVal = float(v)
-            except ValueError:
-                newVal = v
+        newVal = castVal(v)
         res[k] = newVal
     return res
         
@@ -291,6 +305,12 @@ def checkDescr(item,prefix=None):
         
 
 # Subprocess utils
+        
+def checkCmd(cmd):
+    try:
+        subprocess.call([cmd])
+    except FileNotFoundError:
+        raise UserError("Command " + str(cmd) + " does not exist")
         
 def executeCmd(cmd_args):
     debug("command = " + str(cmd_args))
@@ -326,6 +346,27 @@ def getIntValues(nb_values,start=1,exclude_values=[]):
             cpt += 1
         currVal += 1
     return res
+    
+    
+# Import checks
+
+def scipyIsInstalled():
+    try:
+        import scipy
+        # from scipy import ndimage
+        import_scipy_ok = True
+    except ImportError as e:
+        import_scipy_ok = False
+    return import_scipy_ok
+    
+def numpyIsInstalled():
+    try:
+        import numpy
+        # from scipy import ndimage
+        import_numpy_ok = True
+    except ImportError as e:
+        import_numpy_ok = False
+    return import_numpy_ok
 
 # Module utils
 

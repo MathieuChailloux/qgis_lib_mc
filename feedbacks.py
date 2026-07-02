@@ -27,40 +27,58 @@ import time
 import sys
 import datetime
 
-from qgis.core import QgsProcessingFeedback, QgsProcessingMultiStepFeedback
+from qgis.core import (QgsProcessingFeedback,
+    QgsProcessingMultiStepFeedback,
+    QgsMessageLog,
+    Qgis)
 from qgis.PyQt.QtCore import  QCoreApplication
 
-from . import utils
-from . import qgsUtils
+from . import (
+    utils,
+    qgsUtils)
+from .qt_compatibility import *
 
-from PyQt5.QtCore import QObject, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QGuiApplication
-from PyQt5.QtWidgets import QMessageBox
+from qgis.PyQt.QtCore import QObject, pyqtSlot, pyqtSignal
+from qgis.PyQt.QtGui import QGuiApplication
+from qgis.PyQt.QtWidgets import QMessageBox
 
-# progressFeedback = None
+progressFeedback = None
 
-# def beginSection(msg):
-    # if progressFeedback:
-        # progressFeedback.beginSection(msg)
-    # else:
-        # utils.debug("No progress feedback")
+### Log GUI-free
+
+pluginName = "qgis_lib_mc"
+
+def debug(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Info)
+def info(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Info)
+def warn(msg):
+    QgsMessageLog.logMessage(msg,tag=pluginName,level=Qgis.Warning)
+
+###
+
+def beginSection(msg):
+    if progressFeedback:
+        progressFeedback.beginSection(msg)
+    else:
+        utils.debug("No progress feedback")
         
-# def endSection():
-    # if progressFeedback:
-        # progressFeedback.endSection()
-        # progressFeedback.setProgress(100)
+def endSection():
+    if progressFeedback:
+        progressFeedback.endSection()
+        progressFeedback.setProgress(100)
         
-# def setProgressText(text):
-    # if progressFeedback:
-        # progressFeedback.setProgressText(text)
+def setProgressText(text):
+    if progressFeedback:
+        progressFeedback.setProgressText(text)
         
-# def setSubText(text):
-    # if progressFeedback:
-        # progressFeedback.setSubText(text)
+def setSubText(text):
+    if progressFeedback:
+        progressFeedback.setSubText(text)
         
-# def endJob():
-    # if progressFeedback:
-        # progressFeedback.endJob()
+def endJob():
+    if progressFeedback:
+        progressFeedback.endJob()
   
 def tr(msg):
     return QCoreApplication.translate(None, msg)
@@ -69,6 +87,10 @@ def launchDialog(origin,title,msg):
 def paramError(msg,parent=None):
     title = tr("Wrong parameter value")
     launchDialog(parent,title,msg)
+def launchQuestionDialog(origin,title,msg):
+    reply = QMessageBox.question(origin,title,msg,MSG_YES,MSG_NO)
+    return reply
+    
 def paramNameError(name,parent=None):
     m = tr("Name '")
     m += str(name)
@@ -143,17 +165,20 @@ class ProgressFeedback(QgsProcessingFeedback):
         self.printDate(self.mkBoldRed(msg2))
         launchDialog(self.dlg,prefix,msg)
         
-    def user_error(self,msg):
+    def user_error(self,msg,fatal=True):
         self.error_msg(msg,"user error")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
-    def internal_error(self,msg):
+    def internal_error(self,msg,fatal=True):
         self.error_msg(msg,"internal error")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
-    def todo_error(self,msg):
+    def todo_error(self,msg,fatal=True):
         self.error_msg(msg,"Feature not yet implemented")
-        raise utils.CustomException(msg)
+        if fatal:
+            raise utils.CustomException(msg)
         
     def reportError(self,error,fatalError=False):
         error_msg = str(error)
@@ -167,9 +192,12 @@ class ProgressFeedback(QgsProcessingFeedback):
             self.internal_error(error_msg)
             #self.pushWarning(error_msg)
         
+    def setProgressText(self,txt):
+        self.dlg.lblProgress.setText(txt)
+        
     def beginSection(self,txt):
         self.sectionText = txt
-        self.dlg.lblProgress.setText(txt)
+        self.setProgressText(txt)
         self.setProgress(0)
         self.start_time = time.time()
         self.pushInfo(self.sectionHeader + " BEGIN : " + txt)
@@ -180,8 +208,10 @@ class ProgressFeedback(QgsProcessingFeedback):
         self.end_time = time.time()
         diff_time = self.end_time - self.start_time
         self.pushInfo(self.sectionHeader + " END : " + self.sectionText + " in " + str(diff_time) + " seconds")
-        self.sectionText = ""
+        msg = "{} ... DONE".format(self.sectionText)
+        launchDialog(self.dlg,self.tr("Process finished"),msg)
         self.setProgress(100)
+        self.sectionText = ""
             
     def setSubText(self,txt):
         self.setProgressText(txt)
@@ -200,7 +230,7 @@ class ProgressFeedback(QgsProcessingFeedback):
         if str(fv) == 'inf':
             self.pushInfo("Unexpected value in progress bar : " + str(value))
         else:
-            self.progressBar.setValue(value)
+            self.progressBar.setValue(int(value))
         
     def setPercentage(self,percentage):
         pass
@@ -237,8 +267,9 @@ class ProgressFeedback(QgsProcessingFeedback):
     def saveLogAs(self):
         txt = self.dlg.txtLog.toPlainText()
         fname = qgsUtils.saveFileDialog(self.dlg,msg="Enregistrer le journal sous",filter="*.txt")
-        utils.writeFile(fname,txt)
-        self.pushIngo("Log saved to file '" + fname + "'")
+        if fname!="":
+            utils.writeFile(fname,txt)
+            self.pushInfo("Log saved to file '" + fname + "'")
         
     def myClearLog(self):
         self.dlg.txtLog.clear()
