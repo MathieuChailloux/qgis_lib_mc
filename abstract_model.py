@@ -751,7 +751,7 @@ class DictModel(AbstractGroupModel):
             # childObj = classObj.fromXML(child,feedback=feedback)
             item = model.mkItemFromXML(child,feedback=feedback)
             model.addItem(item)
-        return model          
+        return model
             
     # @abstractmethod
     def updateFromXMLAttribs(self,attribs):

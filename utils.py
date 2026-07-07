@@ -261,6 +261,8 @@ def castVal(v):
         newVal = None
     elif v in ["True","False"]:
         newVal = eval(v)
+    elif isinstance(v,int) or isinstance(v,float) or isinstance(v,bool):
+        newVal = v
     elif v.isnumeric():
         newVal = int(v)
     else:
