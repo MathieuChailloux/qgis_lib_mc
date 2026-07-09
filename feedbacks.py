@@ -161,7 +161,9 @@ class ProgressFeedback(QgsProcessingFeedback):
         return "<b><font color=\"red\">" + msg + "</font></b>"
         
     def error_msg(self,msg,prefix=""):
-        self.printDate(self.mkBoldRed("[" + prefix + "] " + msg))
+        msg2 = "[%s] %s"%(prefix,msg)
+        self.printDate(self.mkBoldRed(msg2))
+        launchDialog(self.dlg,prefix,msg)
         
     def user_error(self,msg,fatal=True):
         self.error_msg(msg,"user error")

@@ -369,3 +369,18 @@ def numpyIsInstalled():
     except ImportError as e:
         import_numpy_ok = False
     return import_numpy_ok
+
+# Module utils
+
+def getModuleRelativePath(sourceName,targetName):
+    try:
+        sourceModules = sys.modules[sourceName]
+        try:
+            targetClass = getattr(sourceModules, targetName)
+            return targetClass
+        except KeyError:
+            raise Exception("No module %s in %s modules %s"%(targetName,sourceName,sourceModules))
+    except KeyError:
+        raise Exception("No module %s in sys.modules %s"%(sourceName,sys.modules))
+
+    

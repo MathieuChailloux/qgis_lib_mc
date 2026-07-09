@@ -142,8 +142,8 @@ def normalizeEncoding(layer):
     utils.debug("system = " + str(utils.platform_sys))
     if extension == ".shp" and (utils.platform_sys in ["Linux","Darwin"]):
         layer.dataProvider().setEncoding('Latin-1')
-    elif extension == ".shp":
-        layer.dataProvider().setEncoding('System')
+    #elif extension == ".shp":
+    #    layer.dataProvider().setEncoding('System')
     elif extension == ".gpkg":
         layer.dataProvider().setEncoding('UTF-8')
         
@@ -784,6 +784,7 @@ class LayerComboDialog:
     def setLayerPath(self,fname):
         self.combo.setLayer(None)
         self.layer_name = fname
+        print("HEY")
         if self.vector_mode is None:
             self.layer = loadLayer(fname,loadProject=True)
         elif self.vector_mode:
