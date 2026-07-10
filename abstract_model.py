@@ -370,18 +370,13 @@ class AbstractGroupModel(QAbstractTableModel):
         self.orders = {}
         self.parser_name = self.__class__.__name__
         self.itemClass = itemClass
-        # print(str(itemClassName))
-        # self.itemClass = getattr(sys.modules[__name__], itemClassName)
         if fields:
             self.fields = fields
         else:
             try:
-                feedbacks.debug("ic " + str(self.itemClass))
-                feedbacks.debug("ic " + str(self.itemClass.__class__.__name__))
                 self.fields = self.itemClass.FIELDS
             except AttributeError:
                 self.fields=[]
-        feedbacks.debug("AGM OK")
 
     @staticmethod
     def getItemClass(childTag):
@@ -585,7 +580,6 @@ class DictModel(AbstractGroupModel):
 
     def __init__(self,itemClass=None,fields=[],
             feedback=None,display_fields=None):
-        feedbacks.info("iC1 " + str(itemClass.__class__.__name__))
         if not itemClass:
             itemClass = getattr(sys.modules[__name__], DictItem.__name__)
         self.all_fields = fields[:]
@@ -1276,9 +1270,6 @@ class ExtensiveTableModel(DictModel):
                  rowIdField=ROW_CODE,baseFields=BASE_FIELDS):
         super().__init__(fields=list(baseFields),
             feedback=parentModel.feedback)
-        feedbacks.debug("EM1 " + str(self.__class__.__name__))
-        feedbacks.debug("EM2 " + str(self.itemClass.__class__.__name__))
-        feedbacks.debug("EM OK")
         self.parentModel = parentModel
         # self.feedback = parentModel.feedback
         self.defaultVal = self.DEFAULT_VAL
