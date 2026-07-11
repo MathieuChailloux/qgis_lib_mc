@@ -168,30 +168,8 @@ class DictItem(AbstractGroupItem):
         feedbacks.debug("fromXML " + str(cls.__name__))
         return cls.fromDict(root.attrib,feedback=feedback)
         
-    # def recompute(self):
-        # fields = list(self.dict.keys())
-        # self.idx_to_fields = {fields.index(f) : f for f in self.display_fields}
-        # self.nb_fields = len(fields)
-        
-    # getNField is used by data function in DictModel to display value in table
-    # def getNField(self,n):
-        # if n < self.nb_fields:
-            # return self.dict[self.idx_to_fields[n]]
-        # else:
-            # feedbacks.debug("getNField " + str(n))
-            # feedbacks.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
-            # return None
-            #utils.internal_error("Accessing " + str(n) + " field >= " + str(self.nb_fields))
-            
-    # def updateNField(self,n,value):
-        # if n < self.nb_fields:
-            # self.dict[self.idx_to_fields[n]] = value
-        # else:
-            # assert false
-            
     def equals(self,other):
         return (self.dict == other.dict)
-        
         
     def toXMLItems(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
@@ -247,7 +225,7 @@ class DictItemWithChild(DictItem):
         return o
     def getChild(self):
         return self.child  
-            
+
     def updateFromOther(self,other):
         for k in other.dict:
             self.dict[k] = other.dict[k]
