@@ -258,6 +258,12 @@ class DictItemWithChild(DictItem):
         self.setChild(child)
     def updateFromDlgItem(self,dlgItem):
         self.updateFromChild(dlgItem)
+
+    def __str__(self):
+        s = super().__str__()
+        s += "\n\tChild : "
+        s += str(self.child)
+        return s
         
 class DictItemWithChildren(DictItem):
     
