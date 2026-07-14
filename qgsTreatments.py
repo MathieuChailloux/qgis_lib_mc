@@ -724,7 +724,8 @@ def applyReclassifyByTable(input,table,output,
                    'RANGE_BOUNDARIES' : boundaries_mode,
                    'RASTER_BAND' : 1,
                    'TABLE' : table }
-    return applyProcessingAlg("native","reclassifybytable",parameters,context,feedback)
+    return applyProcessingAlg("native","reclassifybytable",parameters,
+            context,feedback)
     
 def applyHeatmap(input, output, resolution=5, radius_field=None,
         weight_field=None, context=None, feedback=None):
@@ -873,8 +874,8 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         parameters['Y_RESOLUTION'] = y_res
     # parameters = {'ALPHA_BAND': False, 'CROP_TO_CUTLINE': True, 'DATA_TYPE': 0, 'INPUT': 'D:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Groups/landuse/landuse_raster.tif', 'KEEP_RESOLUTION': True, 'MASK': 'D:\\IRSTEA\\BioDispersal\\Tests\\BousquetOrbExtended\\Source\\ZoneEtude\\EPCIBousquetOrbBuf4000.shp', 'NODATA': None, 'OUTPUT': 'D:/IRSTEA/BioDispersal/Tests/BousquetOrbExtended/Groups/landuse/landuse.tif', 'SET_RESOLUTION': True, 'X_RESOLUTION': 25.0, 'Y_RESOLUTION': 25.0}
     # parameters = { 'ALPHA_BAND' : False, 'CROP_TO_CUTLINE' : True, 'DATA_TYPE' : 0, 'EXTRA' : '', 'INPUT' : 'D:/IRSTEA/ERC/tests/BousquetOrbExtended/Source/CorineLandCover/CLC12_BOUSQUET_ORB.tif', 'KEEP_RESOLUTION' : False, 'MASK' : 'D:/IRSTEA/ERC/tests/BousquetOrbExtended/Source/ZoneEtude/EPCIBousquetOrb.shp', 'MULTITHREADING' : False, 'NODATA' : None, 'OPTIONS' : '', 'OUTPUT' : out_path, 'SET_RESOLUTION' : False, 'SOURCE_CRS' : None, 'TARGET_CRS' : None, 'X_RESOLUTION' : 10, 'Y_RESOLUTION' : 10 }
-    utils.debug("parameters = " + str(parameters))
-    return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,context,feedback)
+    return applyProcessingAlg("gdal","cliprasterbymasklayer",parameters,
+        context=context,feedback=feedback)
     
 def clipRasterAllTouched(raster_path,vector_path,dst_crs,
                          out_path=None,nodata=None,data_type=USE_INPUT_TYPE,

@@ -1108,12 +1108,13 @@ class NormalizingParamsModel(QAbstractTableModel):
                 extentLayerPath = self.getExtentLayer()
             else:
                 return input
+        if not feedback:
+            feedback = self.feedback
         nodataVal = qgsTreatments.nodata_val if nodata_val is None else nodata_val
         extentLayer, extentLayerType = qgsUtils.loadLayerGetType(extentLayerPath)
         feedbacks.debug("extentLayerType = " + str(extentLayerType))
         resolution = self.getResolution()
         if extentLayerType == 'Vector':
-            clipped_path = QgsProcessingUtils.generateTempFilename('clipped.tif')
             res = qgsTreatments.clipRasterFromVector(path,extentLayerPath,out_path,
                 resolution=resolution,nodata=nodataVal,
                 context=context,feedback=feedback)
