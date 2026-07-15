@@ -23,8 +23,6 @@
     Useful functions to perform base operation on XML files.
 """
 
-from defusedxml import ElementTree as ET
-
 def getChildren(root):
     res = []
     for c in root:

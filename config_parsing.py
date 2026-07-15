@@ -26,8 +26,6 @@
 
 from . import utils
 
-import xml.etree.ElementTree as ET
-
 config_parsers = None
 
 def setConfigParsers(parsers):
@@ -42,6 +40,7 @@ def getParserByName(name):
 
 def parseConfig(config_file,feedback=None):
     feedback.pushInfo("Parsing configuration from file '" + str(config_file) + "'")
+    from defusedxml import ElementTree as ET
     tree = ET.parse(config_file)
     root = tree.getroot()
     for parser in root:
