@@ -40,7 +40,10 @@ def getParserByName(name):
 
 def parseConfig(config_file,feedback=None):
     feedback.pushInfo("Parsing configuration from file '" + str(config_file) + "'")
-    from defusedxml import ElementTree as ET
+    try:
+        from defusedxml import ElementTree as ET
+    except ModuleNotFoundError:
+        utils.user_error("Module 'defusedxml' not found, install it with QPip plugin")
     tree = ET.parse(config_file)
     root = tree.getroot()
     for parser in root:
