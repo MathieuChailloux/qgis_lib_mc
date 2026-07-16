@@ -19,7 +19,9 @@
 from qgis.gui import (
     QgsFileWidget)
 from qgis.core import (
-    QgsMapLayerProxyModel)
+    Qgis,
+    QgsMapLayerProxyModel,
+    QgsMapLayer)
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView,
@@ -33,6 +35,22 @@ from qgis.PyQt.QtWidgets import (
 # =============================================
 
 IS_QT6 = hasattr(Qt, "CheckState")
+
+# =============================================
+# Layer types
+# =============================================
+if IS_QT6:
+    VECTOR_LAYER = QgsMapLayer.LayerType.VectorLayer
+    RASTER_LAYER = QgsMapLayer.LayerType.RasterLayer
+    VECTOR_LAYER_FILTER = QgsMapLayerProxyModel.Filter.VectorLayer
+    RASTER_LAYER_FILTER = QgsMapLayerProxyModel.Filter.RasterLayer
+    ALL_FILTER = QgsMapLayerProxyModel.Filter.All
+else:
+    VECTOR_LAYER = QgsMapLayer.VectorLayer
+    RASTER_LAYER = QgsMapLayer.RasterLayer
+    VECTOR_LAYER_FILTER = QgsMapLayerProxyModel.VectorLayer
+    RASTER_LAYER_FILTER = QgsMapLayerProxyModel.RasterLayer
+    ALL_FILTER = QgsMapLayerProxyModel.All
 
 # =============================================
 # Text  format

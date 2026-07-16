@@ -173,14 +173,14 @@ USE_INPUT_TYPE = -1
 # Parameter shift return integer value according to TYPES list
 # If input qgis_type is unknown, it is cast to defaultType
 # If input value is -1, it means 'Use input layer data type' and return value is 0
-def qgsTypeToInt(qgis_type,shift=False,typeList=2,defaultType=Qgis.Float32):
+def qgsTypeToInt(qgis_type,shift=False,typeList=2,defaultType=Qgis.DataType.Float32):
     if isinstance(qgis_type,Qgis.DataType):
-        TYPES1 = [Qgis.Byte, Qgis.Int16, Qgis.UInt16, Qgis.Int32, Qgis.UInt32, Qgis.Float32,
-                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
-        TYPES2 = [Qgis.Byte, Qgis.Int16, Qgis.UInt16, Qgis.UInt32, Qgis.Int32, Qgis.Float32,
-                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
-        TYPES3 = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32, Qgis.Float32,
-                 Qgis.Float64, Qgis.CInt16, Qgis.CInt32, Qgis.CFloat32, Qgis.CFloat64]
+        TYPES1 = [Qgis.DataType.Byte, Qgis.DataType.Int16, Qgis.DataType.UInt16, Qgis.DataType.Int32, Qgis.DataType.UInt32, Qgis.DataType.Float32,
+                 Qgis.DataType.Float64, Qgis.DataType.CInt16, Qgis.DataType.CInt32, Qgis.DataType.CFloat32, Qgis.DataType.CFloat64]
+        TYPES2 = [Qgis.DataType.Byte, Qgis.DataType.Int16, Qgis.DataType.UInt16, Qgis.DataType.UInt32, Qgis.DataType.Int32, Qgis.DataType.Float32,
+                 Qgis.DataType.Float64, Qgis.DataType.CInt16, Qgis.DataType.CInt32, Qgis.DataType.CFloat32, Qgis.DataType.CFloat64]
+        TYPES3 = [Qgis.DataType.Byte, Qgis.DataType.UInt16, Qgis.DataType.Int16, Qgis.DataType.UInt32, Qgis.DataType.Int32, Qgis.DataType.Float32,
+                 Qgis.DataType.Float64, Qgis.DataType.CInt16, Qgis.DataType.CInt32, Qgis.DataType.CFloat32, Qgis.DataType.CFloat64]
         if typeList == 1:
             typeList = TYPES1
         elif typeList == 2:
@@ -712,7 +712,7 @@ def zonalHisto(vector,raster,output,prefix='HISTO_',band=1,context=None,feedback
     return applyProcessingAlg("native","zonalhistogram",parameters,context,feedback)
 
 def applyReclassifyByTable(input,table,output,
-                           nodata_val=nodata_val,out_type=Qgis.Float32,
+                           nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                            boundaries_mode=1,nodata_missing=True,
                            context=None,feedback=None):
     # Types : 0 = Byte, ...
@@ -761,11 +761,11 @@ def applyHeatmap(input, output, resolution=5, radius_field=None,
 # Extent can be given through 'extent_path'. If not, it is extracted from input layer.
 # Output raster layer is loaded in QGIS if 'load_flag' is True.
 def applyRasterization(in_path,out_path,extent,resolution,
-                       field=None,burn_val=None,out_type=Qgis.Float32,
+                       field=None,burn_val=None,out_type=Qgis.DataType.Float32,
                        nodata_val=nodata_val,all_touch=False,overwrite=False,
                        context=None,feedback=None,options=gtiff_opts_pipe):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32',
-             'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
+             'Float64', Qgis.DataType.CInt16, Qgis.DataType.CInt32, 'CFloat32', 'CFloat64']
     #utils.debug("applyRasterization")
     feedback.setProgressText("Rasterize")
     if overwrite:
@@ -818,7 +818,7 @@ def applyWarpReproject(in_path,out_path,resampling_mode='near',dst_crs=None,
         qgsUtils.removeRaster(out_path)
     # Output type
     TYPES = ['Use input layer data type', 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32',
-             'Float32', 'Float64', Qgis.CInt16, Qgis.CInt32, 'CFloat32', 'CFloat64']
+             'Float32', 'Float64', Qgis.DataType.CInt16, Qgis.DataType.CInt32, 'CFloat32', 'CFloat64']
     # Parameters
     parameters = { 'DATA_TYPE' : qgsTypeToInt(out_type),
                    'INPUT' : in_path,
@@ -899,7 +899,7 @@ def clipRasterAllTouched(raster_path,vector_path,dst_crs,
 
 
 
-def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
+def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                      nodata_input=None,pct=False,separate=False,options=gtiff_opts_pipe,
                      context=None,feedback=None):
     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64',
@@ -917,7 +917,7 @@ def applyMergeRaster(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
             'OUTPUT': output
         }
     return applyProcessingAlg("gdal","merge",parameters,context,feedback)
-# def applyMergeRaster2(files,output,nodata_val=nodata_val,out_type=Qgis.Float32,
+# def applyMergeRaster2(files,output,nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
 #                      nodata_input=None,pct=False,separate=False,context=None,feedback=None):
 #     TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
 #     feedback.setProgressText("Merge raster")
@@ -950,7 +950,7 @@ def applyRasterCalcNative(layers,expr,output,
         context,feedback)
 
 def applyRasterCalcProc(input_a,output,expr,
-                    nodata_val=nodata_val,out_type=Qgis.Float32,
+                    nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     feedback.setProgressText("Raster Calc")
@@ -965,7 +965,7 @@ def applyRasterCalcProc(input_a,output,expr,
 
 # Temporary workaround to fix UnicodeDecodeError
 def applyRasterCalc(input_a,output,expr,
-                    nodata_val=nodata_val,out_type=Qgis.Float32,
+                    nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                     context=None,feedback=None):
     out_type = qgsTypeToInt(out_type,shift=True)
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
@@ -978,21 +978,21 @@ def applyRasterCalc(input_a,output,expr,
     return output
 
 def applyRasterCalcLT(input,output,max_val,
-                      nodata_val=nodata_val,out_type=Qgis.Float32,
+                      nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                       context=None,feedback=None):
     expr = "less(A," + str(max_val) + ")*A+less_equal(" + str(max_val) + ",A)*" + str(nodata_val)
     return applyRasterCalc(input,output,expr,nodata_val,out_type,
                context=context,feedback=feedback)
 
 def applyRasterCalcLE(input,output,max_val,
-                      nodata_val=nodata_val,out_type=Qgis.Float32,
+                      nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                       context=None,feedback=None):
     expr = "less_equal(A," + str(max_val) + ")*A+less(" + str(max_val) + ",A)*" + str(nodata_val)
     return applyRasterCalc(input,output,expr,nodata_val,out_type,
                context=context,feedback=feedback)
 
 def applyRasterCalcAB(input_a,input_b,output,expr,
-                    nodata_val=nodata_val,out_type=Qgis.Float32,
+                    nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : 1,
@@ -1008,7 +1008,7 @@ def applyRasterCalcAB(input_a,input_b,output,expr,
                context=context,feedback=feedback)
 
 def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,expr,
-                    nodata_val=None,out_type=Qgis.Float32,
+                    nodata_val=None,out_type=Qgis.DataType.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     parameters = { 'BAND_A' : band_a,
@@ -1025,7 +1025,7 @@ def applyRasterCalcABC(input_a,input_b,input_c, band_a, band_b, band_c, output,e
     return applyProcessingAlg("gdal","rastercalculator",parameters,context,feedback)
 
 def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
-                    nodata_val=nodata_val,out_type=Qgis.Float32,
+                    nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                     context=None,feedback=None):
     TYPE = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64']
     if os.path.isfile(output):
@@ -1061,7 +1061,7 @@ def applyRasterCalcAB_ABNull(input_a,input_b,output,expr,
     # return applyRSetNull(nonull_reset,nodata_val,output)
 
 def applyRasterCalcMult(input_a,input_b,output,
-                        nodata_val=nodata_val,out_type=Qgis.Float32,
+                        nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                         context=None,feedback=None):
     expr = "A*B"
     return applyRasterCalcAB(input_a,input_b,output,expr,
@@ -1069,7 +1069,7 @@ def applyRasterCalcMult(input_a,input_b,output,
                              context=context,feedback=feedback)
 
 def applyRasterCalcMin(input_a,input_b,output,
-                       nodata_val=nodata_val,out_type=Qgis.Float32,
+                       nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                        context=None,feedback=None):
     min = qgsUtils.getRastersMinMax([input_a,input_b])
     expr = 'A*less_equal(A,B) + B*less(B,A)'
@@ -1077,7 +1077,7 @@ def applyRasterCalcMin(input_a,input_b,output,
                 out_type=out_type,context=context,feedback=feedback)
 
 def applyRasterCalcMax(input_a,input_b,output,
-                       nodata_val=nodata_val,out_type=Qgis.Float32,
+                       nodata_val=nodata_val,out_type=Qgis.DataType.Float32,
                        context=None,feedback=None):
     expr = 'B*less_equal(A,B) + A*less(B,A) '
     return applyRasterCalcAB_ABNull(input_a,input_b,output,expr,nodata_val=nodata_val,

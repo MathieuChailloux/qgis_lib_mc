@@ -35,7 +35,7 @@ except ImportError:
 import qgis
 from qgis.gui import *
 from qgis.core import *
-from qgis.PyQt.QtCore import QCoreApplication, QVariant, pyqtSignal
+from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from . import utils
@@ -60,14 +60,16 @@ def typeIsNumeric(t):
     return (typeIsInteger(t) or typeIsFloat(t))
 
 def qgisTypeIsInteger(t):
-    int_types = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32]
+    int_types = [
+        Qgis.DataType.Byte, Qgis.DataType.UInt16,
+        Qgis.DataType.Int16, Qgis.DataType.UInt32, Qgis.DataType.Int32]
     return (t in int_types)
 
 def isVectorLayer(layer):
-    return layer.type() == QgsMapLayer.VectorLayer
+    return layer.type() == VECTOR_LAYER
 
 def isRasterLayer(layer):
-    return layer.type() == QgsMapLayer.RasterLayer
+    return layer.type() == RASTER_LAYER
 
 def removeFolder(path):
     if os.path.isdir(path):
@@ -89,7 +91,7 @@ def removeVectorLayer(path):
 # Returns path from QgsMapLayer
 def pathOfLayer(l):
     uri = l.dataProvider().dataSourceUri()
-    if l.type() == QgsMapLayer.VectorLayer and '|' in uri:
+    if l.type() == VECTOR_LAYER and '|' in uri:
         path = uri[:uri.rfind('|')]
     else:
         path = uri
@@ -380,16 +382,16 @@ def getGDALUnsignedTypeAndND(max_val):
 
 # Returns maximum value that can be represented in input unsigned type (QGIS type)
 def getQGISTypeMaxVal(type):
-    unsigned = { Qgis.Byte : 255,
-        Qgis.UInt16 : 65535,
-        Qgis.UInt32 : 4294967295 }
+    unsigned = { Qgis.DataType.Byte : 255,
+        Qgis.DataType.UInt16 : 65535,
+        Qgis.DataType.UInt32 : 4294967295 }
     if type not in unsigned:
         utils.internal_error("Type " + str(type) + " is unsigned")
     return unsigned[type]
 
 # Returns list of classic values to reprensent NoData pixels in raster layers
 def getNDCandidates(type):
-    if type in [ Qgis.Byte, Qgis.UInt16, Qgis.UInt32]:
+    if type in [ Qgis.DataType.Byte, Qgis.DataType.UInt16, Qgis.DataType.UInt32]:
         return [ 0,getQGISTypeMaxVal(type) ]
     else:
         return [ 0, -9999, -1 ]
@@ -771,15 +773,15 @@ class LayerComboDialog:
 
     def setVectorMode(self):
         self.vector_mode = True
-        self.combo.setFilters(QgsMapLayerProxyModel.VectorLayer)
+        self.combo.setFilters(VECTOR_LAYER_FILTER)
 
     def setRasterMode(self):
         self.vector_mode = False
-        self.combo.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.combo.setFilters(RASTER_LAYER_FILTER)
 
     def setBothMode(self):
         self.vector_mode = None
-        self.combo.setFilters(QgsMapLayerProxyModel.All)
+        self.combo.setFilters(ALL_FILTER)
 
     def setLayerPath(self,fname):
         self.combo.setLayer(None)
