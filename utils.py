@@ -25,14 +25,13 @@
 """
     Utility functions independent from QGIS API.
 """
-
+import ast
 import datetime
 import os.path
 import pathlib
 import sys
 import subprocess
 import time
-import html
 import platform
 import glob
 import csv
@@ -260,7 +259,7 @@ def castVal(v):
     if v is None or v == "None":
         newVal = None
     elif v in ["True","False"]:
-        newVal = eval(v)
+        newVal = ast.literal_eval(v)
     elif isinstance(v,int) or isinstance(v,float) or isinstance(v,bool):
         newVal = v
     elif v.isnumeric():

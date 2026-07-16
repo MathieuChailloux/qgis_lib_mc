@@ -24,8 +24,6 @@ import os.path
 import csv
 import ast
 import traceback
-import json
-import inspect
 from io import StringIO
 
 from qgis.core import (
@@ -35,12 +33,10 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsProcessingUtils,
     QgsProcessingFeedback,
-    QgsMessageLog,
     NULL)
-# from qgis.gui import QgsCheckableItemModel
 
 from qgis.PyQt import QtGui, QtCore, QtWidgets
-from qgis.PyQt.QtGui import QStandardItemModel#, QgsCheckableItemModel
+from qgis.PyQt.QtGui import QStandardItemModel
 from qgis.PyQt.QtCore import (
     QVariant,
     QAbstractTableModel,

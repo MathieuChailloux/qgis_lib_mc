@@ -24,7 +24,6 @@
 """
 
 import time
-import sys
 import datetime
 
 from qgis.core import (QgsProcessingFeedback,
@@ -38,7 +37,6 @@ from . import (
     qgsUtils)
 from .qt_compatibility import *
 
-from qgis.PyQt.QtCore import QObject, pyqtSlot, pyqtSignal
 from qgis.PyQt.QtGui import QGuiApplication
 from qgis.PyQt.QtWidgets import QMessageBox
 
