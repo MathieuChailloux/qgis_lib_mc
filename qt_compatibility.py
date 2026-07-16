@@ -35,6 +35,14 @@ from qgis.PyQt.QtWidgets import (
 IS_QT6 = hasattr(Qt, "CheckState")
 
 # =============================================
+# Text  format
+# =============================================
+if IS_QT6:
+    RICH_TEXT = Qt.TextFormat.RichText
+else:
+    RICH_TEXT = Qt.RichText
+
+# =============================================
 # Orders
 # =============================================
 if IS_QT6:
@@ -195,8 +203,10 @@ else:
 
 if IS_QT6:
     CUSTOM_CONTEXT_MENU = Qt.ContextMenuPolicy.CustomContextMenu
+    PREVENT_CONTEXT_MENU = Qt.ContextMenuPolicy.PreventContextMenu
 else:
     CUSTOM_CONTEXT_MENU = Qt.CustomContextMenu
+    PREVENT_CONTEXT_MENU = Qt.PreventContextMenu
 
 
 # =============================================
