@@ -35,6 +35,7 @@ from qgis.core import (
     QgsCoordinateTransform,
     QgsProcessingUtils,
     QgsProcessingFeedback,
+    QgsMessageLog,
     NULL)
 # from qgis.gui import QgsCheckableItemModel
 
@@ -239,8 +240,8 @@ class DictItemWithChild(DictItem):
 
     def __str__(self):
         s = super().__str__()
-        s += "\n\tChild : "
-        s += str(self.child)
+        s += "\n\tChild({}) : {}".format(self.child.__class__.__name__,self.child)
+        # s += str(self.child)
         return s
         
 class DictItemWithChildren(DictItem):
@@ -1611,6 +1612,7 @@ class MainDialog(QtWidgets.QDialog):
             feedbacks.debug(str(msg))
             final_msg = tbinfo + "\n" + msg
             feedbacks.debug("traceback : " + str(tbinfo))
+            # QgsMessageLog.logMessage(tbinfo,"Extensions")
             self.feedback.error_msg(errmsg,prefix="Unexpected error")
         self.mTabWidget.setCurrentWidget(self.logTab)
         self.feedback.focusLogTab()
