@@ -59,7 +59,7 @@ from abc import ABC, abstractmethod
 
 from .qt_compatibility import *
 
-""" 
+"""
     Abstract and usual classes to implement MVC (Model-View-Controller) design pattern.
 """
 
@@ -69,36 +69,36 @@ class AbstractGroupItem:
 
     def __init__(self):
         pass
-        
+
     @abstractmethod
     def getNField(self,n):
         return None
-        
+
     @abstractmethod
     def updateNField(self,n,value):
         return None
-        
+
     @abstractmethod
     def checkItem(self):
         return False
-        
+
     @abstractmethod
     def equals(self,other):
         return False
-        
+
     @abstractmethod
     def applyItem(self):
         pass
-        
+
 # Array item.
 # Array elements order must be fixed.
 class ArrayItem(AbstractGroupItem):
-    
+
     def __init__(self,arr,feedback=None):
         self.arr = arr
         self.nb_fields = len(arr)
         self.feedback = feedback
-        
+
     def getNField(self,n):
         if n < self.nb_fields:
             return self.arr[n]
@@ -106,20 +106,20 @@ class ArrayItem(AbstractGroupItem):
             feedbacks.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             return None
             #assert false
-            
+
     def updateNField(self,n,value):
         if n < self.nb_fields:
             self.arr[n] = value
         else:
             assert false
-            
+
     def equals(self,other):
         self.arr == other.arr
-                 
+
 # Dictionary item.
 # Fields not displayed must be stored at the end.
 class DictItem(AbstractGroupItem):
-    
+
     def __init__(self,dict,feedback=None):
         # if not fields:
             # fields = list(dict.keys())
@@ -131,7 +131,7 @@ class DictItem(AbstractGroupItem):
         # self.nb_fields = len(self.display_fields)
         self.dict = { f:dict[f] for f in dict }
         self.feedback = feedback
-    
+
     # Initialize from values according to fields order
     @classmethod
     def fromValues(cls,valueList):
@@ -141,12 +141,12 @@ class DictItem(AbstractGroupItem):
         feedbacks.debug(str(d))
         feedbacks.debug(str(d.__class__.__name__))
         return cls(dict=d)
-        
+
     def __str__(self):
         return str(self.dict)
     def __copy__(self):
         return DictItem(self.dict,feedback=self.feedback)
-        
+
     # def toJSON(self):
         # return json.dumps(self)
     @classmethod
@@ -164,10 +164,10 @@ class DictItem(AbstractGroupItem):
     def fromXML(cls,root,feedback=None):
         feedbacks.debug("fromXML " + str(cls.__name__))
         return cls.fromDict(root.attrib,feedback=feedback)
-        
+
     def equals(self,other):
         return (self.dict == other.dict)
-        
+
     def toXMLItems(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
         for k,v in self.dict.items():
@@ -180,22 +180,22 @@ class DictItem(AbstractGroupItem):
             # xmlStr += c.toXML()
         xmlStr += "</" + self.__class__.__name__ +">"
         return xmlStr
-            
+
     def updateFromOther(self,other):
         for k in other.dict:
             self.dict[k] = other.dict[k]
     def updateFromDlgItem(self,dlgItem):
         self.updateFromOther(dlgItem)
-   
+
 class DictItemWithChild(DictItem):
-    
+
     def __init__(self,dict=dict,feedback=None,child=None):
         super().__init__(dict=dict,feedback=feedback)
-        self.setChild(child)      
-        
+        self.setChild(child)
+
     # def getItemClass(self,childTag):
         # return getattr(sys.modules[__name__], childTag)
-        
+
     def toXML(self,indent=""):
         feedbacks.debug("childXML = " +str(self.child))
         feedbacks.debug("childXML = " +str(self.child.__class__.__name__))
@@ -221,7 +221,7 @@ class DictItemWithChild(DictItem):
             o.setChild(childObj)
         return o
     def getChild(self):
-        return self.child  
+        return self.child
 
     def updateFromOther(self,other):
         for k in other.dict:
@@ -239,13 +239,13 @@ class DictItemWithChild(DictItem):
         s += "\n\tChild({}) : {}".format(self.child.__class__.__name__,self.child)
         # s += str(self.child)
         return s
-        
+
 class DictItemWithChildren(DictItem):
-    
+
     def __init__(self,dict=dict,feedback=None,children=[]):
         super().__init__(dict=dict,feedback=feedback)
         self.children = children
-        
+
     def toXML(self,indent=""):
         xmlStr = indent + "<" + self.__class__.__name__
         childrenStr = ""
@@ -277,8 +277,8 @@ class DictItemWithChildren(DictItem):
         if self.children:
             return self.children[0]
         else:
-            self.feedback.internal_error("No children for ImportItem")    
-            
+            self.feedback.internal_error("No children for ImportItem")
+
     def updateFromOther(self,other):
         self.updateFromDlgItem(other)
     def updateFromDlgItem(self,dlgItem):
@@ -294,8 +294,8 @@ class DictItemWithChildren(DictItem):
             # if model:
                 # model.fromXMLRoot(child)
                 # model.layoutChanged.emit()
-    
-    
+
+
 # FieldsModel modelizes a unique dictionary.
 # Displayed in vertical mode (1 line = 1 field, single column).
 # Used for parameters for instance.
@@ -306,18 +306,18 @@ class FieldsModel(QAbstractTableModel):
         self.dict = dict
         self.fields = dict.keys()
         self.feedback = feedback
-        
+
     # Number of rows = numberf of fields
     def rowCount(self,parent=QModelIndex()):
         return len(self.fields)
-        
-    # Single column     
+
+    # Single column
     def columnCount(self,parent=QModelIndex()):
         return 1
-    
+
     def getNItem(self,n):
         return self.dict[self.fields[n]]
-    
+
     # This function is called by Qt to display information at 'index' position.
     # Value at 'n' row is retrieved through getNItem.
     def data(self,index,role):
@@ -331,7 +331,7 @@ class FieldsModel(QAbstractTableModel):
             return(QVariant(item))
         else:
             return None
-            
+
     # Row headers = field name, column header = 'value'
     def headerData(self,col,orientation,role):
         if orientation == HORIZONTAL and role == DISPLAY_ROLE:
@@ -339,7 +339,7 @@ class FieldsModel(QAbstractTableModel):
         elif orientation == VERTICAL and role == DISPLAY_ROLE:
             return(self.fields[col])
         return None
-    
+
 # AbstractGroupModel allows multiple group items.
 # Items must implement AbstractGroupItem class.
 class AbstractGroupModel(QAbstractTableModel):
@@ -366,7 +366,7 @@ class AbstractGroupModel(QAbstractTableModel):
     def __str__(self):
         res = "[[" + ",".join([str(i) for i in self.items]) + "]]"
         return res
-    
+
     # @abstractmethod
     # def setItemClass(itemClass):
         # self.itemClass = itemClass
@@ -381,20 +381,20 @@ class AbstractGroupModel(QAbstractTableModel):
             i = self.mkItemFromStr(i_str)
             self.addItem(i)
         self.layoutChanged.emit()
-        
+
     def tr(self, msg):
         return QCoreApplication.translate(self.__class__.__name__, msg)
-        
+
     def checkNotEmpty(self):
         if len(self.items) == 0:
             self.feedback.internal_error("Empty buffer model")
-        
+
     def getItems(self):
         return self.items
-        
+
     def getNbItems(self):
         return len(self.getItems())
-        
+
     def getNItem(self,n):
         if n < self.rowCount():
             return self.items[n]
@@ -404,16 +404,16 @@ class AbstractGroupModel(QAbstractTableModel):
             return None
     def getNField(self,item,n):
         return item.getNField(n)
-        
+
     def rowCount(self,parent=QModelIndex()):
         return len(self.items)
-        
+
     def columnCount(self,parent=QModelIndex()):
         return len(self.fields)
-        
+
     def getHeaderString(self,col):
         return None
-        
+
     def headerData(self,col,orientation,role):
         if col >= len(self.fields):
             pass
@@ -425,7 +425,7 @@ class AbstractGroupModel(QAbstractTableModel):
             headerStr = headerStr if headerStr else self.fields[col]
             return QVariant(headerStr)
         return None
-            
+
     # This function is called by Qt to display information at 'index' position.
     # Value at (row,col) position is retrieved through getNItem and getNField.
     # Items values must be strings.
@@ -443,11 +443,11 @@ class AbstractGroupModel(QAbstractTableModel):
             return(QVariant(val))
         else:
             return None
-            
+
     def setDataXY(self,x,y,value):
         item = self.getNItem(x)
         item.updateNField(index.column(),value)
-    
+
     # This function is called by Qt when the view is modified at 'index' position.
     def setData(self, index, value, role):
         feedbacks.debug("setData (" + str(index.row()) + ","
@@ -457,16 +457,16 @@ class AbstractGroupModel(QAbstractTableModel):
             self.dataChanged.emit(index, index)
             return True
         return False
-            
+
     def flags(self, index):
         return ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
-        
+
     def itemExists(item):
         for i in self.items:
             if i.equals(item):
                 return True
         return False
-            
+
     # Add new item in model if not already existing.
     # layoutChanged signal must be emitted to update view.
     def addItem(self,item):
@@ -478,10 +478,10 @@ class AbstractGroupModel(QAbstractTableModel):
             self.items.append(item)
             self.insertRow(0)
             self.layoutChanged.emit()
-        
+
     def removeField(self,fieldname):
         self.fields.remove(fieldname)
-        
+
     # Remove items at 'indexes' positions from model.
     # If multiple columns are selected, multiple indexes are created,
     # so only unique rows are extracted to delete items.
@@ -491,7 +491,7 @@ class AbstractGroupModel(QAbstractTableModel):
         feedbacks.debug("self.clss = " + str(self.__class__.__name__))
         rows = sorted(set([i.row() for i in indexes]))
         self.removeItemsFromRows(rows)
-        
+
     def removeItemsFromRows(self,rows):
         n = 0
         for row in rows:
@@ -500,7 +500,7 @@ class AbstractGroupModel(QAbstractTableModel):
             del self.items[roww]
             n += 1
         self.layoutChanged.emit()
-        
+
     # Apply items for 'indexes' (position in item list, not index from Qt selection)
     # If no 'indexes' given, apply each item
     def applyItems(self,indexes=None):
@@ -510,7 +510,7 @@ class AbstractGroupModel(QAbstractTableModel):
         for n in indexes:
             i = self.items[n]
             i.applyItem()
-            
+
     def getItems(self,indexes=None):
         res = []
         if not indexes:
@@ -519,7 +519,7 @@ class AbstractGroupModel(QAbstractTableModel):
             i = self.items[n]
             res.append(i)
         return res
-            
+
     # Order items based on 'idx' column/field
     # Reverse order at each call for a specific column
     # def orderItems(self,idx):
@@ -534,28 +534,28 @@ class AbstractGroupModel(QAbstractTableModel):
             # self.items.reverse()
         # self.orders[idx] = not self.orders[idx]
         # self.layoutChanged.emit()
-        
+
     def upgradeElem(self,row):
         feedbacks.debug("upgradeElem " + str(row))
         if row > 0:
             self.swapItems(row -1, row)
-        
+
     def downgradeElem(self,row):
         feedbacks.debug("downgradeElem " + str(row))
         if row < len(self.items) - 1:
             self.swapItems(row, row + 1)
-            
+
     # Switch items at position 'i1' and 'i2'
     def swapItems(self,i1,i2):
         self.items[i1], self.items[i2] = self.items[i2], self.items[i1]
         self.layoutChanged.emit()
-        
+
     # Remove all items
     def clearModel(self):
         self.items = []
         self.layoutChanged.emit()
-        
-        
+
+
 # DictModel is a group model with dictionary items
 class DictModel(AbstractGroupModel):
 
@@ -572,11 +572,11 @@ class DictModel(AbstractGroupModel):
         # self.idx_to_fields = self.fields
         self.nb_fields = len(self.fields)
         # self.feedback = feedback
-        
+
     def __copy__(self):
         return DictModel(itemClass=self.itemClass,fields=self.fields,
             feedback=self.feedback,display_fields=self.display_fields)
-        
+
     def getNField(self,item,n):
         try:
             # return item.dict[self.display_fields.keys()[n]]
@@ -596,7 +596,7 @@ class DictModel(AbstractGroupModel):
         fieldname = self.fields[y]
         item.dict[fieldname] = value
         # item.dict[self.idx_to_fields[y]] = value
-        
+
     def sort(self,col,order):
         # try:
             # sorted_items = sorted(self.items, key=lambda i: i.dict[self.fields[col]])
@@ -609,34 +609,34 @@ class DictModel(AbstractGroupModel):
         def isInt(i):
             k = keyFunc(i)
             return isinstance(k,int) or (isinstance(k,str) and k.isdigit())
-            
+
         int_items = [i for i in self.items if isInt(i)]
         not_items = [i for i in self.items if not isInt(i)]
         sorted_ints = sorted(int_items, key=keyFuncInt)
         sorted_other = sorted(not_items, key=keyFunc)
         sorted_items = sorted_ints + sorted_other
-            
+
         if order == DESCENDING_ORDER:
             sorted_items.reverse()
         self.items = sorted_items
         self.layoutChanged.emit()
-                
+
     def getMatchingItem(self,item):
         for i in self.items:
             if i.equals(item):
                 return i
         return None
-        
+
     def getItemFromName(self,name):
         for i in self.items:
             if i.getName() == name:
                 return i
         return None
-        
+
     def itemExists(self,item):
         matching_item = self.getMatchingItem(item)
         return (matching_item != None)
-        
+
     def addItem(self,item):
         feedbacks.debug(str(self.__class__.__name__
             + " addItem " + str(item)))
@@ -650,13 +650,13 @@ class DictModel(AbstractGroupModel):
             feedbacks.debug("adding item")
             self.items.append(item)
             self.insertRow(0)
-        
+
     def recompute(self):
         # if self.dict:
             # fields = list(self.dict.keys())
         # self.idx_to_fields = {self.fields.index(f) : f for f in self.display_fields}
         self.nb_fields = len(self.fields)
-            
+
     def addField(self,field,defaultVal=None):
         feedbacks.debug("addField f1 " + str(self.fields))
         if field not in self.fields:
@@ -669,7 +669,7 @@ class DictModel(AbstractGroupModel):
                 i.dict[field] = defaultVal
             self.layoutChanged.emit()
         feedbacks.debug("addField f2 " + str(self.fields))
-            
+
     def renameField(self,oldName,newName):
         if oldName not in self.fields:
             self.feedback.internal_error("Could not find field " + str(oldName))
@@ -678,13 +678,13 @@ class DictModel(AbstractGroupModel):
         for i in self.items:
             i.dict[newName] = i.dict.pop(oldName)
         self.layoutChanged.emit()
-        
+
     def renameFieldValue(self,fieldname,oldVal,newVal):
         for item in self.items:
             if item.dict[fieldname] == oldVal:
                 item.dict[fieldname] = newVal
         self.layoutChanged.emit()
-            
+
     # Each item is updated when field is removed
     # Item recompute function must be called to keep consistency
     def removeField(self,fieldname):
@@ -702,7 +702,7 @@ class DictModel(AbstractGroupModel):
             self.all_fields.remove(fieldname)
             self.recompute()
         self.layoutChanged.emit()
-        
+
     # @abstractmethod
     def mkItemFromDict(self,dict,feedback=None):
         return self.itemClass.fromDict(dict,feedback=feedback)
@@ -727,11 +727,11 @@ class DictModel(AbstractGroupModel):
             item = model.mkItemFromXML(child,feedback=feedback)
             model.addItem(item)
         return model
-            
+
     # @abstractmethod
     def updateFromXMLAttribs(self,attribs):
         self.dict = DictModel.dictFromXMLAttribs(attribs)
-        
+
     def updateFromXML(self,root,feedback=None):
         self.updateFromXMLAttribs(root.attrib)
         #self.clearModel()
@@ -741,8 +741,8 @@ class DictModel(AbstractGroupModel):
             item = self.mkItemFromXML(parsed_item,feedback=feedback)
             self.addItem(item)
         self.layoutChanged.emit()
-              
-        
+
+
     def toXML(self,indent=" ",attribs_dict=None):
         # feedbacks.debug("toXML " + self.parser_name)
         xmlStr = indent + "<" + self.parser_name
@@ -758,7 +758,7 @@ class DictModel(AbstractGroupModel):
         xmlStr += indent + "</" + self.parser_name + ">"
         return xmlStr
         # self.feedback.endSection()
-        
+
     # Saves model to CSV file 'fname'
     def saveCSV(self,fname):
         with open(fname,"w", newline='') as f:
@@ -768,7 +768,7 @@ class DictModel(AbstractGroupModel):
                 feedbacks.debug("writing row " + str(i.dict))
                 writer.writerow(i.dict)
         feedbacks.debug("Model saved to file '" + str(fname) + "'")
-        
+
     def applyItemsWithContext(self,context,feedback,indexes=None):
         if not self.items:
             self.feedback.reportError("Empty Model")
@@ -782,7 +782,7 @@ class DictModel(AbstractGroupModel):
             self.applyItemWithContext(i,context,step_feedback)
             step_feedback.setCurrentStep(cpt)
 
-    
+
 class NormalizingParamsModel(QAbstractTableModel):
 
     WORKSPACE = "workspace"
@@ -790,17 +790,17 @@ class NormalizingParamsModel(QAbstractTableModel):
     EXTENT_LAYER = "extentLayer"
     RESOLUTION = "resolution"
     CRS = "crs"
-    
+
     DEFAULT_CRS = QgsCoordinateReferenceSystem("epsg:2154")
     DEFAULT_FIELDS = [WORKSPACE,EXTENT_LAYER,
         RESOLUTION,PROJECT,CRS]
-    
+
     def __init__(self,fields=DEFAULT_FIELDS,feedback=None):
         self.clearModel()
         self.fields = fields
         self.feedback = feedback
         QAbstractTableModel.__init__(self)
-        
+
     def clearModel(self):
         self.workspace = None
         self.extentLayer = None
@@ -808,71 +808,71 @@ class NormalizingParamsModel(QAbstractTableModel):
         self.resolution = 0.0
         self.projectFile = ""
         self.crs = self.DEFAULT_CRS
-        
+
     def tr(self, msg):
         return QCoreApplication.translate(self.__class__.__name__, msg)
-        
+
     def checkWorkspaceInit(self):
         if not self.workspace:
             self.feedback.user_error(self.tr("Workspace parameter not initialized"))
         if not os.path.isdir(self.workspace):
             self.feedback.user_error("Workspace directory '" + self.workspace + "' does not exist")
-            
+
     def checkExtentInit(self):
         if not self.extentLayer:
             self.feedback.user_error(self.tr("Extent parameter not initialized"))
-            
+
     def checkResolutionInit(self):
         if not self.resolution or self.resolution <= 0:
             self.feedback.user_error(self.tr("Resolution parameter not initialized"))
-            
+
     def checkCrsInit(self):
         if not self.crs:
             self.feedback.user_error(self.tr("CRS parameter not initialized"))
         if not self.crs.isValid():
             self.feedback.user_error(self.tr("Invalid CRS"))
-            
+
     def checkInit(self):
         checkWorkspaceInit()
         checkExtentInit()
         checkResolutionInit()
         checkCrsInit()
-        
+
     def setExtentLayer(self,path):
         if path:
             path = self.normalizePath(path)
         feedbacks.debug("Setting extent layer to " + str(path))
         self.extentLayer = path
         self.layoutChanged.emit()
-        
+
     def setResolution(self,resolution):
         feedbacks.debug("Setting resolution to " + str(resolution))
         self.resolution = resolution
         self.layoutChanged.emit()
-        
+
     def setCrs(self,crs):
         feedbacks.debug("Setting extent CRS to " + crs.description())
         self.crs = crs
         self.layoutChanged.emit()
-        
+
     def getRasterParams(self):
         crs = self.crs
         extent = self.getExtentString()
         resolution = self.getResolution()
         return (crs, extent, resolution)
-        
+
     def getCrsStr(self):
         return self.crs.authid().lower()
 
     def getTransformator(self,in_crs):
         transformator = QgsCoordinateTransform(in_crs,self.crs,QgsProject.instance())
         return transformator
-    
+
     def getBoundingBox(self,in_extent_rect,in_crs):
         transformator = self.getTransformator(in_crs)
         out_extent_rect = transformator.transformBoundingBox(in_extent_rect)
         return out_extent_rect
-        
+
     def setWorkspace(self,path):
         norm_path = utils.normPath(path)
         self.workspace = norm_path
@@ -880,12 +880,12 @@ class NormalizingParamsModel(QAbstractTableModel):
         if not os.path.isdir(norm_path):
             self.feedback.user_error("Directory '" + norm_path + "' does not exist")
         return norm_path
-            
+
     def updateFromXML(self,root,feedback=None):
         dict = root.attrib
         feedbacks.debug("params dict = " + str(dict))
         return self.fromXMLDict(dict)
-    
+
     def fromXMLDict(self,dict):
         if self.WORKSPACE in dict:
             if not self.workspace and os.path.isdir(dict[self.WORKSPACE]):
@@ -904,7 +904,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         if self.CRS in dict:
             crs = QgsCoordinateReferenceSystem(dict[self.CRS])
             self.setCrs(crs)
-    
+
     def getXMLStr(self):
         xmlStr = ""
         if self.workspace:
@@ -916,13 +916,13 @@ class NormalizingParamsModel(QAbstractTableModel):
         if self.crs:
             xmlStr += " " + self.CRS + "=\"" + self.getCrsStr() + "\""
         return xmlStr
-        
+
     def rowCount(self,parent=QModelIndex()):
         return len(self.fields)
-        
+
     def columnCount(self,parent=QModelIndex()):
         return 1
-        
+
     def getNItem(self,n):
         items = [self.workspace,
                  self.extentLayer,
@@ -930,7 +930,7 @@ class NormalizingParamsModel(QAbstractTableModel):
                  self.projectFile,
                  self.crs.description()]
         return items[n]
-            
+
     def data(self,index,role):
         if not index.isValid():
             return None
@@ -942,10 +942,10 @@ class NormalizingParamsModel(QAbstractTableModel):
             return(QVariant(item))
         else:
             return None
-            
+
     def flags(self, index):
         return ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
-        
+
     def headerData(self,col,orientation,role):
         if orientation == HORIZONTAL and role == DISPLAY_ROLE:
             return QVariant("value")
@@ -953,14 +953,14 @@ class NormalizingParamsModel(QAbstractTableModel):
             #return QVariant(self.fields[col])
             return QVariant(self.tr(self.fields[col]))
         return None
-        
+
     # Checks that workspace is intialized and is an existing directory.
     def checkWorkspaceInit(self):
         if not self.workspace:
             self.feedback.user_error("Workspace parameter not initialized")
         if not os.path.isdir(self.workspace):
             self.feedback.user_error("Workspace directory '" + self.workspace + "' does not exist")
-            
+
     # Returns relative path w.r.t. workspace directory.
     # File separator is set to common slash '/'.
     def normalizePath(self,path):
@@ -977,7 +977,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             rel_path = norm_path
         final_path = utils.normPath(rel_path)
         return final_path
-            
+
     # Returns absolute path from normalized path (cf 'normalizePath' function)
     def getOrigPath(self,path):
         self.checkWorkspaceInit()
@@ -990,7 +990,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             join_path = utils.joinPath(self.workspace,path)
             norm_path = os.path.normpath(join_path)
             return norm_path
-            
+
     # Checks that all parameters are initialized
     def checkInit(self):
         self.checkWorkspaceInit()
@@ -1007,21 +1007,21 @@ class NormalizingParamsModel(QAbstractTableModel):
             self.feedback.user_error("CRS parameter not initialized")
         if not self.crs.isValid():
             self.feedback.user_error("Invalid CRS")
-            
+
     def getResolution(self):
         return float(self.resolution)
-        
+
     def getExtentLayer(self):
         if self.extentLayer:
             return self.getOrigPath(self.extentLayer)
         else:
             return None
-        
+
     def getExtentLayerAndType(self):
         path = self.getExtentLayer()
         layer, type = qgsUtils.loadLayerGetType(path)
         return (path,type)
-        
+
     def getExtentString(self):
         extent_path = self.getExtentLayer()
         if not extent_path:
@@ -1035,7 +1035,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         res += ',' + str(transformed_extent.yMaximum())
         res += '[' + str(self.crs.authid()) + ']'
         return res
-        
+
     # Return bounding box coordinates of extent layer
     def getExtentCoords(self):
         extent_path = self.getExtentLayer()
@@ -1043,20 +1043,20 @@ class NormalizingParamsModel(QAbstractTableModel):
             return qgsUtils.coordsOfExtentPath(extent_path)
         else:
             self.feedback.user_error("Extent layer not initialized")
-            
+
     # Checks that given layer matches extent layer coordinates
     def equalsParamsExtent(self,path):
         params_coords = self.getExtentCoords()
         path_coords = qgsUtils.coordsOfExtentPath(path)
         return (params_coords == path_coords)
-            
+
     # Returns extent layer bounding box as a QgsRectangle
     def getExtentRectangle(self):
         coords = self.getExtentCoords()
         rect = QgsRectangle(float(coords[0]),float(coords[1]),
                             float(coords[2]),float(coords[3]))
-        return rect 
-        
+        return rect
+
     def clipByExtent(self,input,name="",out_path="",clip_raster=True,
             context=None,feedback=None):
         extentLayer = self.getExtentLayer()
@@ -1096,7 +1096,7 @@ class NormalizingParamsModel(QAbstractTableModel):
         else:
             assert(False)
         return res
-                
+
     # Normalize given raster layer to match global extent and resolution
     def normalizeRaster(self,path,extentLayerPath=None,out_path=None,resampling_mode="near",
             nodata_val=None,context=None,feedback=None):
@@ -1123,7 +1123,7 @@ class NormalizingParamsModel(QAbstractTableModel):
                 dst_crs=self.crs,resolution=resolution,extent=extent,
                 nodata_val=nodataVal,context=context,feedback=feedback)
         return res
-                
+
 """ AbstractConnector connects a view and a model """
 class AbstractConnector:
 
@@ -1137,7 +1137,7 @@ class AbstractConnector:
         self.removeButton = removeButton
         self.runButton = runButton
         self.selectionCheckbox = selectionCheckbox
-        
+
     # If addButton given, it is connected to addItem function
     # If removeButton given, it is connected to removeItems function
     def connectComponents(self):
@@ -1151,7 +1151,7 @@ class AbstractConnector:
         if self.selectionCheckbox:
             self.selectionCheckbox.stateChanged.connect(self.switchOnlySelection)
         #self.view.horizontalHeader().sectionClicked.connect(self.model.orderItems)
-        
+
     def disconnectComponents(self):
         if self.addButton:
             self.addButton.disconnect()
@@ -1159,40 +1159,40 @@ class AbstractConnector:
             self.removeButton.disconnect()
         if self.runButton:
             self.runButton.disconnect()
-        
+
     def tr(self,msg):
         return self.dlg.tr(msg)
-                
+
     def switchOnlySelection(self):
         new_val = not self.onlySelection
         feedbacks.debug("setting onlySelection to " + str(new_val))
         self.onlySelection = new_val
-        
+
     # This function build model item from view and is called by addItem
     @abstractmethod
     def mkItem(self):
         self.feedback.todo_error(" [" + self.__class__.__name__ + "] mkItem not implemented")
-        
+
     def getSelectedIndexes(self):
         if self.onlySelection:
             indexes = list(set([i.row() for i in self.view.selectedIndexes()]))
         else:
             indexes = range(0,len(self.model.items))
         return indexes
-        
+
     def applyItems(self):
         indexes = self.getSelectedIndexes()
         feedbacks.debug("Selected indexes = " + str(indexes))
         self.model.applyItemsWithContext(None,self.dlg.feedback,indexes)
         #self.model.applyItemsWithContext(self.dlg.context,self.dlg.feedback,indexes)
-        
+
     def addItem(self):
         feedbacks.debug("AbstractConnector.addItem")
         item = self.mkItem()
         if item:
             self.model.addItem(item)
             self.model.layoutChanged.emit()
-        
+
     def removeItems(self):
         if self.model.getItems():
             indices = self.view.selectedIndexes()
@@ -1200,7 +1200,7 @@ class AbstractConnector:
             self.model.removeItems(indices)
         else:
             feedbacks.warn("Empty model, nothing to remove")
-        
+
     # Upgrade selected item rank (only single selection for now)
     def upgradeItem(self):
         feedbacks.debug("upgradeItem")
@@ -1216,7 +1216,7 @@ class AbstractConnector:
                 self.view.selectRow(row - 1)
         else:
             feedbacks.warn("Several rows selected, please select only one")
-            
+
     # Downgrade selected item rank (only single selection for now)
     def downgradeItem(self):
         feedbacks.debug("downgradeItem")
@@ -1243,7 +1243,7 @@ class ExtensiveTableModel(DictModel):
     ROW_DESCR = 'descr'
     ROW_CODE = 'code'
     BASE_FIELDS = [ ROW_CODE, ROW_DESCR ]
-    
+
     DEFAULT_VAL = None
 
     LEGACY_MATCHING = { 'class' : ROW_NAME , 'class_descr' : ROW_DESCR }
@@ -1262,21 +1262,21 @@ class ExtensiveTableModel(DictModel):
         self.idField = idField
         self.rowIdField = rowIdField
         self.valueSet = []
-        
+
     def setValues(self,values):
         self.valueSet = values
     def getItemValue(self,item):
         return item.dict[self.idField]
     def getCodesStr(self):
         return [str(i.dict[self.idField]) for i in self.items]
-                
+
     # True if item matching class 'rowName' exists, False otherwise.
     def rowExists(self,rowName):
         for fr in self.items:
             if fr.dict[self.idField] == rowName:
                 return True
         return False
-        
+
     # Returns item matching class 'rowName', None if there is no match.
     def getRowByName(self,rowName):
         for i in self.items:
@@ -1287,7 +1287,7 @@ class ExtensiveTableModel(DictModel):
     def getMatchingRow(self,row):
         rowItem = self.createRowFromDict(row)
         return self.getMatchingItem(rowItem)
-        
+
     # Creates RowItem from dict
     def createRowFromDict(self,d):
         return DictItem(d,feedback=self.feedback)
@@ -1310,7 +1310,7 @@ class ExtensiveTableModel(DictModel):
         d = { self.ROW_CODE : code, self.ROW_DESCR : descr }
         rowItem = self.createRowFromDict(d)
         self.addRowItem(rowItem)
-        
+
     # Removes item matching class 'name' from model.
     def removeRowFromName(self,name):
         feedbacks.debug("removing row " + str(name) + " from table")
@@ -1320,7 +1320,7 @@ class ExtensiveTableModel(DictModel):
                 del self.items[i]
                 self.layoutChanged.emit()
                 return
-        
+
     # Adds subnetwork columns to given FrictionRowItem.
     # Friction values are set to defaultVal (None).
     def addRowFields(self,row):
@@ -1328,23 +1328,23 @@ class ExtensiveTableModel(DictModel):
         feedbacks.debug("addRowFields " + str(extFields))
         for f in extFields:
             row.dict[f] = self.defaultVal
-            
+
     # Adds new subnetwork entry to all items of model from given STItem.
     def addCol(self,col_name,defaultVal=DEFAULT_VAL):
         feedbacks.debug("addCol " + str(col_name))
         super().addField(col_name,defaultVal = self.defaultVal)
-        
+
     # Removes subnetwork 'st_name' entry for all items of model.
     def removeColFromName(self,col_name):
         feedbacks.debug("removeColFromName " + str(col_name))
         self.removeField(col_name)
         self.layoutChanged.emit()
-        
+
     # def updateFromXML(self,root,feedback=None):
         # extFields = self.fields[len(self.baseFields):]
         # for f in extFields:
             # self.removeColFromName(f)
-        
+
     # Reload items of model to match current ClassModel.
     def reloadModel(self,baseRowItems):
         feedbacks.debug("reloadModel")
@@ -1371,8 +1371,8 @@ class ExtensiveTableModel(DictModel):
                         currItem.dict[f] = bri_val
             else:
                 self.addRowItemFromBase(bri)
-        self.layoutChanged.emit()        
-                            
+        self.layoutChanged.emit()
+
     # Returns reclassify matrix (list) for native:reclassifybytable call.
     def getReclassifyMatrixes(self,colNames):
         matrixes = { colName : [] for colName in colNames }
@@ -1402,12 +1402,12 @@ class ExtensiveTableModel(DictModel):
                 # TODO : change self.ROW_CODE to something like self.codeField
                 matrixes[name] += [ code, code, float(new_val) ]
         return matrixes
-        
+
     # Returns set of item' code (value in input raster)
     def getCodes(self):
         codes = set([int(item.dict[self.ROW_CODE]) for item in self.items])
         return codes
-        
+
     # Raise an error in values of input raster do no match codes of friction items.
     def checkInVals(self,in_path):
         in_vals = qgsUtils.getRasterValsFromPath(in_path)
@@ -1415,7 +1415,7 @@ class ExtensiveTableModel(DictModel):
         diff = in_vals.difference(codes)
         if len(diff) > 0:
             self.feedback.user_error("Some values of " + str(in_path) + " are not associated to a friction value " + str(diff))
-            
+
     # Saves friction coefficients to CSV file 'fname'
     def saveCSV(self,fname):
         with open(fname,"w", newline='') as f:
@@ -1425,7 +1425,7 @@ class ExtensiveTableModel(DictModel):
                 feedbacks.debug("writing row " + str(i.dict))
                 writer.writerow(i.dict)
         feedbacks.debug("Friction saved to file '" + str(fname) + "'")
-                
+
     # Imports CSV row as an item
     def fromCSVRow(self,row):
         if self.idField not in row:
@@ -1462,7 +1462,7 @@ class ExtensiveTableModel(DictModel):
         else:
             msg = self.tr("Ignoring row without matching item: {}".format(row))
             feedbacks.warn(msg)
-    
+
     # Skeleton  to read CSV rows and apply rowFunc on each
     def iterateCSVRows(self,fname,rowFunc):
         delimiter = ';'
@@ -1483,7 +1483,7 @@ class ExtensiveTableModel(DictModel):
     # Loads CSV file 'fname' into model (update).
     def fromCSVUpdateExisting(self,fname):
         self.iterateCSVRows(fname,self.fromCSVRowExisting)
-        
+
     # Loads friction coefficients from CSV file 'fname' into model.
     # Existing items are erased.
     def fromCSV(self,fname):
@@ -1501,21 +1501,21 @@ class ExtensiveTableModel(DictModel):
             for row in reader:
                 self.fromCSVRow(row)
         self.layoutChanged.emit()
-        
-    # Loads model from XML root (tag 'FrictionModel')    
+
+    # Loads model from XML root (tag 'FrictionModel')
     # def fromXML(self,root):
         # self.items = []
         # for fr in root:
                 # self.fromCSVRow(fr.attrib)
         # self.layoutChanged.emit()
-        
+
     def flags(self, index):
         if index.column() in [1,2]:
             flags = ITEM_IS_SELECTABLE | ITEM_IS_ENABLED
         else:
             flags = ITEM_IS_SELECTABLE | ITEM_IS_ENABLED | ITEM_IS_EDITABLE
         return flags
-        
+
     # Remove all items
     def clearModel(self):
         # feedbacks.debug("clearModel {}".format(self.extFields))
@@ -1523,7 +1523,7 @@ class ExtensiveTableModel(DictModel):
             self.removeField(f)
         self.extFields = []
         super().clearModel()
-        
+
 
 # Main model for plugins that can be saved to XML file
 class MainModel:
@@ -1538,13 +1538,13 @@ class MainModel:
             xmlStr += "\n" + indent + model.toXML(indent=new_indent)
         xmlStr += "\n" + indent + "</" + self.parser_name + ">"
         return xmlStr
-        
+
     def getModelFromParserName(self,name):
         for model in self.models:
             if model.parser_name == name:
                 return model
         return None
-        
+
     def getOutLayerFromName(self,name,model):
         feedbacks.debug("getOutLayerFromName " + str(name))
         item = model.getItemFromName(name)
@@ -1556,7 +1556,7 @@ class MainModel:
         abs_layer = self.getOrigPath(layer)
         feedbacks.debug("getOutLayerFromName abs_layer " + str(abs_layer))
         return abs_layer
-        
+
     # def fromXMLRoot(self,root):
         # for child in root:
             # feedbacks.debug("tag = " + str(child.tag))
@@ -1564,7 +1564,7 @@ class MainModel:
             # model = self.getModelFromParserName(child.tag)
             # if model:
                 # model.fromXML(child)
-                # model.layoutChanged.emit()        
+                # model.layoutChanged.emit()
     # def fromXMLRoot(self,root):
         # for child in root:
             # utils.debug("tag = " + str(child.tag))
@@ -1573,7 +1573,7 @@ class MainModel:
                 # model.fromXML(child)
                 # model.layoutChanged.emit()
 
-# Main dialog for multi-tabs plugins            
+# Main dialog for multi-tabs plugins
 class MainDialog(QtWidgets.QDialog):
 # class MainDialog(QtWidgets.QMainWindow):
 
@@ -1583,7 +1583,7 @@ class MainDialog(QtWidgets.QDialog):
             # QgsApplication.processingRegistry().addProvider(self.provider)
         for tab in self.connectors:
             tab.initGui()
-            
+
     def tr(self, message):
         return QCoreApplication.translate(self.pluginName, message)
 
@@ -1613,7 +1613,7 @@ class MainDialog(QtWidgets.QDialog):
         self.mTabWidget.setCurrentWidget(self.logTab)
         self.feedback.focusLogTab()
         # self.feedback.clear()
-        
+
     # Connects view and model components for each tab.
     # Connects global elements such as project file and language management.
     def connectComponents(self,saveAsFlag=True):
@@ -1628,7 +1628,7 @@ class MainDialog(QtWidgets.QDialog):
         self.langFr.clicked.connect(self.switchLangFr)
         self.aboutButton.clicked.connect(self.openHelpDialog)
         sys.excepthook = self.pluginExcHook
-            
+
     def reject(self):
         msg = self.tr("Are you sure you want to exit ? Please ensure your project is saved")
         reply = feedbacks.launchQuestionDialog(self,"MitiConnect",msg)
@@ -1636,10 +1636,10 @@ class MainDialog(QtWidgets.QDialog):
             self.accept()
         else:
             return
-                
+
     def initLog(self):
         utils.print_func = self.txtLog.append
-        
+
     def switchLang(self,lang):
         utils.debug("switchLang " + str(lang))
         #loc_lang = locale.getdefaultlocale()
@@ -1661,24 +1661,24 @@ class MainDialog(QtWidgets.QDialog):
         # self.paramsConnector.refreshProjectName()
         utils.curr_language = lang
         self.tabConnector.loadHelpFile()
-        
+
     def switchLangEn(self):
         self.switchLang("en")
         self.langEn.setChecked(True)
         self.langFr.setChecked(False)
-        
+
     def switchLangFr(self):
         self.switchLang("fr")
         self.langEn.setChecked(False)
         self.langFr.setChecked(True)
-        
+
     def openHelpDialog(self):
         pass
-        
+
     # Recompute self.parsers in case they have been reloaded
     def recomputeParsers(self):
         self.parsers = [self.pluginModel]
-        
+
     # Return XML string describing project
     def toXML(self):
         return self.pluginModel.toXML()
@@ -1691,20 +1691,20 @@ class MainDialog(QtWidgets.QDialog):
         self.paramsConnector.setProjectFile(fname)
         utils.writeFile(fname,xmlStr)
         feedbacks.debug(self.tr("Model saved into file '") + fname + "'")
-        
+
     def saveModelAsAction(self):
         fname = qgsUtils.saveFileDialog(parent=self,
                                         msg=self.tr("Save project as"),
                                         filter="*.xml")
         if fname:
             self.saveModelAs(fname)
-        
+
     # Save project to projectFile if existing
     def saveModel(self):
         fname = self.pluginModel.paramsModel.projectFile
         utils.checkFileExists(fname,"Project ")
         self.saveModelAs(fname)
-   
+
     # Load project from 'fname' if existing
     def loadModel(self,fname):
         feedbacks.debug("loadModel " + str(fname))
@@ -1715,14 +1715,14 @@ class MainDialog(QtWidgets.QDialog):
         self.paramsConnector.setProjectFile(fname)
         config_parsing.parseConfig(fname,feedback=self.feedback)
         feedbacks.debug("Model loaded from file '" + fname + "'")
-        
+
     def loadModelAction(self):
         fname = qgsUtils.openFileDialog(parent=self,
                                         msg=self.tr("Open project"),
                                         filter="*.xml")
         if fname:
             self.loadModel(fname)
-            
+
     def clearModels(self):
         feedbacks.debug("clearModels")
         # self.pluginModel.paramsModel.clearModel()
@@ -1730,7 +1730,7 @@ class MainDialog(QtWidgets.QDialog):
             model.clearModel()
             model.items = []
             model.layoutChanged.emit()
-        
+
 # Table view with dialog to build items
 # Butonn to create new item, double click to edit selected item
 class TableToDialogConnector(AbstractConnector):
@@ -1744,7 +1744,7 @@ class TableToDialogConnector(AbstractConnector):
     def connectComponents(self):
         super().connectComponents()
         self.view.doubleClicked.connect(self.openDialogEdit)
-    
+
     def openDialogGetResult(self,item):
         self.preDlg(item)
         item_dlg = self.openDialog(item)
@@ -1761,7 +1761,7 @@ class TableToDialogConnector(AbstractConnector):
             dlg_item = None
             # self.postDlg(item.child)
         return dlg_item
-    
+
     def openDialogEdit(self,index):
         row = index.row()
         item = self.model.getNItem(row)
@@ -1770,7 +1770,7 @@ class TableToDialogConnector(AbstractConnector):
         if dlg_item:
             self.updateFromDlgItem(item,dlg_item)
             self.model.layoutChanged.emit()
-            
+
     def mkItem(self):
         dlg_item = self.openDialogGetResult(None)
         return dlg_item
@@ -1778,39 +1778,39 @@ class TableToDialogConnector(AbstractConnector):
             # return self.mkItemFromDlgItem(dlg_item)
         # else:
             # return None
-            
+
     def pathFieldToRel(self,dlgItem,fieldname):
         if dlgItem and dlgItem.dict and fieldname in dlgItem.dict:
             oldVal = dlgItem.dict[fieldname]
             if oldVal:
                 newVal = self.model.pluginModel.normalizePath(oldVal)
                 dlgItem.dict[fieldname] = newVal
-            
+
     def pathFieldToAbs(self,dlgItem,fieldname):
         if dlgItem and fieldname in dlgItem.dict:
             oldVal = dlgItem.dict[fieldname]
             if oldVal:
                 newVal = self.model.pluginModel.getOrigPath(oldVal)
                 dlgItem.dict[fieldname] = newVal
-       
+
     @abstractmethod
-    def openDialog(self,item): 
+    def openDialog(self,item):
         pass
-        
+
     def preDlg(self,dlg_item):
         pass
     def postDlg(self,dlg_item):
         pass
     def postDlgNew(self,dlg_item):
         pass
-    
-    def updateFromDlgItem(self,item,dlg_item): 
+
+    def updateFromDlgItem(self,item,dlg_item):
         item.updateFromDlgItem(dlg_item)
     # @abstractmethod
-    # def mkItemFromDlgItem(self,dlg_item): 
+    # def mkItemFromDlgItem(self,dlg_item):
         # pass
-     
-    
+
+
 class CheckableComboDelegate(QStandardItemModel):
 
     def __init__(self,baseModel):
@@ -1841,7 +1841,7 @@ class CheckableComboDelegate(QStandardItemModel):
             self.dataChanged.emit(index, index)
             return True
         return False
-        
+
 # Code snippet from https://stackoverflow.com/questions/17748546/pyqt-column-of-checkboxes-in-a-qtableview
 class CheckBoxDelegate(QtWidgets.QStyledItemDelegate):
     """
@@ -1946,13 +1946,13 @@ class ComboDelegate(QtWidgets.QItemDelegate):
     editorItems=[]
     height = 20
     width = 200
-    
+
     def __init__(self,items):
         super().__init__()
         self.editorItems = items
         self.height = 20
         self.width = 200
-    
+
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QListWidget(parent)
         # editor.addItems(self.editorItems)
@@ -1972,10 +1972,10 @@ class ComboDelegate(QtWidgets.QItemDelegate):
 
     def setModelData(self, editor, model, index):
         editorIndex=editor.currentIndex()
-        text=editor.currentItem().text() 
+        text=editor.currentItem().text()
         model.setData(index, text,role=EDIT_ROLE)
         # print '\t\t\t ...setModelData() 1', text
 
     @pyqtSlot()
-    def currentItemChanged(self): 
+    def currentItemChanged(self):
         self.commitData.emit(self.sender())

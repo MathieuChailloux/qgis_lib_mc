@@ -52,27 +52,27 @@ def typeIsInteger(t):
             or t == QVariant.UInt
             or t == QVariant.LongLong
             or t == QVariant.ULongLong)
-            
+
 def typeIsFloat(t):
     return (t == QVariant.Double)
-    
+
 def typeIsNumeric(t):
     return (typeIsInteger(t) or typeIsFloat(t))
 
 def qgisTypeIsInteger(t):
     int_types = [Qgis.Byte, Qgis.UInt16, Qgis.Int16, Qgis.UInt32, Qgis.Int32]
     return (t in int_types)
-    
+
 def isVectorLayer(layer):
     return layer.type() == QgsMapLayer.VectorLayer
-    
+
 def isRasterLayer(layer):
     return layer.type() == QgsMapLayer.RasterLayer
-    
+
 def removeFolder(path):
     if os.path.isdir(path):
         shutil.rmtree(path)
-    
+
 # Delete raster file and associated xml file
 def removeRaster(path):
     if isLayerLoaded(path):
@@ -80,12 +80,12 @@ def removeRaster(path):
     utils.removeFile(path)
     aux_name = path + ".aux.xml"
     utils.removeFile(aux_name)
-            
+
 def removeVectorLayer(path):
     if isLayerLoaded(path):
         utils.user_error("Layer " + str(path) + " is already loaded in QGIS, please remove it")
     utils.removeFile(path)
-    
+
 # Returns path from QgsMapLayer
 def pathOfLayer(l):
     uri = l.dataProvider().dataSourceUri()
@@ -96,18 +96,18 @@ def pathOfLayer(l):
     #utils.debug("pathOfLayer uri " + str(uri))
     #utils.debug("pathOfLayer path " + str(path))
     return path
-      
+
 def layerNameOfPath(p):
     bn = os.path.basename(p)
     res = os.path.splitext(bn)[0]
     return res
-    
+
 def getVectorFilters():
     return QgsProviderRegistry.instance().fileVectorFilters()
-    
+
 def getRasterFilters():
     return QgsProviderRegistry.instance().fileRasterFilters()
-           
+
 def getLayerByFilename(fname):
     map_layers = QgsProject.instance().mapLayers().values()
     fname_parts = Path(fname.lower()).parts
@@ -131,10 +131,10 @@ def getLayerBySource(source):
             return layer
     else:
         return None
-       
+
 def isLayerLoaded(fname):
     return (getLayerByFilename(fname) != None)
-    
+
 def normalizeEncoding(layer):
     path = pathOfLayer(layer)
     extension = os.path.splitext(path)[1].lower()
@@ -146,7 +146,7 @@ def normalizeEncoding(layer):
     #    layer.dataProvider().setEncoding('System')
     elif extension == ".gpkg":
         layer.dataProvider().setEncoding('UTF-8')
-        
+
 def loadLayerInQGIS(layer,groupName=None):
     if groupName:
         root = QgsProject.instance().layerTreeRoot()
@@ -158,7 +158,7 @@ def loadLayerInQGIS(layer,groupName=None):
         # group.insertChildNode(0,layer)
     else:
         QgsProject.instance().addMapLayer(layer,True)
-       
+
 # Opens vector layer from path.
 # If loadProject is True, layer is added to QGIS project
 def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None,
@@ -177,7 +177,7 @@ def loadVectorLayer(fname,loadProject=False,normalize=False,groupName=None,
     if loadProject:
         loadLayerInQGIS(layer,groupName=groupName)
     return layer
-    
+
 # Opens raster layer from path.
 # If loadProject is True, layer is added to QGIS project
 def loadRasterLayer(fname,loadProject=False,groupName=None):
@@ -202,7 +202,7 @@ def loadRasterLayer(fname,loadProject=False,groupName=None):
 #            return (loadRasterLayer(fname,loadProject))
 #        except utils.CustomException:
 #            utils.user_error("Could not load layer '" + fname + "'")
-            
+
 def loadVectorLayerNoError(fname):
     layer = QgsVectorLayer(fname, layerNameOfPath(fname), "ogr")
     if not layer:
@@ -213,7 +213,7 @@ def loadVectorLayerNoError(fname):
         return None
     normalizeEncoding(layer)
     return layer
-    
+
 def loadRasterLayerNoError(fname):
     layer = QgsRasterLayer(fname, layerNameOfPath(fname))
     if not layer:
@@ -223,7 +223,7 @@ def loadRasterLayerNoError(fname):
         utils.debug("Invalid raster layer '" + fname + "'")
         return None
     return layer
-    
+
 def loadLayer(fname,loadProject=False,groupName=None):
     utils.debug("loadLayer " + str(fname))
     if isLayerLoaded(fname):
@@ -236,7 +236,7 @@ def loadLayer(fname,loadProject=False,groupName=None):
     if loadProject:
         loadLayerInQGIS(layer,groupName=groupName)
     return layer
-    
+
 # def loadLayerNone(fname,loadProject=False):
     # utils.debug("loadLayer " + str(fname))
     # if not fname:
@@ -244,7 +244,7 @@ def loadLayer(fname,loadProject=False,groupName=None):
     # if not os.path.isfile(fname):
         # return None
     # return loadLayer(fname,loadProject=loadProject)
-            
+
 #def loadLayerGetTypeOld(fname,loadProject=False):
 #    utils.checkFileExists(fname)
 #    try:
@@ -258,7 +258,7 @@ def loadLayer(fname,loadProject=False,groupName=None):
 #            return (layer, type)
 #        except utils.CustomException:
 #            utils.user_error("Could not load layer '" + fname + "'")
-    
+
 def loadLayerGetType(fname,loadProject=False,groupName=None):
     utils.debug("loadLayerGetType " + str(fname))
     layer = loadVectorLayerNoError(fname)
@@ -271,7 +271,7 @@ def loadLayerGetType(fname,loadProject=False,groupName=None):
     if loadProject:
         loadLayerInQGIS(layer,groupName=groupName)
     return (layer, type)
-    
+
 # Retrieve layer loaded in QGIS project from name
 def getLoadedLayerByName(name):
     utils.debug("Layers = " + str([l.name() for l in QgsProject.instance().mapLayers().values()]))
@@ -284,7 +284,7 @@ def getLoadedLayerByName(name):
         utils.user_error("Several layers named '" + name + "' found")
     else:
         return layers[0]
-    
+
 def removeLayer(layer):
     inst = QgsProject.instance()
     inst.removeMapLayers( [layer.id()] )
@@ -294,26 +294,26 @@ def removeLayerFromPath(layerPath):
     utils.debug("layer ZZ {}".format(layer))
     if layer:
         removeLayer(layer)
-    
+
 def removeGroupOld(groupName):
     root = QgsProject.instance().layerTreeRoot()
     groupNode = root.findGroup(groupName)
     if groupNode:
-        root.removeChildNode(groupNode)    
+        root.removeChildNode(groupNode)
 def removeGroupR(root,groupName):
     #print("removeGroupR " + str(root.name()))
     children = root.children()
     for c in children:
         if c.nodeType() ==  QgsLayerTreeNode.NodeGroup:
             if c.name() == groupName:
-                root.removeChildNode(c)    
+                root.removeChildNode(c)
             else:
                 removeGroupR(c,groupName)
-    
+
 def removeGroups(groupName):
     root = QgsProject.instance().layerTreeRoot()
     removeGroupR(root,groupName)
-    
+
 # Find all groups
 def findGroupsAll(root=None):
     if root is None:
@@ -323,34 +323,34 @@ def findGroupsAll(root=None):
         if c.nodeType() ==  QgsLayerTreeNode.NodeGroup:
             groups += findGroupsAll(c)
     return groups
-    
-        
+
+
 # LAYER PARAMETERS
 
 # Returns CRS code in lowercase (e.g. 'epsg:2154')
 def getLayerCrsStr(layer):
     return str(layer.crs().authid().lower())
-    
+
 # Returns geometry type string (e.g. 'MultiPolygon')
 def getLayerGeomStr(layer):
     return QgsWkbTypes.displayString(layer.wkbType())
-    
+
 # Returns simple geometry type string (e.g. 'Polygon', 'Line', 'Point')
 def getLayerSimpleGeomStr(layer):
     type = layer.wkbType()
     geom_type = QgsWkbTypes.geometryType(type)
     return QgsWkbTypes.geometryDisplayString(geom_type)
-    
+
 # Checks if geometry is multipart
 def isMultipartLayer(layer):
     wkb_type = layer.wkbType()
     is_multi = QgsWkbTypes.isMultiType(wkb_type)
     return is_multi
-    
+
 def hasPolygonGeometry(layer):
     geomType = layer.geometryType()
-    return geomType == QgsWkbTypes.PolygonGeometry 
-    
+    return geomType == QgsWkbTypes.PolygonGeometry
+
 # Returns smallest unisgned type (GDAL type) in which max_val can be represented
 def getGDALUnsignedType(max_val):
     if max_val < 256:
@@ -368,7 +368,7 @@ def getGDALUnsignedTypeAndND(max_val):
         return gdal.GDT_UInt16, 65535
     else:
         return gdal.GDT_UInt32, sys.maxsize
-    
+
 # Returns smallest unisgned type (GDAL type) in which max_val can be represented
 # def getGDALTypeAndND(max_val):
     # if max_val < 255:
@@ -377,7 +377,7 @@ def getGDALUnsignedTypeAndND(max_val):
         # return gdal.GDT_UInt16, 65535
     # else:
         # return gdal.GDT_UInt32, sys.maxsize
-        
+
 # Returns maximum value that can be represented in input unsigned type (QGIS type)
 def getQGISTypeMaxVal(type):
     unsigned = { Qgis.Byte : 255,
@@ -386,14 +386,14 @@ def getQGISTypeMaxVal(type):
     if type not in unsigned:
         utils.internal_error("Type " + str(type) + " is unsigned")
     return unsigned[type]
-    
+
 # Returns list of classic values to reprensent NoData pixels in raster layers
 def getNDCandidates(type):
     if type in [ Qgis.Byte, Qgis.UInt16, Qgis.UInt32]:
         return [ 0,getQGISTypeMaxVal(type) ]
     else:
         return [ 0, -9999, -1 ]
-        
+
 # Returns a value to represent NoData pixels that does not already exist in vals
 def getNDCandidate(type,vals):
     candidates = getNDCandidates(type)
@@ -401,7 +401,7 @@ def getNDCandidate(type,vals):
         if cand not in vals:
             return cand
     utils.internal_error("Could not find a proper NoData value, exiting (please contact support)")
-    
+
 # Checks layers geometry compatibility (raise error if not compatible)
 def checkLayersCompatible(l1,l2):
     crs1 = l1.crs().authid()
@@ -416,20 +416,20 @@ def checkLayersCompatible(l1,l2):
         utils.user_error("Layer " + l1.name() + " geometry '" + str(geomType1)
                     + "' not compatible with geometry '" + str(geomType2)
                     + "' of layer " + l2.name())
-    
+
 def createOrUpdateField(in_layer,func,out_field):
     if out_field not in in_layer.fields().names():
         field = QgsField(out_field, QVariant.Double)
         in_layer.dataProvider().addAttributes([field])
         in_layer.updateFields()
-    
-    in_layer.startEditing()    
+
+    in_layer.startEditing()
     for f in in_layer.getFeatures():
         f[out_field] = func(f)
         in_layer.updateFeature(f)
     in_layer.commitChanges()
-    
-    
+
+
 # Initialize new layer from existing one, importing CRS and geometry
 def createLayerFromExisting(inLayer,outName,geomType=None,crs=None):
     utils.debug("[createLayerFromExisting]")
@@ -443,7 +443,7 @@ def createLayerFromExisting(inLayer,outName,geomType=None,crs=None):
     utils.debug(layerStr)
     outLayer=QgsVectorLayer(geomType + '?crs='+crs, outName, "memory")
     return outLayer
-    
+
 # Writes file from existing QgsMapLayer
 def writeShapefile(layer,outfname):
     utils.debug("[writeShapefile] " + outfname + " from " + str(layer))
@@ -454,7 +454,7 @@ def writeShapefile(layer,outfname):
         utils.info("Shapefile '" + outfname + "' succesfully created")
     else:
         utils.user_error("Unable to create shapefile '" + outfname + "' : " + str(error_msg))
-    
+
 # Writes file from existing QgsMapLayer
 def writeVectorLayer(layer,outfname,attributes=[]):
     utils.debug("[writeVectorLayer] " + outfname + " from " + str(layer))
@@ -466,7 +466,7 @@ def writeVectorLayer(layer,outfname,attributes=[]):
         utils.info("File '" + outfname + "' succesfully created")
     else:
         utils.user_error("Unable to create file '" + outfname + "' : " + str(error_msg))
-        
+
 # Return bounding box coordinates as a list
 def coordsOfExtentPath(extent_path):
     layer = loadLayer(extent_path)
@@ -476,7 +476,7 @@ def coordsOfExtentPath(extent_path):
     y_min = extent.yMinimum()
     y_max = extent.yMaximum()
     return [str(x_min),str(y_min),str(x_max),str(y_max)]
-    
+
 def getExtentStrFromPath(extent_path,crs=None):
     extent_layer = loadLayer(extent_path)
     extent = extent_layer.extent()
@@ -487,12 +487,12 @@ def getExtentStrFromPath(extent_path,crs=None):
     res += ',' + str(extent.yMaximum())
     res += '[' + str(crs.authid()) + ']'
     return res
-    
+
 def transformBoundingBox(in_rect,in_crs,out_crs):
     transformator = QgsCoordinateTransform(in_crs,out_crs,QgsProject.instance())
     out_rect = transformator.transformBoundingBox(in_rect)
     return out_rect
-    
+
 def getLayerFieldUniqueValues(layer,fieldname):
     path = pathOfLayer(layer)
     fieldnames = layer.fields().names()
@@ -502,7 +502,7 @@ def getLayerFieldUniqueValues(layer,fieldname):
     for f in layer.getFeatures():
         field_values.add(f[fieldname])
     return field_values
-    
+
 def getLayerAssocs(layer,key_field,val_field):
     assoc = {}
     path = pathOfLayer(layer)
@@ -521,9 +521,9 @@ def getLayerAssocs(layer,key_field,val_field):
         else:
             assoc[k] = [v]
     return assoc
-   
+
 """ Raster utilities """
-   
+
 # Code snippet from https://github.com/Martin-Jung/LecoS/blob/master/lecos_functions.py
 # Exports array to .tif file (path) according to rasterSource
 def exportRaster(array,rasterSource,path,
@@ -567,7 +567,7 @@ def exportRaster(array,rasterSource,path,
     outDs.SetProjection(raster.GetProjection())
 
     band = outDs = None # Close writing
-    
+
 def getRasterValsFromPath(path):
     gdal_layer = gdal.Open(path)
     if not gdal_layer:
@@ -582,7 +582,7 @@ def getRasterValsFromPath(path):
         unique_vals.remove(in_nodata_val)
     utils.debug("Unique values : " + str(unique_vals))
     return unique_vals
-    
+
 # IMPORT GDAL OR NOT ?
 def getRasterValsOld(layer):
     path = pathOfLayer(layer)
@@ -596,7 +596,7 @@ def getRasterValsOld(layer):
     unique_vals.remove(in_nodata_val)
     utils.debug("Unique values : " + str(unique_vals))
     return unique_vals
-    
+
 def getRasterValsBis(layer):
     if layer is None:
         return []
@@ -608,7 +608,7 @@ def getRasterValsBis(layer):
     unique_values = set([bl.value(r, c) for r in range(rows) for c in range(cols)])
     unique_values.remove(nodata_val)
     return list(unique_values)
-    
+
 def getRasterValsAndArray(path,nodata=None):
     raster = gdal.Open(str(path))
     if not raster:
@@ -618,7 +618,7 @@ def getRasterValsAndArray(path,nodata=None):
         if nodata == None:
             nodata = band.GetNoDataValue()
         try:
-            array =  band.ReadAsArray() 
+            array =  band.ReadAsArray()
         except ValueError:
             utils.internal_error("Raster file is too big for processing. Please crop the file and try again.")
             return
@@ -639,7 +639,7 @@ def getRasterValsArrayND(path,nodata=None):
         if nodata == None:
             nodata = band.GetNoDataValue()
         try:
-            array =  band.ReadAsArray() 
+            array =  band.ReadAsArray()
         except ValueError:
             utils.internal_error("Raster file is too big for processing. Please crop the file and try again.")
             return
@@ -659,17 +659,17 @@ def getRasterValsArrayND(path,nodata=None):
         # pr.initHistogram(hist,1,0)
     # utils.debug("hist = " + str(hist))
     # return hist
-       
+
 def getRasterStats(layer):
     pr = layer.dataProvider()
     stats = pr.bandStatistics(1,stats=QgsRasterBandStats.All)
     return stats
-    
+
 def getRasterMinMax(layer):
     stats = getRasterStats(layer)
     min, max = stats.minimumValue, stats.maximumValue
     return (min, max)
-    
+
 def getRastersMinMax(layers):
     if not layers:
         utils.internal_error("No layers selected")
@@ -681,8 +681,8 @@ def getRastersMinMax(layers):
         if curr_max > max:
             max = curr_max
     return (min, max)
-        
-    
+
+
 def getRasterMinMedMax(layer):
     stats = getRasterStats(layer)
     min, max = stats.minimumValue, stats.maximumValue
@@ -690,21 +690,21 @@ def getRasterMinMedMax(layer):
     half_range = range//2
     med = min + half_range
     return (min,med,max)
-    
+
 # def getRasterNoData(layer):
     # band1 = layer.GetRasterBand(1)
     # nodata_val = band1.GetNoDataValue()
     # return nodata_val
-    
+
 # def getRasterResolution(layer):
     # pass
-    
+
 def getVectorValsOld(layer,field_name):
     field_values = set()
     for f in layer.getFeatures():
         field_values.add(f[field_name])
     return sorted(field_values)
-    
+
 def getVectorVals(layer,field_name):
     idx = layer.dataProvider().fieldNameIndex(field_name)
     return layer.uniqueValues(idx)
@@ -716,7 +716,7 @@ def checkProjectionUnit(layer):
             utils.internal_error("The layer "+layer.name()+" has a projection in "+layer.crs().authid()+", with "+QgsUnitTypes.encodeUnit(layer.crs().mapUnits())+" unit, it must be in meter unit (like EPSG:2154).")
 
 
-""" GPKG """ 
+""" GPKG """
 
 # Geopackages 'fid'
 def getMaxFid(layer):
@@ -727,7 +727,7 @@ def getMaxFid(layer):
         if id > max:
             max = id
     return max
-    
+
 def normFids(layer):
     max_fid = 1
     feats = layer.getFeatures()
@@ -739,8 +739,8 @@ def normFids(layer):
     layer.commitChanges()
 
 
-""" UI utilities """    
-    
+""" UI utilities """
+
 # Opens file dialog in open mode
 def openFileDialog(parent,msg="",filter=""):
     fname, filter = QFileDialog.getOpenFileName(parent,
@@ -748,7 +748,7 @@ def openFileDialog(parent,msg="",filter=""):
                                                 directory=utils.dialog_base_dir,
                                                 filter=filter)
     return fname
-    
+
 # Opens file dialog in save mode
 def saveFileDialog(parent,msg="",filter=""):
     fname, filter = QFileDialog.getSaveFileName(parent,
@@ -756,7 +756,7 @@ def saveFileDialog(parent,msg="",filter=""):
                                                 directory=utils.dialog_base_dir,
                                                 filter=filter)
     return fname
-        
+
 # Layer ComboDialog
 class LayerComboDialog:
 
@@ -768,19 +768,19 @@ class LayerComboDialog:
         self.layer = None
         self.vector_mode = None
         self.button.clicked.connect(self.openDialog)
-        
+
     def setVectorMode(self):
         self.vector_mode = True
         self.combo.setFilters(QgsMapLayerProxyModel.VectorLayer)
-        
+
     def setRasterMode(self):
         self.vector_mode = False
         self.combo.setFilters(QgsMapLayerProxyModel.RasterLayer)
-        
+
     def setBothMode(self):
         self.vector_mode = None
         self.combo.setFilters(QgsMapLayerProxyModel.All)
-        
+
     def setLayerPath(self,fname):
         self.combo.setLayer(None)
         self.layer_name = fname
@@ -793,14 +793,14 @@ class LayerComboDialog:
             self.layer = loadRasterLayer(fname,loadProject=True)
         # utils.debug("self.layer = " +str(self.layer))
         self.combo.setLayer(self.layer)
-        
-        
+
+
     def getFileFilters(self):
         if self.vector_mode:
             return getVectorFilters()
         else:
             return getRasterFilters()
-        
+
     def openDialog(self):
         fname = openFileDialog(self.parent,
                                      msg="Ouvrir la couche",
@@ -810,7 +810,7 @@ class LayerComboDialog:
             #self.combo.layerChanged.emit(self.layer)
         # else:
             # self.parent.feedback.user_error("Could not open file " + str(fname))
-        
+
     def getLayer(self):
         return self.layer
 
@@ -819,7 +819,7 @@ class LayerComboDialog:
 
 def mkTmpPath(fname):
     return QgsProcessingUtils.generateTempFilename(fname)
-        
+
 # Base algorithm
 class BaseProcessingAlgorithm(QgsProcessingAlgorithm):
     INPUT = 'INPUT'
@@ -864,7 +864,7 @@ def checkPluginInstalled(pluginName):
     pluginList = QgsProviderRegistry.instance().pluginList()
     utils.debug("pluginList = " + str(pluginList))
     return (pluginName in pluginList)
-    
+
 def getPluginInstance(pluginName,errorOK=False):
     if pluginName not in qgis.utils.plugins:
         if errorOK:
@@ -873,6 +873,6 @@ def getPluginInstance(pluginName,errorOK=False):
             raise QgsProcessingException("Plugin {} not installed".format(pluginName))
     pluginInstance = qgis.utils.plugins[pluginName]
     return pluginInstance
-    
+
 def mkProcTmpPath(fname):
     return QgsProcessingUtils.generateTempFilename(fname)

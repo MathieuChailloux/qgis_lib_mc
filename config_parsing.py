@@ -59,4 +59,3 @@ def parseModel(parser_root,feedback=None):
     feedback.pushDebugInfo("config_parsers " + str([cf.__class__.__name__ for cf in config_parsers]))
     parser = getParserByName(parser_tag)
     parser.updateFromXML(parser_root,feedback=feedback)
-        

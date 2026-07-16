@@ -27,18 +27,18 @@
 from . import utils, qgsUtils
 
 class LogConnector:
-    
+
     def __init__(self,dlg):
         self.dlg = dlg
-    
+
     def initGui(self):
         self.dlg.debugButton.setChecked(utils.debug_flag)
-    
+
     def connectComponents(self):
         self.dlg.debugButton.clicked.connect(self.switchDebugMode)
         self.dlg.logSaveAs.clicked.connect(self.saveLogAs)
         self.dlg.logClear.clicked.connect(self.myClearLog)
-        
+
     def switchDebugMode(self):
         if self.dlg.debugButton.isChecked():
             utils.debug_flag = True
@@ -46,12 +46,12 @@ class LogConnector:
         else:
             utils.debug_flag = False
             utils.info("Debug mode deactivated")
-            
+
     def saveLogAs(self):
         txt = self.dlg.txtLog.toPlainText()
         fname = qgsUtils.saveFileDialog(self.dlg,msg="Enregistrer le journal sous",filter="*.txt")
         utils.writeFile(fname,txt)
         utils.info("Log saved to file '" + fname + "'")
-        
+
     def myClearLog(self):
         self.dlg.txtLog.clear()
