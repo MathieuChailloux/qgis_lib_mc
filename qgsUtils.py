@@ -39,7 +39,7 @@ from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtWidgets import QFileDialog
 
 from . import utils
-
+from .qt_compatibility import *
 
 if os.environ.get("GTIFF_COPT") is not None:
     GTIFF_COPT = os.environ["GTIFF_COPT"].split()
