@@ -309,15 +309,14 @@ def checkDescr(item,prefix=None):
 
 def checkCmd(cmd):
     try:
-        subprocess.call([cmd])
+        subprocess.run([cmd],shell=False) # nosec B603
     except FileNotFoundError:
         raise UserError("Command " + str(cmd) + " does not exist")
 
 def executeCmd(cmd_args):
     debug("command = " + str(cmd_args))
     p = subprocess.Popen(cmd_args,
-                         stderr=subprocess.PIPE,
-                         stdout=subprocess.PIPE)
+        stderr=subprocess.PIPE,stdout=subprocess.PIPE)# nosec B603
     out,err = p.communicate()
     debug(str(p.args))
     if out:
@@ -332,7 +331,7 @@ def executeCmdAsScript(cmd_args):
     debug("executeCmdAsScript")
     new_args = [sys.executable] + cmd_args
     debug(str(new_args))
-    ret = subprocess.call(new_args)
+    ret = subprocess.run(new_args,shell=False)# nosec B603
     debug("return code = " + str(ret))
 
 

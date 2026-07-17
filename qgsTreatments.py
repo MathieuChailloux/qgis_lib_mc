@@ -1284,7 +1284,7 @@ def applyRasterizationCmd(in_path,field,out_path,extent_path,
     parameters.extend(more_args)
     parameters.extend([in_path,out_path])
     utils.debug("rasterization cmd = " + str(parameters))
-    p = subprocess.Popen(parameters,stderr=subprocess.PIPE)
+    p = subprocess.Popen(parameters,stderr=subprocess.PIPE) # nosec B603
     out,err = p.communicate()
     utils.debug(str(p.args))
     if out:

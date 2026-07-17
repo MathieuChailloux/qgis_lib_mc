@@ -105,13 +105,12 @@ class ArrayItem(AbstractGroupItem):
         else:
             feedbacks.warn("getNField(" + str(n) + ") out of bounds : " + str(self.nb_fields))
             return None
-            #assert false
 
     def updateNField(self,n,value):
         if n < self.nb_fields:
             self.arr[n] = value
         else:
-            assert false
+            raise AssertionError
 
     def equals(self,other):
         self.arr == other.arr
@@ -228,7 +227,6 @@ class DictItemWithChild(DictItem):
             self.dict[k] = other.dict[k]
         self.setChild(other.child)
     def updateFromChild(self,child):
-        # assert(False)
         self.dict = self.childToDict(child)
         self.setChild(child)
     def updateFromDlgItem(self,dlgItem):
@@ -375,7 +373,8 @@ class AbstractGroupModel(QAbstractTableModel):
         return self.itemClass.fromStr(s,feedback=self.feedback)
         # return DictItem.fromStr(s)
     def fromStr(self,s):
-        assert(len(s)>=4)
+        if (len(s)<4):
+            raise AssertionError
         items_str = s[2:-2].split(",")
         for i_str in items_str:
             i = self.mkItemFromStr(i_str)
@@ -1094,7 +1093,7 @@ class NormalizingParamsModel(QAbstractTableModel):
             res = qgsTreatments.clipVectorByExtent(input,extent,out_path,
                 context=context,feedback=feedback)
         else:
-            assert(False)
+            raise AssertionError
         return res
 
     # Normalize given raster layer to match global extent and resolution

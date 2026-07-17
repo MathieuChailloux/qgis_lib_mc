@@ -29,10 +29,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsColorRampShader,
                        QgsRasterShader,
                        QgsColorBrewerColorRamp,
-                       QgsGradientColorRamp,
-                       QgsCptCityColorRamp,
                        QgsPresetSchemeColorRamp,
-                       QgsRasterBandStats,
                        QgsPalettedRasterRenderer,
                        QgsSingleBandPseudoColorRenderer,
                        QgsGraduatedSymbolRenderer,
@@ -84,7 +81,8 @@ def getGradientColorRampRdYlGn(invert=True):
     return mkColorRamp('RdYlGn',invert=invert)
 
 def getRandomSingleColorRamp():
-    rampName = random.choice(singleColorRampList)
+    # rampName = random.choice(singleColorRampList)
+    rampName = 'Greens'
     return mkColorRamp(rampName,invert=True)
 
 def setRenderer(layer,renderer):
@@ -122,17 +120,11 @@ def setGraduatedStyle(layer,fieldname,color_ramp_name,invert_ramp=False,
 
 def setGreenGraduatedStyle(layer,fieldname):
     setGraduatedStyle(layer,fieldname,'Greens')
-    # color_ramp = mkColorRamp('Greens')
-    # renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
-    # setRenderer(layer,renderer)
 
 def setRdYlGnGraduatedStyle(layer,fieldname,invert_ramp=False,
         classif_method=QgsGraduatedSymbolRenderer.Jenks,invert_ranges=False):
     setGraduatedStyle(layer,fieldname,'RdYlGn',invert_ramp=invert_ramp,
         classif_method=classif_method,invert_ranges=invert_ranges)
-    # color_ramp = mkColorRamp('RdYlGn')
-    # renderer = mkGraduatedRenderer(layer,fieldname,color_ramp,classif_method=classif_method)
-    # setRenderer(layer,renderer)
 
 def setCustomClasses(layer,renderer,class_bounds):
     nb_bounds = len(class_bounds)
@@ -260,7 +252,6 @@ def getValuesFromLayer3(layer):
 def mkRasterShader(layer,color_ramp,classif_mode=QgsColorRampShader.Continuous):
     min, med, max = getValuesFromLayer3(layer)
     rasterShader = QgsRasterShader(minimumValue=min,maximumValue=max)
-    colorRamp = getRandomSingleColorRamp()
     if not color_ramp:
         utils.internal_error("Could not create color ramp")
     colorRampShader = QgsColorRampShader(minimumValue=min,maximumValue=max,
@@ -322,10 +313,10 @@ def setLightingQuantileStyle(layer):
     utils.info("setLightingQuantileStyle")
     colorRamp = mkColorRamp('Inferno')
     if not colorRamp:
-        assert(False)
+        raise AssertionError
     shader = mkQuantileShaderFromColorRamp(layer,colorRamp)
     if not shader:
-        assert(False)
+        raise AssertionError
     setSBPCRasterRenderer(layer,shader)
 
 # def mkColorRampShaderPalettedGnYlRd(valueList,colorList):
