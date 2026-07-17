@@ -65,6 +65,8 @@ gdal_merge_cmd = None
 gdal_rasterize_cmd = None
 gdal_warp_cmd = None
 
+tmpOutput = QgsProcessing.TEMPORARY_OUTPUT
+
 # Processing call wrappers
 
 def applyProcessingAlg(provider,alg_name,parameters,context=None,
@@ -606,7 +608,7 @@ def applyPolygonizeFieldOpt(input,output,band=1,eight=False,fieldname='DN',conte
 def convertGeomType(input,type,output,context=None,feedback=None):
     parameters = { 'INPUT' : input, 'TYPE' : type, 'OUTPUT' : output }
 
-def listUniqueValues(input,fieldname,output=None,outputHtml=None,
+def listUniqueValues(input,fieldname,output=tmpOutput,outputHtml=tmpOutput,
         context=None,feedback=None):
     params = { 'FIELDS' : [fieldname],
         'INPUT' : input,
@@ -878,7 +880,7 @@ def clipRasterFromVector(raster_path,vector_path,out_path,
         context=context,feedback=feedback)
 
 def clipRasterAllTouched(raster_path,vector_path,dst_crs,
-                         out_path=None,nodata=None,data_type=USE_INPUT_TYPE,
+                         out_path=tmpOutput,nodata=None,data_type=USE_INPUT_TYPE,
                          resolution=None,context=None,feedback=None):
     feedback.setProgressText("Clip raster at")
     # data type 0 = input raster type

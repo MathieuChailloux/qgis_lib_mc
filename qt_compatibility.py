@@ -61,14 +61,6 @@ else:
     RICH_TEXT = Qt.RichText
 
 # =============================================
-# Orders
-# =============================================
-if IS_QT6:
-    DESCENDING_ORDER = Qt.SortOrder.DescendingOrder
-else:
-    DESCENDING_ORDER  = Qt.DescendingOrder
-
-# =============================================
 # Map layer proxy model filter
 # =============================================
 if IS_QT6:
